@@ -13,6 +13,7 @@ from .workstation_model import (
 )
 from .workstation_motion import (
     NORMAL,
+    bind_commands,
     preflight,
     transform,
     unexpected_contacts,
@@ -24,11 +25,66 @@ class MotionBlocked(ValueError):
     """A concrete pose or connecting motion failed the cell's geometric gate."""
 
 
+class PlanningBudgetExceeded(MotionBlocked):
+    """A bounded search stopped before all required checks were completed."""
+
+
+class PlanningBudget:
+    """Check wall time and optional call limits at each expensive operation.
+
+    One underlying IK/contact call may finish after the deadline. The result
+    cannot be retained unless the subsequent checkpoint still has budget.
+    """
+
+    def __init__(
+        self,
+        seconds=None,
+        *,
+        max_ik_calls=None,
+        max_collision_checks=None,
+        now=None,
+    ):
+        self.now = now or time.monotonic
+        self.started = self.now()
+        self.seconds = seconds
+        self.limits = {"ik": max_ik_calls, "collision": max_collision_checks}
+        self.calls = {"ik": 0, "collision": 0}
+        self.exhausted = False
+
+    def check(self, operation=None):
+        """Consume a call only if its shared segment budget permits it."""
+        if (
+            self.seconds is not None
+            and self.now() - self.started >= self.seconds
+        ):
+            self.exhausted = True
+            raise PlanningBudgetExceeded("规划预算耗尽：每段时间上限")
+        if operation in self.calls:
+            limit = self.limits[operation]
+            if limit is not None and self.calls[operation] >= limit:
+                self.exhausted = True
+                raise PlanningBudgetExceeded(
+                    f"规划预算耗尽：{operation} 调用上限"
+                )
+            self.calls[operation] += 1
+
+    def summary(self):
+        return {
+            "seconds_limit": self.seconds,
+            "elapsed_seconds": self.now() - self.started,
+            "call_limits": self.limits,
+            "calls": dict(self.calls),
+            "exhausted": self.exhausted,
+            "enforcement": "checkpoints before and after bounded underlying calls",
+        }
+
+
 class Commands:
     """Build only motions that pass both pose and connecting-motion checks."""
 
-    def __init__(self, sim):
+    def __init__(self, sim, budget=None):
         self.sim = sim
+        self.budget = budget
         self.items = []
         self.pose = sim.body_transform(sim.gripper)
         self.q = sim.data.qpos[sim.q_index].copy()
@@ -51,8 +107,21 @@ class Commands:
         del self.items[length:]
 
     def collision(self, q, phase):
+        if self.budget is not None:
+            self.budget.check("collision")
         self.sim.set_scratch_pose(q, self.attached)
-        return unexpected_contacts(self.sim, self.sim.scratch, phase)
+        contacts = unexpected_contacts(self.sim, self.sim.scratch, phase)
+        if self.budget is not None:
+            self.budget.check()
+        return contacts
+
+    def solve_ik(self, pose, seed):
+        if self.budget is not None:
+            self.budget.check("ik")
+        result = self.sim.ik(pose, seed)
+        if self.budget is not None:
+            self.budget.check()
+        return result
 
     def edge(self, first, second, phase, step=0.025):
         count = max(1, int(np.ceil(np.max(np.abs(second - first)) / step)))
@@ -72,6 +141,8 @@ class Commands:
         begin = time.monotonic()
         scale = self.sim.upper - self.sim.lower
         for attempt in range(220):
+            if self.budget is not None:
+                self.budget.check()
             if time.monotonic() - begin > 3:
                 break
             sample = (
@@ -137,7 +208,7 @@ class Commands:
                     curve(amount).as_matrix(),
                     start_pose[:3, 3] * (1 - amount) + goal[:3, 3] * amount,
                 )
-                candidate, error, _ = self.sim.ik(pose, q)
+                candidate, error, _ = self.solve_ik(pose, q)
                 if not self.edge(q, candidate, phase, step=0.012):
                     raise MotionBlocked("段间插值与整站障碍干涉")
                 duration = max(
@@ -148,10 +219,12 @@ class Commands:
                 samples.append((candidate, pose, duration))
                 self.max_error = max(self.max_error, error)
                 q = candidate
+        except PlanningBudgetExceeded:
+            raise
         except ValueError:
             if phase not in {"transfer", "return", "home"}:
                 raise
-            goal_q = self.sim.ik(goal, start_q)[0]
+            goal_q = self.solve_ik(goal, start_q)[0]
             route = self.joint_route(goal_q, phase)
             samples = []
             q = start_q
@@ -160,6 +233,8 @@ class Commands:
                     1, int(np.ceil(np.max(np.abs(last - first)) / 0.008))
                 )
                 for amount in np.linspace(0, 1, subdivisions + 1)[1:]:
+                    if self.budget is not None:
+                        self.budget.check()
                     candidate = first * (1 - amount) + last * amount
                     self.sim.set_scratch_pose(candidate, self.attached)
                     pose = self.sim.body_transform(
@@ -170,6 +245,8 @@ class Commands:
                     )
                     samples.append((candidate, pose, duration))
                     q = candidate
+        if self.budget is not None:
+            self.budget.check()
         for q, pose, duration in samples:
             self.clock += float(duration) * CELL_CONFIG["planning"].get(
                 "trajectory_time_scale", 1.0
@@ -295,6 +372,9 @@ def build_plan(sim, paths, mode="removal", publish=None):
     )
     for path in paths:
         start_search = time.monotonic()
+        builder.budget = PlanningBudget(
+            CELL_CONFIG["planning"]["max_search_seconds_per_segment"]
+        )
         points = np.asarray(path["nominal_xyz"])
         failures = []
         saved = builder.saved()
@@ -308,11 +388,10 @@ def build_plan(sim, paths, mode="removal", publish=None):
         }
         attempts = 0
         for rotation, contact, roll in segment_candidates(path, sim.tool):
-            if (
-                time.monotonic() - start_search
-                > CELL_CONFIG["planning"]["max_search_seconds_per_segment"]
-            ):
-                failures.append("姿态修复搜索达到每段时间上限")
+            try:
+                builder.budget.check()
+            except PlanningBudgetExceeded as error:
+                failures.append(str(error))
                 break
             attempts += 1
             builder.restore(saved)
@@ -321,7 +400,9 @@ def build_plan(sim, paths, mode="removal", publish=None):
                 seed = builder.q.copy()
                 for point in points[[0, len(points) // 2, -1]]:
                     pose = workpiece_target(point, rotation, gap, contact)
-                    q, _, _ = sim.ik(pose @ sim.workpiece_from_gripper, seed)
+                    q, _, _ = builder.solve_ik(
+                        pose @ sim.workpiece_from_gripper, seed
+                    )
                     collisions = builder.collision(q, "trace")
                     if collisions:
                         raise MotionBlocked(
@@ -361,9 +442,16 @@ def build_plan(sim, paths, mode="removal", publish=None):
                 # Sparse poses and linear edges do not guarantee the actual
                 # PCHIP curve. Reject this candidate before retaining its path;
                 # otherwise a single bad trace cancels every accepted segment.
-                curve_check = preflight(sim, builder.items)
+                curve_check = preflight(
+                    sim, builder.items, budget=builder.budget
+                )
                 if not curve_check["passed"]:
-                    collision = curve_check["unexpected_contacts"][0]
+                    collisions = curve_check["unexpected_contacts"]
+                    if not collisions:
+                        raise MotionBlocked(
+                            curve_check.get("reason", "候选连续曲线预检未完成")
+                        )
+                    collision = collisions[0]
                     raise MotionBlocked(
                         "候选连续曲线干涉："
                         + " / ".join(collision["pair"])
@@ -381,6 +469,9 @@ def build_plan(sim, paths, mode="removal", publish=None):
                 )
                 accepted.append(path)
                 break
+            except PlanningBudgetExceeded as error:
+                failures.append(str(error))
+                break
             except ValueError as error:
                 failures.append(str(error))
         if row["status"] != "passed":
@@ -392,6 +483,8 @@ def build_plan(sim, paths, mode="removal", publish=None):
             )
         row["seconds"] = time.monotonic() - start_search
         row["failure_reasons"] = list(dict.fromkeys(failures))[:5]
+        row["budget"] = builder.budget.summary()
+        builder.budget = None
         rows.append(row)
         publish(
             {
@@ -413,6 +506,7 @@ def build_plan(sim, paths, mode="removal", publish=None):
                 ),
                 "home",
             )
+            builder.items = bind_commands(sim, builder.items)
             checks = preflight(sim, builder.items)
         except ValueError as error:
             builder.items = []
@@ -444,8 +538,11 @@ def build_plan(sim, paths, mode="removal", publish=None):
             and len(accepted) == len(paths)
             and checks["passed"],
             "seconds": time.monotonic() - begin,
-            "duration_s": builder.clock,
+            "duration_s": builder.clock if builder.items else 0.0,
             "sample_count": len(builder.items),
+            "motion_binding": builder.items[0].get("motion_binding")
+            if builder.items
+            else None,
             "ik_max_mm": builder.max_error * 1000,
             "connecting_motion_repairs": builder.rrt_repairs,
             "workpiece_normal_strategy": "each observed region is oriented against the fixed tool separately",

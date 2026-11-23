@@ -53,6 +53,37 @@ from .workstation_transfers import shorten_transfers
 from .workstation_web import export_scene
 
 
+def continuation_reason(
+    mode,
+    motion_gate_passed,
+    quality,
+    remaining_paths,
+    pass_index,
+    max_passes,
+    observational_release,
+):
+    """Choose continuation from sensor evidence and the remaining pass budget."""
+    if mode != "removal":
+        return "clearance_pass_complete"
+    if not motion_gate_passed:
+        return "motion_safety_gate"
+    if quality.get("overgrind", 0):
+        return "overgrind_requires_disposition"
+    if quality.get("negative_limit_risk", 0):
+        return "negative_limit_requires_review"
+    if quality.get("invalid_observations"):
+        return "invalid_reinspection_requires_review"
+    if not remaining_paths:
+        return (
+            "observed_regions_verified"
+            if observational_release
+            else "reinspection_requires_review"
+        )
+    if pass_index + 1 >= max_passes:
+        return "pass_budget_exhausted"
+    return "followup_planning"
+
+
 def global_plan(sim, paths, mode):
     """Retain the original single-orientation cell planner as a local ablation."""
     started = time.monotonic()
@@ -532,20 +563,15 @@ def run(args):
                 # Evaluation truth grades the outcome above. Only sensor
                 # evidence, motion safety and the budget choose continuation.
                 stopping = result["controller_stopping"]
-                if args.mode != "removal":
-                    stopping["reason"] = "clearance_pass_complete"
-                elif not result["motion_gate_passed"]:
-                    stopping["reason"] = "motion_safety_gate"
-                elif not remaining_paths:
-                    stopping["reason"] = (
-                        "observed_regions_verified"
-                        if result["observational_release"]
-                        else "reinspection_requires_review"
-                    )
-                elif pass_index + 1 == args.max_passes:
-                    stopping["reason"] = "pass_budget_exhausted"
-                else:
-                    stopping["reason"] = "followup_planning"
+                stopping["reason"] = continuation_reason(
+                    args.mode,
+                    result["motion_gate_passed"],
+                    quality,
+                    remaining_paths,
+                    pass_index,
+                    args.max_passes,
+                    result["observational_release"],
+                )
                 if stopping["reason"] != "followup_planning":
                     break
                 status("planning")
@@ -586,7 +612,10 @@ def run(args):
             if admitted and checks["passed"]
             else "review"
             if any(item["kind"] == "review" for item in detections)
-            or (not paths and any(item["machining_required"] for item in detections))
+            or (
+                not paths
+                and any(item["machining_required"] for item in detections)
+            )
             else "no_defect_detected"
             if not paths
             else "blocked"

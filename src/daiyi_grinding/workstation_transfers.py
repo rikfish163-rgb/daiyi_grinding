@@ -4,8 +4,8 @@ from collections import Counter
 
 import numpy as np
 
-from .workstation_motion import preflight
-from .workstation_planning import Commands
+from .workstation_motion import binding_failure, preflight
+from .workstation_planning import Commands, PlanningBudget
 
 
 def transfer_windows(commands):
@@ -54,7 +54,14 @@ def continuous_joins(commands):
 
 
 def bridge(sim, start, end):
-    builder = Commands(sim)
+    if (
+        not start["attached"]
+        or not end["attached"]
+        or start.get("event")
+        or end.get("event")
+    ):
+        return None
+    builder = Commands(sim, budget=PlanningBudget(seconds=3.0))
     builder.q = start["q"].copy()
     builder.pose = start["pose"].copy()
     builder.attached = True
@@ -88,6 +95,18 @@ def splice(commands, shortcuts):
 
 
 def shorten_transfers(sim, commands, admitted, checks):
+    if binding_failure(sim, commands):
+        return (
+            [],
+            [],
+            {
+                **checks,
+                **preflight(sim, commands),
+                "admitted_count": 0,
+                "blocked_count": checks.get("segment_count", len(admitted)),
+                "all_paths_passed": False,
+            },
+        )
     if not checks["passed"] or len(admitted) < 2:
         return commands, admitted, checks
 

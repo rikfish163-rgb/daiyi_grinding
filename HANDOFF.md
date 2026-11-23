@@ -1,6 +1,34 @@
 # 当前 ESTUN 工位与本机工程交接
 
-2026-11-21 最新进度为[实际训练模型与自主去除](docs/learned_grinding_20261121.md)。
+2026-11-23 新增[企业对标离线经验库](docs/enterprise_offline_20261123.md)
+和[统一运行器说明](docs/enterprise_offline_runner_20261123.md)。
+运行入口为 `daiyi-enterprise-offline`，八类套件分别验证场景、标定、识别、
+规划、工艺、复检、可靠性及验收判据；`--include-main-chain` 追加当前
+ESTUN 的薄批缝执行和正常无动作对照。新运行目录不得覆盖历史证据。
+
+本轮主流程保护包括连续曲线途中碰撞检查、预检采样预算耗尽整条命令拒绝、
+装夹/坐标/场景/运动源码变更后的计划失效，以及 signed 复检的负向过磨、
+负边界不确定和非法输入停止。控制器使用独立执行与质量绑定校验；
+历史结果只能作对应的历史证据。
+
+所有 MuJoCo 创建模型、渲染和积分共同使用
+`runs/enterprise_offline_20261123/mujoco.lock`。
+统一运行器会管理锁，自持锁的模块不再重复外套。
+单独执行仓库验证时使用：
+
+```bash
+MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+  flock runs/enterprise_offline_20261123/mujoco.lock bash scripts/verify.sh
+```
+
+Git 当前没有初始提交，改动以本轮开始的
+`runs/enterprise_offline_20261123/baseline_source_hashes.json`
+和暂存文件为对照；继续工作时保留该快照、原 `results/`、历史运行和冻结权重。
+企业愿景指标尚待双方确认实物验收规程。曹公开合成数据和 CPU 后处理已复用，
+杨的同件原始点云、真实相机/装夹/TCP、力控去除率和表面质量仍待补。
+软件故障注入循环不代表 800 小时连续实机运行。
+
+2026-11-21 阶段进度为[实际训练模型与自主去除](docs/learned_grinding_20261121.md)。
 `config/learned_detector.json` 登记已冻结的 387,683 参数 RGB-D U-Net，
 网页学习模式与 `--detector learned --checkpoint ...` 已接入。
 冻结原始分割 F1 94.01%，同输入可测候选 F1 91.91%。

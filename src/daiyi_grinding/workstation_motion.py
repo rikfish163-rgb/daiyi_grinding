@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import csv
+import hashlib
+import json
 import time
+from pathlib import Path
 
 import mujoco
 import numpy as np
@@ -20,6 +23,8 @@ from .workstation_model import (
 
 NORMAL = np.array([-1.0, 0.0, 0.0])
 CONTACT = WHEEL_CENTER + np.array([WHEEL_HALF_WIDTH, 0.0, 0.0])
+PREFLIGHT_JOINT_STEP_RAD = 0.012
+PREFLIGHT_SAMPLE_BUDGET = 200_000
 
 
 def transform(rotation, position):
@@ -272,17 +277,206 @@ def joint_curve(sim, commands, start_time=0):
     positions = np.vstack(
         [sim.data.qpos[sim.q_index], [item["q"] for item in commands]]
     )
+    if (
+        not np.isfinite(times).all()
+        or not np.isfinite(positions).all()
+        or positions.shape != (len(times), 6)
+        or np.any(np.diff(times) <= 0)
+    ):
+        raise ValueError("命令时间须严格递增，六轴关节位置须为有限数")
     return times, PchipInterpolator(times, positions, axis=0)
 
 
-def preflight(sim, commands):
-    """Check interpolated robot and carried workpiece geometry before stepping."""
-    bad = []
+def motion_binding(sim):
+    """Bind a plan to the actual fixture, frames, scene and motion sources."""
+    source = Path(__file__).parent
+    paths = [
+        source / name
+        for name in (
+            "workstation_motion.py",
+            "workstation_planning.py",
+            "workstation_transfers.py",
+            "workstation_model.py",
+            "workstation_tooling.py",
+        )
+    ]
+    paths.append(source.parents[1] / "config" / "workstation.json")
+    scene = getattr(sim, "scene_file", None)
+    geometry = hashlib.sha256()
+    for key in (
+        "geom_type",
+        "geom_size",
+        "geom_pos",
+        "geom_quat",
+        "geom_bodyid",
+        "geom_dataid",
+        "geom_contype",
+        "geom_conaffinity",
+        "mesh_vert",
+        "mesh_face",
+        "mesh_pos",
+        "mesh_quat",
+        "body_pos",
+        "body_quat",
+        "jnt_pos",
+        "jnt_axis",
+        "jnt_range",
+    ):
+        if hasattr(sim.model, key):
+            array = np.ascontiguousarray(getattr(sim.model, key))
+            geometry.update(f"{key}:{array.dtype}:{array.shape}".encode())
+            geometry.update(memoryview(array))
+    payload = {
+        "schema_version": 1,
+        "grasp_setup": getattr(sim, "grasp_setup", None),
+        "frames": {
+            key: np.asarray(getattr(sim, key)).tolist()
+            for key in (
+                "gripper_from_workpiece",
+                "workpiece_from_gripper",
+                "loading_rotation",
+            )
+            if hasattr(sim, key)
+        },
+        "joint_limits": {
+            key: np.asarray(getattr(sim, key)).tolist()
+            for key in ("lower", "upper")
+            if hasattr(sim, key)
+        },
+        "tool": {
+            "key": getattr(sim.tool, "key", None),
+            "geom": sim.tool.geom,
+        },
+        "scene_sha256": hashlib.sha256(Path(scene).read_bytes()).hexdigest()
+        if scene is not None
+        else None,
+        "collision_model_sha256": geometry.hexdigest(),
+        "source_hashes": {
+            path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in paths
+        },
+    }
+    return {
+        **payload,
+        "sha256": hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest(),
+    }
+
+
+def bind_commands(sim, commands):
+    """Stamp the first command while retaining the existing command schema."""
     if not commands:
-        return {"passed": False, "checked_commands": 0, "contact_count": 0}
-    times, curve = joint_curve(sim, commands)
+        return commands
+    return [
+        {**commands[0], "motion_binding": motion_binding(sim)},
+        *commands[1:],
+    ]
+
+
+def binding_failure(sim, commands):
+    """Reject a stamped plan after a fixture/frame/model/source change."""
+    expected = commands[0].get("motion_binding") if commands else None
+    if expected is not None:
+        actual = motion_binding(sim)
+        if expected.get("sha256") != actual["sha256"]:
+            return {
+                "reason": "装夹、坐标、场景或运动源码已变化，旧计划哈希失效",
+                "expected_binding_sha256": expected.get("sha256"),
+                "actual_binding_sha256": actual["sha256"],
+            }
+    return None
+
+
+def curve_interval_speed_bound(curve, index, duration):
+    """Exact absolute derivative bound for each cubic coordinate interval."""
+    cubic, quadratic, linear = curve.c[:3, index]
+    end = 3 * cubic * duration**2 + 2 * quadratic * duration + linear
+    bound = np.maximum(np.abs(linear), np.abs(end))
+    vertex = np.divide(
+        -quadratic,
+        3 * cubic,
+        out=np.zeros_like(cubic),
+        where=cubic != 0,
+    )
+    inside = (cubic != 0) & (vertex > 0) & (vertex < duration)
+    peak = np.abs(3 * cubic * vertex**2 + 2 * quadratic * vertex + linear)
+    return np.where(inside, np.maximum(bound, peak), bound)
+
+
+def preflight(
+    sim,
+    commands,
+    *,
+    sampling_policy="bounded_joint",
+    sample_budget=PREFLIGHT_SAMPLE_BUDGET,
+    budget=None,
+):
+    """Check the servo curve with bounded joint spacing and bounded work.
+
+    The 0.012 rad spacing matches the existing Cartesian-leg edge checker.
+    It strengthens temporal sampling; it is not a proof of continuous mesh
+    clearance or a substitute for measured tracking and profile acceptance.
+    ``legacy_four`` is retained only for explicit same-input ablations.
+    """
+    empty = {
+        "passed": False,
+        "checked_commands": 0,
+        "contact_count": 0,
+        "unexpected_contacts": [],
+    }
+    if not commands:
+        return empty
+    if sampling_policy not in {"bounded_joint", "legacy_four"}:
+        raise ValueError("未知连续曲线采样策略")
+    invalid_binding = binding_failure(sim, commands)
+    if invalid_binding:
+        return {**empty, **invalid_binding, "stale_plan": True}
+    try:
+        times, curve = joint_curve(sim, commands)
+    except ValueError as error:
+        return {**empty, "reason": str(error), "invalid_commands": True}
+    positions = np.asarray([command["q"] for command in commands])
+    if hasattr(sim, "lower") and (
+        np.any(positions < sim.lower) or np.any(positions > sim.upper)
+    ):
+        return {
+            **empty,
+            "reason": "命令超出已发布的六轴关节限位",
+            "joint_limits_failed": True,
+        }
+    counts = []
+    for index, duration in enumerate(np.diff(times)):
+        speed = curve_interval_speed_bound(curve, index, duration)
+        count = (
+            4
+            if sampling_policy == "legacy_four"
+            else max(
+                4,
+                int(
+                    np.ceil(np.max(speed) * duration / PREFLIGHT_JOINT_STEP_RAD)
+                ),
+            )
+        )
+        counts.append(count)
+    required_samples = sum(counts) + (
+        len(commands) if sampling_policy == "bounded_joint" else 0
+    )
+    if required_samples > sample_budget:
+        return {
+            **empty,
+            "reason": "连续曲线预检达到采样预算，整条命令拒绝执行",
+            "budget_exhausted": True,
+            "required_samples": required_samples,
+            "sample_budget": sample_budget,
+        }
+    bad, contact_count = [], 0
     for index, command in enumerate(commands):
-        for fraction in (0.25, 0.5, 0.75, 1.0):
+        first = 1 if sampling_policy == "legacy_four" else 0
+        for step in range(first, counts[index] + 1):
+            if budget is not None:
+                budget.check("collision")
+            fraction = step / counts[index]
             sim.set_scratch_pose(
                 curve(
                     times[index] * (1 - fraction) + times[index + 1] * fraction
@@ -292,16 +486,31 @@ def preflight(sim, commands):
             for collision in unexpected_contacts(
                 sim, sim.scratch, command["phase"]
             ):
-                bad.append(
-                    {"command": index, "phase": command["phase"], **collision}
-                )
+                contact_count += 1
+                if len(bad) < 30:
+                    bad.append(
+                        {
+                            "command": index,
+                            "phase": command["phase"],
+                            "fraction": fraction,
+                            **collision,
+                        }
+                    )
+    if budget is not None:
+        budget.check()
     return {
-        "passed": not bad,
-        "contact_count": len(bad),
-        "unexpected_contacts": bad[:30],
+        "passed": contact_count == 0,
+        "contact_count": contact_count,
+        "unexpected_contacts": bad,
         "checked_commands": len(commands),
         "samples_per_command": 4,
-        "scope": "the same C1 joint curve used by the servo, sampled with CAD-derived collision pieces; not real-controller certification",
+        "sampling_policy": sampling_policy,
+        "max_samples_per_command": max(counts),
+        "checked_interpolated_samples": required_samples,
+        "joint_step_bound_rad": PREFLIGHT_JOINT_STEP_RAD
+        if sampling_policy == "bounded_joint"
+        else None,
+        "scope": "the same C1 joint curve used by the servo, sampled with CAD-derived collision pieces; bounded joint spacing is not continuous collision certification or real-controller certification",
     }
 
 
@@ -506,6 +715,9 @@ def execute(
     sim, commands, mode, publish, realtime_factor=2.0, removal=None, prefix=""
 ):
     """Continuously integrate the servo and free workpiece with grasp constraints."""
+    invalid_binding = binding_failure(sim, commands)
+    if invalid_binding:
+        raise ValueError(invalid_binding["reason"])
     removal = GeometricRemoval(sim) if removal is None else removal
     start_sim = float(sim.data.time)
     times, curve = joint_curve(sim, commands, start_sim)

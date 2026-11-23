@@ -40,6 +40,15 @@ daiyi-casting-scan = "daiyi_grinding.casting_scan_calibration:main"
 daiyi-defect-model = "daiyi_grinding.defect_training:main"
 daiyi-cad-resolution = "daiyi_grinding.cad_resolution:main"
 daiyi-cad-refinement = "daiyi_grinding.cad_refinement:main"
+daiyi-enterprise-offline = "daiyi_grinding.enterprise_offline:main"
+daiyi-enterprise-acceptance = "daiyi_grinding.enterprise_acceptance:main"
+daiyi-offline-scenarios = "daiyi_grinding.offline_scenarios:main"
+daiyi-registration-stress = "daiyi_grinding.registration_stress:main"
+daiyi-perception-stress = "daiyi_grinding.perception_stress:main"
+daiyi-planning-stress = "daiyi_grinding.planning_stress:main"
+daiyi-process-sandbox = "daiyi_grinding.process_sandbox:main"
+daiyi-reinspection-stress = "daiyi_grinding.reinspection_stress:main"
+daiyi-reliability-stress = "daiyi_grinding.reliability_stress:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

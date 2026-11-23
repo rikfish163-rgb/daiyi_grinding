@@ -29,6 +29,25 @@
 当前 ESTUN 的基准毛刺闭环已将三处生成余料降至 0.3 mm 以下；
 类别匹配仍需复核，团队先验复杂工况仍有可达性和跟踪限制。
 
+2026-11-23 新增[企业对标离线验证与经验库](docs/enterprise_offline_20261123.md)。
+九个研发角色覆盖场景换型、标定误差预算、识别压力、规划、工艺、复检、
+控制可靠性、企业验收和统一运行器。八类独立套件通过同一入口运行，
+每次保存实际命令、退出码、耗时、源码与输入哈希、产物和失败处置记录。
+软件套件通过、仿真运动通过和企业实物验收各自记录。
+
+```bash
+# 使用新目录；运行器串行调度，并管理共享 MuJoCo 锁。
+MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+  .venv/bin/daiyi-enterprise-offline \
+  --include-main-chain --output runs/enterprise_offline_20261123/suite_new
+```
+
+重新安装入口可运行 `.venv/bin/python -m pip install --no-deps --no-build-isolation -e .`。
+模块方式为 `.venv/bin/python -m daiyi_grinding.enterprise_offline`。
+视觉定位 ±0.1 mm、型面 ±0.3 mm、换型 30 分钟、新品占机 2 小时和连续
+800 小时仍需现场独立证据。当前签名复检已经区分正余量与负向过磨；
+过磨、负边界不确定或非法复检会停止自动回磨。
+
 ## 启动
 
 在本工程目录执行：

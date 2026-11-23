@@ -1,0 +1,64 @@
+{
+  "schema": "daiyi-enterprise-requirements-v1",
+  "revision": "20261123",
+  "agreement_status": "需求说明为草稿；量化值来自愿景技术指标，尚非双方确认的实物验收规程",
+  "sources": {
+    "requirements_draft": {
+      "path": "feishu_docs/上海戴屹具身AI检测打磨项目需求说明__wiki-TJ5Rwkla8i9zNgkV2zKchYuAn7g.md",
+      "sha256": "97226d4271aa089074b0c1c02cd69ed352486bc4dd1effce2f7df44580531f4d",
+      "status": "draft",
+      "source_date": "2026-09-10"
+    },
+    "vision_targets": {
+      "path": "feishu_docs/具身打磨项目愿景技术指标__wiki-CZfWwvWKsimxGNkRFsHcSuvjncV.md",
+      "sha256": "c53b926b00d0b40ef0343c1a373f44a4b3e43abe439ada9648385f16df947c60",
+      "status": "vision_targets"
+    },
+    "senior_1112": {
+      "path": "feishu_docs/11.12代码结构、模块功能变化__wiki-H5fxwWJ3Yi5sHVkPRYTcYWc8nCb.md",
+      "sha256": "d04efdc2e08dc5d3654d6751bcbc2b6309b40297520f6e60d16fa6b267639db1",
+      "status": "documented_capabilities_not_rerun",
+      "source_date": "2026-11-11"
+    },
+    "current_chain": {
+      "path": "docs/workstation_full_chain_20261122.md",
+      "sha256": "90e61809f5cac3c474451e228d7534a181513e85f928a30dc5d5c5934f875bfd",
+      "status": "archived_simulation_evidence"
+    },
+    "current_learning": {
+      "path": "docs/learned_grinding_20261121.md",
+      "sha256": "ca0a10eaafcb5fadd4586cbe78387cb25c9bf130c31e5fcf0459890aeb607259",
+      "status": "project_trained_synthetic_model"
+    },
+    "team_reuse": {
+      "path": "docs/team_data_reuse_20261121.md",
+      "sha256": "fe9781e9ce449586d1532b5835fa5aa2236115e6c5f8cd27e71d5bd774f97ec7",
+      "status": "public_synthetic_data_and_cpu_code_reuse"
+    }
+  },
+  "conventions": {
+    "statuses": ["pass", "fail", "unknown"],
+    "unknown_is_pass": false,
+    "localization": "最大三维欧氏定位误差加输入不确定度上界；这是保守的本地演练口径，正式采样及误差定义待双方确认",
+    "signed_surface": "同件、同区、同点磨后 after_mm ± uncertainty_mm 的整个区间在双边公差内；加工区和保护区都须登记及覆盖",
+    "motion": "两种 FK 跟踪 P95 严格小于 1 mm 且零非预期接触；不替代定位精度或型面一致性",
+    "occupancy": "单机墙钟中新品 occupied_intervals 的区间并集；不相加重叠区间，不使用计划运动时间",
+    "reliability": "同一 boot_id 连续心跳、无重启、无故障；实时时钟与虚拟时钟分别评价，短时演练不证明 800 小时"
+  },
+  "requirements": [
+    {"id": "source_integrity", "label": "输入身份与哈希", "kind": "offline_gate", "source": "senior_1112", "target": {"all_declared_hashes_match": true}},
+    {"id": "defect_binary", "label": "缺陷二值像素识别", "kind": "diagnostic", "source": "requirements_draft", "target": null},
+    {"id": "defect_category", "label": "生成缺陷类别与实例覆盖", "kind": "offline_gate", "source": "current_chain", "target": {"all_generated_objects_matched": true}},
+    {"id": "localization", "label": "独立三维缺陷定位", "kind": "enterprise_target", "source": "vision_targets", "target": {"maximum_error_mm": 0.1, "required_defect_classes": ["flash", "burr", "casting_root"]}},
+    {"id": "motion_tracking", "label": "仿真运动跟踪", "kind": "offline_gate", "source": "current_chain", "target": {"p95_strictly_below_mm": 1.0, "unexpected_contacts": 0}},
+    {"id": "simulated_residual", "label": "仿真正余料峰值", "kind": "offline_gate", "source": "current_chain", "target": {"maximum_positive_residual_mm": 0.3}},
+    {"id": "signed_surface", "label": "独立双边型面量测", "kind": "enterprise_target", "source": "vision_targets", "target": {"lower_mm": -0.3, "upper_mm": 0.3, "protected_zones_required": true}},
+    {"id": "simulation_cycle", "label": "离线完整闭环或正常无动作对照", "kind": "offline_gate", "source": "current_chain", "target": {"all_cycle_gates": true}},
+    {"id": "controller_commissioning", "label": "控制器与工艺回执", "kind": "enterprise_target", "source": "requirements_draft", "target": {"completed": true, "calibrations_verified": true, "unexpected_contacts": 0}},
+    {"id": "changeover", "label": "换型墙钟", "kind": "enterprise_target", "source": "vision_targets", "target": {"maximum_seconds": 1800}},
+    {"id": "new_product_occupancy", "label": "新品占机墙钟", "kind": "enterprise_target", "source": "vision_targets", "target": {"maximum_seconds": 7200}},
+    {"id": "adaptive_changeover", "label": "换型无需修改程序代码", "kind": "enterprise_target", "source": "requirements_draft", "target": {"code_changed": false, "different_products": true}},
+    {"id": "continuous_reliability", "label": "真实软件连续稳定运行", "kind": "enterprise_target", "source": "vision_targets", "target": {"minimum_hours": 800, "maximum_heartbeat_gap_seconds": 3600, "failures": 0}},
+    {"id": "virtual_reliability", "label": "虚拟可靠性演练", "kind": "offline_gate", "source": "current_chain", "target": {"minimum_virtual_hours": 800, "maximum_heartbeat_gap_seconds": 3600, "failures": 0}}
+  ]
+}

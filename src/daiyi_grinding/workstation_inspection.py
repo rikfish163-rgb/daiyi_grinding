@@ -595,15 +595,20 @@ class Inspection:
             height = observed_normal_height_mm(
                 candidate, observation, quantile=0.95
             )
-            if height is not None and height > CELL_DETECTOR_CONFIG.review_height_mm:
+            if (
+                height is not None
+                and height > CELL_DETECTOR_CONFIG.review_height_mm
+            ):
                 points = observation["reference_xyz"][tuple(candidate.pixels.T)]
                 points = points[np.isfinite(points).all(axis=1)]
                 self.review_points.append(points)
-                self.protected_observations.append({
-                    "view": index,
-                    "normal_height_p95_mm": height,
-                    "reference_points": len(points),
-                })
+                self.protected_observations.append(
+                    {
+                        "view": index,
+                        "normal_height_p95_mm": height,
+                        "reference_points": len(points),
+                    }
+                )
         local_paths = []
         for detection in detections:
             paths = observed_paths(detection, observation)

@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "suite_id": "enterprise_offline_scenarios_20261123",
+  "seed_registry": {
+    "development": [97101],
+    "scenario_evaluation": [97111],
+    "frozen_before_generation": true,
+    "not_a_new_holdout_claim": "The scenario_evaluation split is a preregistered, previously unobserved same-CAD simulation evaluation seed. It is not an untouched final holdout after results are inspected, not cross-CAD evidence, and not a replacement for the frozen 9601/9602 regression.",
+    "excluded_seeds": [9301, 9302, 9401, 9402, 9403, 9404, 9501, 9502, 9601, 9602, 9101, 9901, 9902, 9903, 9904, 120481, 120483, 120487, 120489],
+    "historical_split_plans": ["runs/learned_grinding_20261121/split_plan.json"],
+    "known_regression_evidence": [
+      "runs/learned_grinding_20261121/test_01/evaluation.json",
+      "runs/daiyi_full_chain_20261122/same_input_42/paired_comparison.json"
+    ],
+    "entity_rule": "part_id + cad_id + entity_seed is one group; every morphology, view, crop, augmentation and sensor perturbation of that group stays in one split"
+  },
+  "parts": {
+    "097": {
+      "part_id": "097",
+      "cad_id": "097",
+      "cad_path": "assets/ier220_workstation/meshes/workpiece/wp_097_c0.stl",
+      "cad_sha256": "498209ebc02335ee07b9362ccb578f17913e488fd232fde41d5b015b47337d1f",
+      "identity_status": "supplied CAD file identifier; manufacturing stage and pre-existing defects are unconfirmed",
+      "main_station_support": "supported",
+      "entity_namespace": "synthetic097"
+    },
+    "021": {
+      "part_id": "021",
+      "cad_id": "021",
+      "cad_path": "assets/ier220_workstation/meshes/workpiece/wp_021_c0.stl",
+      "cad_sha256": "676b1696b9aaeb7ae0f3c179e61033ea11a2e0aad3e1bd4a652b2747b3167c45",
+      "identity_status": "supplied CAD file identifier; not a before/after variant of 097 and manufacturing stage is unconfirmed",
+      "main_station_support": "metadata_only_reject",
+      "rejection_reason": "workstation_model.py fixes WORKPIECE_MESH, body/material names, workpiece_097 coordinates, grasp, fixture and collision proxies to 097; renaming a file is not a changeover"
+    },
+    "cao_box_train": {
+      "part_id": "primitive_box_001",
+      "cad_id": "weldgrind_primitive_box_001_nominal_mesh",
+      "cad_path": "external/datasets/weldgrind_public_v1/weldgrind_dataset_20261110_public_v1/raw/new/train/primitive_box_001_state_01/mesh_target.ply",
+      "source_metadata": "external/datasets/weldgrind_public_v1/weldgrind_dataset_20261110_public_v1/raw/new/train/primitive_box_001_state_01/metadata.json",
+      "program_input": "external/datasets/weldgrind_public_v1/weldgrind_dataset_20261110_public_v1/program_inputs/train/primitive_box_001_state_01.npz",
+      "identity_status": "Cao public synthetic train base; neither an enterprise casting nor a new holdout",
+      "main_station_support": "public_io_only_reject",
+      "rejection_reason": "world-mm RGB-D/point/trajectory schema can be read, but this mesh and its FRANKA/world trajectory have no registered 097 grasp, fixture, camera or ESTUN changeover binding"
+    }
+  },
+  "profile_overrides": {
+    "flash_thin": {
+      "base_profile": "team_prior_20261121",
+      "case": "casting_flash",
+      "sha256": "f99ea0dc447ff6cfefe8297a1687cf18729758a2eabb250cde93022d6ba8fba2",
+      "families": {
+        "variable_flash": {
+          "height_mm": [0.35, 0.85],
+          "full_width_mm": [0.4, 0.9],
+          "remove_hotspots": true
+        }
+      },
+      "source": "Yang method with a deliberately bounded low/thin simulation range; not a measured size distribution"
+    },
+    "flash_thick": {
+      "base_profile": "team_prior_20261121",
+      "case": "casting_flash",
+      "sha256": "9ea2046fab0a7572756811f6d61c0491f17eb3b8120ca5efd3d92c88fe195a03",
+      "families": {
+        "variable_flash": {
+          "height_mm": [4.8, 5.8],
+          "full_width_mm": [1.2, 1.6],
+          "remove_hotspots": true
+        }
+      },
+      "source": "Yang documented 0.3–5.0 mm generation settings and 6 mm exploratory cap; not a measured thick-flash quantile"
+    },
+    "interrupted_low": {
+      "base_profile": "team_prior_20261121",
+      "case": "casting_interrupted",
+      "sha256": "04b39bc92a646a975f7211387192d3b2bdc345ff86b5afa3da85fa61e4511b73",
+      "families": {
+        "interrupted_flash": {
+          "height_mm": [0.35, 0.9],
+          "full_width_mm": [0.45, 0.9],
+          "remove_hotspots": true
+        }
+      },
+      "source": "bounded low interrupted-flash stress; root gaps remain generator-controlled"
+    },
+    "burr_small": {
+      "base_profile": "team_prior_20261121",
+      "case": "casting_burr",
+      "sha256": "5e5c4edfb103b6fbe3ae7aa69e8f318628f49b873619087b0be46ffb936965c7",
+      "compact_filter": {
+        "height_mm_max": 1.0,
+        "major_radius_mm_max": 2.3,
+        "minor_radius_mm_max": 1.75,
+        "optimizer_split": "train",
+        "semantic_code": 602,
+        "eligible_training_instances": 150
+      },
+      "source": "a deterministic subset of Cao's paired synthetic train dimensions; source train provenance is retained and this is not a new independent size distribution"
+    }
+  },
+  "scenario_families": [
+    {"scenario_id": "normal_baseline", "case": "casting_normal", "profile": "team_prior_20261121", "morphology": "normal", "size_regime": "none", "root_region": "none", "view_policy": "fixed_six_encoder_views", "sensor": "team_depth_prior", "occlusion": "normal_self_occlusion", "clamping": "original_fixture_weld", "expected_failure": "false_positive_or_unnecessary_path", "source": "same-CAD nominal control", "split": "development"},
+    {"scenario_id": "flash_thin", "case": "casting_flash", "profile_override": "flash_thin", "morphology": "variable_flash", "size_regime": "thin_low_0.35_0.85mm", "root_region": "CAD_supported_top_candidate", "view_policy": "fixed_six_encoder_views", "sensor": "team_depth_prior", "occlusion": "self_occlusion_retained", "clamping": "original_fixture_weld", "expected_failure": "missed_low_stock_or_incomplete_boundary", "source": "Yang_method_bounded_simulation_override", "split": "development"},
+    {"scenario_id": "flash_thick", "case": "casting_flash", "profile_override": "flash_thick", "morphology": "variable_flash", "size_regime": "thick_4.8_5.8mm", "root_region": "CAD_supported_top_candidate", "view_policy": "fixed_six_encoder_views", "sensor": "team_depth_prior", "occlusion": "self_occlusion_retained", "clamping": "original_fixture_weld", "expected_failure": "review_envelope_and_tool_footprint_hold", "source": "Yang_documented_generation_settings", "split": "development"},
+    {"scenario_id": "interrupted_low", "case": "casting_interrupted", "profile_override": "interrupted_low", "morphology": "interrupted_flash", "size_regime": "low_0.35_0.9mm_with_real_gaps", "root_region": "CAD_supported_top_candidate_three_fragments", "view_policy": "fixed_six_encoder_views", "sensor": "team_depth_prior", "occlusion": "self_occlusion_retained", "clamping": "original_fixture_weld", "expected_failure": "fragment_merge_or_weak_fragment_miss", "source": "Yang_interrupted_method_bounded_override", "split": "development"},
+    {"scenario_id": "curled_sheet", "case": "casting_curled", "profile": "team_prior_20261121", "morphology": "curled_flash", "size_regime": "research_v1_sheet_arc_and_thickness", "root_region": "CAD_supported_top_candidate", "view_policy": "fixed_six_encoder_views", "sensor": "team_depth_prior", "occlusion": "curl_backface_and_root_occlusion", "clamping": "original_fixture_weld", "expected_failure": "hidden_backface_or_root_not_observed", "source": "research_v1_geometry_Yang_documented_morphology_no_measured_curl", "split": "development"},
+    {"scenario_id": "torn_sheet", "case": "casting_torn", "profile": "team_prior_20261121", "morphology": "torn_flash", "size_regime": "research_v1_sheet_arc_and_thickness", "root_region": "CAD_supported_top_candidate_three_fragments", "view_policy": "fixed_six_encoder_views", "sensor": "team_depth_prior", "occlusion": "broken_edges_and_self_occlusion", "clamping": "original_fixture_weld", "expected_failure": "small_fragment_or_boundary_miss", "source": "research_v1_geometry_Yang_documented_morphology_no_measured_tear", "split": "development"},
+    {"scenario_id": "burr_small", "case": "casting_burr", "profile_override": "burr_small", "morphology": "irregular_burr", "size_regime": "height<=1mm_major_radius<=2.3mm_minor_radius<=1.75mm", "root_region": "top_and_outer_wall_CAD_supported_patches", "view_policy": "fixed_six_encoder_views", "sensor": "team_depth_prior", "occlusion": "side_wall_may_be_hidden", "clamping": "original_fixture_weld", "expected_failure": "small_object_recall_or_measurable_surface_loss", "source": "Cao_public_synthetic_train_602_paired_dimension_subset", "split": "development"},
+    {"scenario_id": "mixed_root_regions", "case": "casting_mixed", "profile": "team_prior_20261121", "morphology": "mixed_variable_curled_torn_interrupted_burr", "size_regime": "team_prior_full_range", "root_region": "top_and_outer_wall_CAD_supported_patches", "view_policy": "fixed_six_encoder_views", "sensor": "team_depth_prior", "occlusion": "mixed_self_and_side_wall_occlusion", "clamping": "original_fixture_weld", "expected_failure": "class_confusion_or_partial_reachability", "source": "Yang_method_Cao_train_prior_research_sheet_assumptions", "split": "development"},
+    {"scenario_id": "burr_occlusion_dropout", "case": "casting_burr", "profile": "team_prior_20261121", "morphology": "irregular_burr", "size_regime": "team_prior_full_range", "root_region": "top_and_outer_wall_CAD_supported_patches", "view_policy": "fixed_six_encoder_views_no_new_camera", "sensor": "occlusion_dropout_stress", "sensor_override": {"depth_noise_sigma_mm": 0.25, "dropout_probability": 0.025}, "occlusion": "natural_side_wall_occlusion_plus_synthetic_dropout", "clamping": "original_fixture_weld", "expected_failure": "missing_depth_or_unobserved_side_root", "source": "legacy_noisy_sensor_stress_not_real_camera_calibration", "split": "development"},
+    {"scenario_id": "flash_reflective_dropout_proxy", "case": "casting_flash", "profile": "team_prior_20261121", "morphology": "variable_flash", "size_regime": "team_prior_full_range", "root_region": "CAD_supported_top_candidate", "view_policy": "fixed_six_encoder_views", "sensor": "unvalidated_specular_dropout_proxy", "sensor_override": {"depth_noise_sigma_mm": 0.5, "dropout_probability": 0.08}, "occlusion": "self_occlusion_plus_deep_dropout", "clamping": "original_fixture_weld", "expected_failure": "depth_missing_edge_inflation_or_region_fragmentation", "source": "synthetic_sensor_stress_not_a_reflectance_model_not_ALSON_calibration", "split": "development"}
+  ],
+  "matrix": {
+    "dry_plan_only_by_default": true,
+    "development_seeds": [97101, 97102, 97103],
+    "scenario_evaluation_seeds": [97111],
+    "view_policies": ["fixed_six_encoder_views"],
+    "clamping_setups": ["original_fixture_weld", "opposite_simulation_planning_only"],
+    "sensor_stresses": ["team_depth_prior", "legacy_noisy", "unvalidated_specular_dropout_proxy"],
+    "note": "The full matrix expands independent scenario/sensor/clamping combinations. Opposite clamping is an existing simulation planning condition only, not a validated change of physical fixture. Matrix rows do not imply that every combination has been rendered or dynamically executed."
+  },
+  "real_data_pending": [
+    "Yang's original real workpiece point cloud with explicit units, identity, file hashes and approved same-CAD evidence",
+    "enterprise-confirmed part IDs, nominal CAD versions, manufacturing stages, actual mold parting roots and machining permission",
+    "real ALSON reflective-metal calibration, depth dropout observations, camera intrinsics/extrinsics and fixture repeatability",
+    "new-part datum, gripper/fixture/collision proxy, T_workpiece_gripper, tool contact and safe-path validation before any 021 or public-base changeover",
+    "physical machine occupancy, cycle time, force/removal calibration and independently measured before/after quality; all remain pending"
+  ]
+}

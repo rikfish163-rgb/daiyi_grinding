@@ -67,11 +67,15 @@ class ReinspectionTests(unittest.TestCase):
         self.assertEqual([row["id"] for row in rows], [1, 2])
 
     def test_supplementary_view_faces_missing_anchors(self):
-        tracker = Reinspection([{
-            **self.target,
-            "points": np.zeros((1, 3)),
-            "normals": np.array([[0, -1.0, 0]]),
-        }])
+        tracker = Reinspection(
+            [
+                {
+                    **self.target,
+                    "points": np.zeros((1, 3)),
+                    "normals": np.array([[0, -1.0, 0]]),
+                }
+            ]
+        )
         tracker.last_camera = np.eye(4)
         tracker.last_camera[0, 3] = 1.0
         self.assertEqual(tracker.supplementary_angle(300, (315, 330, 345)), 315)
@@ -81,8 +85,14 @@ class ReinspectionTests(unittest.TestCase):
 
 class IntegrationContractTests(unittest.TestCase):
     def test_known_preset_is_resolved_by_normal_web_entry(self):
-        job = validate({"workpiece_profile": "097_thin_seam", "case": "burr",
-                        "targeted_rescan": True, "seed": 120481})
+        job = validate(
+            {
+                "workpiece_profile": "097_thin_seam",
+                "case": "burr",
+                "targeted_rescan": True,
+                "seed": 120481,
+            }
+        )
         self.assertEqual(job["case"], "thin")
         self.assertEqual(job["detector"], "geometric")
         self.assertTrue(job["targeted_rescan"])
