@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco model="ESTUN_iER220_2700_Workstation_021">
+  <compiler angle="radian" autolimits="true" meshdir="meshes" />
+  <option timestep="0.002" integrator="implicitfast" iterations="50" gravity="0 0 -9.81" />
+  <size memory="128M" />
+  <visual>
+    <global offwidth="1600" offheight="1200" />
+    <quality shadowsize="2048" />
+    <map znear="0.02" zfar="25" />
+  </visual>
+  <default>
+    <joint damping="40.0" armature="1.5" frictionloss="2.0" />
+    <geom friction="0.7 0.01 0.002" solref="0.015 1" />
+  </default>
+  <asset>
+    <mesh name="st_columns_m0" file="station/columns_c0.stl" inertia="shell" />
+    <material name="st_columns_mat0" rgba="0.64 0.64 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_columns_m1" file="station/columns_c1.stl" inertia="shell" />
+    <material name="st_columns_mat1" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_columns_m2" file="station/columns_c2.stl" inertia="shell" />
+    <material name="st_columns_mat2" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_columns_m3" file="station/columns_c3.stl" inertia="shell" />
+    <material name="st_columns_mat3" rgba="0.00 1.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_columns_m4" file="station/columns_c4.stl" inertia="shell" />
+    <material name="st_columns_mat4" rgba="0.36 0.46 0.93 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_columns_m5" file="station/columns_c5.stl" inertia="shell" />
+    <material name="st_columns_mat5" rgba="0.51 0.04 0.03 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_columns_m6" file="station/columns_c6.stl" inertia="shell" />
+    <material name="st_columns_mat6" rgba="0.00 0.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_columns_m7" file="station/columns_c7.stl" inertia="shell" />
+    <material name="st_columns_mat7" rgba="0.12 0.13 0.71 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_columns_m8" file="station/columns_c8.stl" inertia="shell" />
+    <material name="st_columns_mat8" rgba="1.00 1.00 0.89 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_columns_m9" file="station/columns_c9.stl" inertia="shell" />
+    <material name="st_columns_mat9" rgba="0.00 0.00 0.07 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m0" file="station/loading_station_c0.stl" inertia="shell" />
+    <material name="st_loading_station_mat0" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m1" file="station/loading_station_c1.stl" inertia="shell" />
+    <material name="st_loading_station_mat1" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m2" file="station/loading_station_c2.stl" inertia="shell" />
+    <material name="st_loading_station_mat2" rgba="0.87 0.41 0.01 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m3" file="station/loading_station_c3.stl" inertia="shell" />
+    <material name="st_loading_station_mat3" rgba="0.05 0.52 0.69 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m4" file="station/loading_station_c4.stl" inertia="shell" />
+    <material name="st_loading_station_mat4" rgba="0.00 0.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m5" file="station/loading_station_c5.stl" inertia="shell" />
+    <material name="st_loading_station_mat5" rgba="0.22 0.22 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m6" file="station/loading_station_c6.stl" inertia="shell" />
+    <material name="st_loading_station_mat6" rgba="0.22 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m7" file="station/loading_station_c7.stl" inertia="shell" />
+    <material name="st_loading_station_mat7" rgba="0.08 1.00 0.92 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m8" file="station/loading_station_c8.stl" inertia="shell" />
+    <material name="st_loading_station_mat8" rgba="0.00 1.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m9" file="station/loading_station_c9.stl" inertia="shell" />
+    <material name="st_loading_station_mat9" rgba="1.00 0.22 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_loading_station_m10" file="station/loading_station_c10.stl" inertia="shell" />
+    <material name="st_loading_station_mat10" rgba="1.00 0.15 0.10 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_safety_fences_m0" file="station/safety_fences_c0.stl" inertia="shell" />
+    <material name="st_safety_fences_mat0" rgba="0.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_safety_fences_m1" file="station/safety_fences_c1.stl" inertia="shell" />
+    <material name="st_safety_fences_mat1" rgba="0.96 0.64 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_safety_fences_m2" file="station/safety_fences_c2.stl" inertia="shell" />
+    <material name="st_safety_fences_mat2" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_safety_fences_m3" file="station/safety_fences_c3.stl" inertia="shell" />
+    <material name="st_safety_fences_mat3" rgba="1.00 1.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_safety_fences_m4" file="station/safety_fences_c4.stl" inertia="shell" />
+    <material name="st_safety_fences_mat4" rgba="0.52 0.52 0.52 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_safety_fences_m5" file="station/safety_fences_c5.stl" inertia="shell" />
+    <material name="st_safety_fences_mat5" rgba="0.00 0.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_pedestal_plate_m0" file="station/pedestal_plate_c0.stl" inertia="shell" />
+    <material name="st_pedestal_plate_mat0" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_pedestal_plate_m1" file="station/pedestal_plate_c1.stl" inertia="shell" />
+    <material name="st_pedestal_plate_mat1" rgba="0.00 0.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_tool_tables_m0" file="station/tool_tables_c0.stl" inertia="shell" />
+    <material name="st_tool_tables_mat0" rgba="0.66 0.69 0.71 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_tool_tables_m1" file="station/tool_tables_c1.stl" inertia="shell" />
+    <material name="st_tool_tables_mat1" rgba="0.00 0.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_tool_tables_m2" file="station/tool_tables_c2.stl" inertia="shell" />
+    <material name="st_tool_tables_mat2" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_tool_tables_m3" file="station/tool_tables_c3.stl" inertia="shell" />
+    <material name="st_tool_tables_mat3" rgba="0.00 0.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_operator_dummy_m0" file="station/operator_dummy_c0.stl" inertia="shell" />
+    <material name="st_operator_dummy_mat0" rgba="1.00 1.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m0" file="station/cabinets_c0.stl" inertia="shell" />
+    <material name="st_cabinets_mat0" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m1" file="station/cabinets_c1.stl" inertia="shell" />
+    <material name="st_cabinets_mat1" rgba="0.60 0.64 0.87 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m2" file="station/cabinets_c2.stl" inertia="shell" />
+    <material name="st_cabinets_mat2" rgba="0.52 0.55 0.52 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m3" file="station/cabinets_c3.stl" inertia="shell" />
+    <material name="st_cabinets_mat3" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m4" file="station/cabinets_c4.stl" inertia="shell" />
+    <material name="st_cabinets_mat4" rgba="0.05 0.05 0.05 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m5" file="station/cabinets_c5.stl" inertia="shell" />
+    <material name="st_cabinets_mat5" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m6" file="station/cabinets_c6.stl" inertia="shell" />
+    <material name="st_cabinets_mat6" rgba="0.03 0.03 0.03 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m7" file="station/cabinets_c7.stl" inertia="shell" />
+    <material name="st_cabinets_mat7" rgba="0.52 0.52 0.52 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m8" file="station/cabinets_c8.stl" inertia="shell" />
+    <material name="st_cabinets_mat8" rgba="0.00 0.21 0.21 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m9" file="station/cabinets_c9.stl" inertia="shell" />
+    <material name="st_cabinets_mat9" rgba="0.97 0.91 0.79 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m10" file="station/cabinets_c10.stl" inertia="shell" />
+    <material name="st_cabinets_mat10" rgba="1.00 1.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m11" file="station/cabinets_c11.stl" inertia="shell" />
+    <material name="st_cabinets_mat11" rgba="0.87 0.41 0.01 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m12" file="station/cabinets_c12.stl" inertia="shell" />
+    <material name="st_cabinets_mat12" rgba="0.01 0.01 0.01 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_cabinets_m13" file="station/cabinets_c13.stl" inertia="shell" />
+    <material name="st_cabinets_mat13" rgba="0.00 0.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m0" file="station/vision_sensor_c0.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat0" rgba="0.48 0.00 0.02 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m1" file="station/vision_sensor_c1.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat1" rgba="1.00 1.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m2" file="station/vision_sensor_c2.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat2" rgba="1.00 0.90 0.76 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m3" file="station/vision_sensor_c3.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat3" rgba="1.00 1.00 0.89 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m4" file="station/vision_sensor_c4.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat4" rgba="0.10 0.10 0.09 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m5" file="station/vision_sensor_c5.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat5" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m6" file="station/vision_sensor_c6.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat6" rgba="0.03 0.03 0.02 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m7" file="station/vision_sensor_c7.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat7" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m8" file="station/vision_sensor_c8.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat8" rgba="0.05 0.05 0.05 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m9" file="station/vision_sensor_c9.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat9" rgba="0.96 0.96 0.96 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m10" file="station/vision_sensor_c10.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat10" rgba="0.47 0.62 0.54 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_vision_sensor_m11" file="station/vision_sensor_c11.stl" inertia="shell" />
+    <material name="st_vision_sensor_mat11" rgba="0.46 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_stiff_spindle_m0" file="station/stiff_spindle_c0.stl" inertia="shell" />
+    <material name="st_stiff_spindle_mat0" rgba="0.36 0.46 0.93 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_stiff_spindle_m1" file="station/stiff_spindle_c1.stl" inertia="shell" />
+    <material name="st_stiff_spindle_mat1" rgba="0.37 0.37 0.43 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_stiff_spindle_m2" file="station/stiff_spindle_c2.stl" inertia="shell" />
+    <material name="st_stiff_spindle_mat2" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_stiff_spindle_m3" file="station/stiff_spindle_c3.stl" inertia="shell" />
+    <material name="st_stiff_spindle_mat3" rgba="0.00 0.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_stiff_spindle_m4" file="station/stiff_spindle_c4.stl" inertia="shell" />
+    <material name="st_stiff_spindle_mat4" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_stiff_spindle_m5" file="station/stiff_spindle_c5.stl" inertia="shell" />
+    <material name="st_stiff_spindle_mat5" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_stiff_spindle_m6" file="station/stiff_spindle_c6.stl" inertia="shell" />
+    <material name="st_stiff_spindle_mat6" rgba="0.01 0.01 0.45 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_stiff_spindle_m7" file="station/stiff_spindle_c7.stl" inertia="shell" />
+    <material name="st_stiff_spindle_mat7" rgba="0.00 0.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_stiff_spindle_m8" file="station/stiff_spindle_c8.stl" inertia="shell" />
+    <material name="st_stiff_spindle_mat8" rgba="0.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_belt_grinder_m0" file="station/belt_grinder_c0.stl" inertia="shell" />
+    <material name="st_belt_grinder_mat0" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="st_floor_m0" file="station/floor_c0.stl" inertia="shell" />
+    <material name="st_floor_mat0" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_base_m0" file="robot/base_c0.stl" inertia="shell" />
+    <material name="rob_base_mat0" rgba="1.00 0.29 0.01 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_base_m1" file="robot/base_c1.stl" inertia="shell" />
+    <material name="rob_base_mat1" rgba="0.31 0.40 0.43 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_base_m2" file="robot/base_c2.stl" inertia="shell" />
+    <material name="rob_base_mat2" rgba="0.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_base_m3" file="robot/base_c3.stl" inertia="shell" />
+    <material name="rob_base_mat3" rgba="0.69 0.64 0.36 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_base_m4" file="robot/base_c4.stl" inertia="shell" />
+    <material name="rob_base_mat4" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_base_m5" file="robot/base_c5.stl" inertia="shell" />
+    <material name="rob_base_mat5" rgba="0.60 0.64 0.86 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_base_m6" file="robot/base_c6.stl" inertia="shell" />
+    <material name="rob_base_mat6" rgba="0.22 0.22 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m0" file="robot/link1_c0.stl" inertia="shell" />
+    <material name="rob_link1_mat0" rgba="1.00 0.29 0.01 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m1" file="robot/link1_c1.stl" inertia="shell" />
+    <material name="rob_link1_mat1" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m2" file="robot/link1_c2.stl" inertia="shell" />
+    <material name="rob_link1_mat2" rgba="0.03 0.03 0.03 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m3" file="robot/link1_c3.stl" inertia="shell" />
+    <material name="rob_link1_mat3" rgba="0.53 0.53 0.53 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m4" file="robot/link1_c4.stl" inertia="shell" />
+    <material name="rob_link1_mat4" rgba="0.56 0.53 0.50 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m5" file="robot/link1_c5.stl" inertia="shell" />
+    <material name="rob_link1_mat5" rgba="0.24 0.26 0.26 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m6" file="robot/link1_c6.stl" inertia="shell" />
+    <material name="rob_link1_mat6" rgba="0.07 0.07 0.07 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m7" file="robot/link1_c7.stl" inertia="shell" />
+    <material name="rob_link1_mat7" rgba="0.59 0.64 0.85 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m8" file="robot/link1_c8.stl" inertia="shell" />
+    <material name="rob_link1_mat8" rgba="0.05 0.05 0.05 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m9" file="robot/link1_c9.stl" inertia="shell" />
+    <material name="rob_link1_mat9" rgba="0.38 0.34 0.30 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m10" file="robot/link1_c10.stl" inertia="shell" />
+    <material name="rob_link1_mat10" rgba="0.45 0.45 0.45 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m11" file="robot/link1_c11.stl" inertia="shell" />
+    <material name="rob_link1_mat11" rgba="0.78 0.78 0.78 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m12" file="robot/link1_c12.stl" inertia="shell" />
+    <material name="rob_link1_mat12" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link1_m13" file="robot/link1_c13.stl" inertia="shell" />
+    <material name="rob_link1_mat13" rgba="0.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link2_m0" file="robot/link2_c0.stl" inertia="shell" />
+    <material name="rob_link2_mat0" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link2_m1" file="robot/link2_c1.stl" inertia="shell" />
+    <material name="rob_link2_mat1" rgba="1.00 0.29 0.01 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link2_m2" file="robot/link2_c2.stl" inertia="shell" />
+    <material name="rob_link2_mat2" rgba="0.56 0.53 0.50 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link2_m3" file="robot/link2_c3.stl" inertia="shell" />
+    <material name="rob_link2_mat3" rgba="0.05 0.05 0.05 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link2_m4" file="robot/link2_c4.stl" inertia="shell" />
+    <material name="rob_link2_mat4" rgba="0.45 0.45 0.45 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link2_m5" file="robot/link2_c5.stl" inertia="shell" />
+    <material name="rob_link2_mat5" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link2_m6" file="robot/link2_c6.stl" inertia="shell" />
+    <material name="rob_link2_mat6" rgba="0.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link3_m0" file="robot/link3_c0.stl" inertia="shell" />
+    <material name="rob_link3_mat0" rgba="1.00 0.29 0.01 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link3_m1" file="robot/link3_c1.stl" inertia="shell" />
+    <material name="rob_link3_mat1" rgba="0.03 0.03 0.03 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link3_m2" file="robot/link3_c2.stl" inertia="shell" />
+    <material name="rob_link3_mat2" rgba="0.53 0.53 0.53 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link3_m3" file="robot/link3_c3.stl" inertia="shell" />
+    <material name="rob_link3_mat3" rgba="0.22 0.22 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link3_m4" file="robot/link3_c4.stl" inertia="shell" />
+    <material name="rob_link3_mat4" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link3_m5" file="robot/link3_c5.stl" inertia="shell" />
+    <material name="rob_link3_mat5" rgba="0.59 0.64 0.85 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link3_m6" file="robot/link3_c6.stl" inertia="shell" />
+    <material name="rob_link3_mat6" rgba="0.38 0.34 0.30 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link3_m7" file="robot/link3_c7.stl" inertia="shell" />
+    <material name="rob_link3_mat7" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link3_m8" file="robot/link3_c8.stl" inertia="shell" />
+    <material name="rob_link3_mat8" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link4_m0" file="robot/link4_c0.stl" inertia="shell" />
+    <material name="rob_link4_mat0" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link4_m1" file="robot/link4_c1.stl" inertia="shell" />
+    <material name="rob_link4_mat1" rgba="0.22 0.22 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link4_m2" file="robot/link4_c2.stl" inertia="shell" />
+    <material name="rob_link4_mat2" rgba="1.00 0.44 0.03 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link4_m3" file="robot/link4_c3.stl" inertia="shell" />
+    <material name="rob_link4_mat3" rgba="0.45 0.45 0.45 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link4_m4" file="robot/link4_c4.stl" inertia="shell" />
+    <material name="rob_link4_mat4" rgba="0.14 0.15 0.16 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link4_m5" file="robot/link4_c5.stl" inertia="shell" />
+    <material name="rob_link4_mat5" rgba="1.00 0.29 0.01 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link4_m6" file="robot/link4_c6.stl" inertia="shell" />
+    <material name="rob_link4_mat6" rgba="0.60 0.64 0.86 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link4_m7" file="robot/link4_c7.stl" inertia="shell" />
+    <material name="rob_link4_mat7" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link4_m8" file="robot/link4_c8.stl" inertia="shell" />
+    <material name="rob_link4_mat8" rgba="0.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link5_m0" file="robot/link5_c0.stl" inertia="shell" />
+    <material name="rob_link5_mat0" rgba="0.24 0.26 0.26 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link5_m1" file="robot/link5_c1.stl" inertia="shell" />
+    <material name="rob_link5_mat1" rgba="0.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link5_m2" file="robot/link5_c2.stl" inertia="shell" />
+    <material name="rob_link5_mat2" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link6_m0" file="robot/link6_c0.stl" inertia="shell" />
+    <material name="rob_link6_mat0" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link6_m1" file="robot/link6_c1.stl" inertia="shell" />
+    <material name="rob_link6_mat1" rgba="0.24 0.26 0.26 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link6_m2" file="robot/link6_c2.stl" inertia="shell" />
+    <material name="rob_link6_mat2" rgba="0.05 0.05 0.05 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link6_m3" file="robot/link6_c3.stl" inertia="shell" />
+    <material name="rob_link6_mat3" rgba="0.60 0.64 0.86 1" specular="0.35" shininess="0.3" />
+    <mesh name="rob_link6_m4" file="robot/link6_c4.stl" inertia="shell" />
+    <material name="rob_link6_mat4" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m0" file="gripper/gripper_c0.stl" inertia="shell" />
+    <material name="grip_mat0" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m1" file="gripper/gripper_c1.stl" inertia="shell" />
+    <material name="grip_mat1" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m2" file="gripper/gripper_c2.stl" inertia="shell" />
+    <material name="grip_mat2" rgba="0.59 0.64 0.85 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m3" file="gripper/gripper_c3.stl" inertia="shell" />
+    <material name="grip_mat3" rgba="0.36 0.46 0.93 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m4" file="gripper/gripper_c4.stl" inertia="shell" />
+    <material name="grip_mat4" rgba="0.09 0.10 0.10 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m5" file="gripper/gripper_c5.stl" inertia="shell" />
+    <material name="grip_mat5" rgba="0.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m6" file="gripper/gripper_c6.stl" inertia="shell" />
+    <material name="grip_mat6" rgba="0.00 0.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m7" file="gripper/gripper_c7.stl" inertia="shell" />
+    <material name="grip_mat7" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m8" file="gripper/gripper_c8.stl" inertia="shell" />
+    <material name="grip_mat8" rgba="0.22 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m9" file="gripper/gripper_c9.stl" inertia="shell" />
+    <material name="grip_mat9" rgba="0.00 0.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m10" file="gripper/gripper_c10.stl" inertia="shell" />
+    <material name="grip_mat10" rgba="0.60 0.64 0.86 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m11" file="gripper/gripper_c11.stl" inertia="shell" />
+    <material name="grip_mat11" rgba="1.00 1.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m12" file="gripper/gripper_c12.stl" inertia="shell" />
+    <material name="grip_mat12" rgba="1.00 1.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m0" file="fixture/fixture_c0.stl" inertia="shell" />
+    <material name="fix_mat0" rgba="0.89 0.39 0.07 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m1" file="fixture/fixture_c1.stl" inertia="shell" />
+    <material name="fix_mat1" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m2" file="fixture/fixture_c2.stl" inertia="shell" />
+    <material name="fix_mat2" rgba="0.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m3" file="fixture/fixture_c3.stl" inertia="shell" />
+    <material name="fix_mat3" rgba="0.75 0.74 0.71 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m4" file="fixture/fixture_c4.stl" inertia="shell" />
+    <material name="fix_mat4" rgba="0.00 0.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m5" file="fixture/fixture_c5.stl" inertia="shell" />
+    <material name="fix_mat5" rgba="0.00 0.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m6" file="fixture/fixture_c6.stl" inertia="shell" />
+    <material name="fix_mat6" rgba="0.36 0.46 0.93 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m7" file="fixture/fixture_c7.stl" inertia="shell" />
+    <material name="fix_mat7" rgba="0.22 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m8" file="fixture/fixture_c8.stl" inertia="shell" />
+    <material name="fix_mat8" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m9" file="fixture/fixture_c9.stl" inertia="shell" />
+    <material name="fix_mat9" rgba="1.00 1.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="wp_021_m0" file="workpiece/wp_021_c0.stl" inertia="shell" />
+    <material name="wp_021_mat0" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+  </asset>
+  <worldbody>
+    <light pos="-1.5 -2.5 5.0" dir="0.2 0.3 -1" diffuse="0.95 0.94 0.92" castshadow="true" />
+    <light pos="2.5 2.5 4.0" dir="-0.4 -0.4 -1" diffuse="0.45 0.5 0.55" castshadow="false" />
+    <camera name="overview" pos="2.6 -3.8 2.9" xyaxes="0.80 0.60 0 -0.26 0.35 0.90" fovy="48" />
+    <camera name="workstation_front" pos="-4.2 -3.2 2.5" xyaxes="0.62 -0.78 0 0.25 0.20 0.95" fovy="46" />
+    <camera name="loading_closeup" pos="0.65 -2.95 1.55" xyaxes="0.75 0.66 0 -0.30 0.34 0.89" fovy="42" />
+    <camera name="robot_side" pos="0.0 -3.9 1.65" xyaxes="1 0 0 0 0 1" fovy="44" />
+    <camera name="grinder_closeup" pos="-0.1 -1.85 1.95" xyaxes="0.69580 0.71824 -0.00000 -0.24276 0.23517 0.94115" fovy="46" />
+    <camera name="vision_scanner" pos="-0.48 -2.14 1.24" xyaxes="0.97342 -0.22904 0.00000 0.18241 0.77525 0.60474" fovy="52" />
+    <geom name="physics_floor" type="plane" pos="0 0 0" size="6 6 0.1" rgba="0.22 0.24 0.28 1" contype="1" conaffinity="3" />
+    <geom name="st_columns_0" type="mesh" mesh="st_columns_m0" material="st_columns_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="st_columns_1" type="mesh" mesh="st_columns_m1" material="st_columns_mat1" contype="0" conaffinity="0" group="1" />
+    <geom name="st_columns_2" type="mesh" mesh="st_columns_m2" material="st_columns_mat2" contype="0" conaffinity="0" group="1" />
+    <geom name="st_columns_3" type="mesh" mesh="st_columns_m3" material="st_columns_mat3" contype="0" conaffinity="0" group="1" />
+    <geom name="st_columns_4" type="mesh" mesh="st_columns_m4" material="st_columns_mat4" contype="0" conaffinity="0" group="1" />
+    <geom name="st_columns_5" type="mesh" mesh="st_columns_m5" material="st_columns_mat5" contype="0" conaffinity="0" group="1" />
+    <geom name="st_columns_6" type="mesh" mesh="st_columns_m6" material="st_columns_mat6" contype="0" conaffinity="0" group="1" />
+    <geom name="st_columns_7" type="mesh" mesh="st_columns_m7" material="st_columns_mat7" contype="0" conaffinity="0" group="1" />
+    <geom name="st_columns_8" type="mesh" mesh="st_columns_m8" material="st_columns_mat8" contype="0" conaffinity="0" group="1" />
+    <geom name="st_columns_9" type="mesh" mesh="st_columns_m9" material="st_columns_mat9" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_0" type="mesh" mesh="st_loading_station_m0" material="st_loading_station_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_1" type="mesh" mesh="st_loading_station_m1" material="st_loading_station_mat1" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_2" type="mesh" mesh="st_loading_station_m2" material="st_loading_station_mat2" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_3" type="mesh" mesh="st_loading_station_m3" material="st_loading_station_mat3" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_4" type="mesh" mesh="st_loading_station_m4" material="st_loading_station_mat4" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_5" type="mesh" mesh="st_loading_station_m5" material="st_loading_station_mat5" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_6" type="mesh" mesh="st_loading_station_m6" material="st_loading_station_mat6" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_7" type="mesh" mesh="st_loading_station_m7" material="st_loading_station_mat7" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_8" type="mesh" mesh="st_loading_station_m8" material="st_loading_station_mat8" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_9" type="mesh" mesh="st_loading_station_m9" material="st_loading_station_mat9" contype="0" conaffinity="0" group="1" />
+    <geom name="st_loading_station_10" type="mesh" mesh="st_loading_station_m10" material="st_loading_station_mat10" contype="0" conaffinity="0" group="1" />
+    <geom name="st_safety_fences_0" type="mesh" mesh="st_safety_fences_m0" material="st_safety_fences_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="st_safety_fences_1" type="mesh" mesh="st_safety_fences_m1" material="st_safety_fences_mat1" contype="0" conaffinity="0" group="1" />
+    <geom name="st_safety_fences_2" type="mesh" mesh="st_safety_fences_m2" material="st_safety_fences_mat2" contype="0" conaffinity="0" group="1" />
+    <geom name="st_safety_fences_3" type="mesh" mesh="st_safety_fences_m3" material="st_safety_fences_mat3" contype="0" conaffinity="0" group="1" />
+    <geom name="st_safety_fences_4" type="mesh" mesh="st_safety_fences_m4" material="st_safety_fences_mat4" contype="0" conaffinity="0" group="1" />
+    <geom name="st_safety_fences_5" type="mesh" mesh="st_safety_fences_m5" material="st_safety_fences_mat5" contype="0" conaffinity="0" group="1" />
+    <geom name="st_pedestal_plate_0" type="mesh" mesh="st_pedestal_plate_m0" material="st_pedestal_plate_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="st_pedestal_plate_1" type="mesh" mesh="st_pedestal_plate_m1" material="st_pedestal_plate_mat1" contype="0" conaffinity="0" group="1" />
+    <geom name="st_tool_tables_0" type="mesh" mesh="st_tool_tables_m0" material="st_tool_tables_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="st_tool_tables_1" type="mesh" mesh="st_tool_tables_m1" material="st_tool_tables_mat1" contype="0" conaffinity="0" group="1" />
+    <geom name="st_tool_tables_2" type="mesh" mesh="st_tool_tables_m2" material="st_tool_tables_mat2" contype="0" conaffinity="0" group="1" />
+    <geom name="st_tool_tables_3" type="mesh" mesh="st_tool_tables_m3" material="st_tool_tables_mat3" contype="0" conaffinity="0" group="1" />
+    <geom name="st_operator_dummy_0" type="mesh" mesh="st_operator_dummy_m0" material="st_operator_dummy_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_0" type="mesh" mesh="st_cabinets_m0" material="st_cabinets_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_1" type="mesh" mesh="st_cabinets_m1" material="st_cabinets_mat1" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_2" type="mesh" mesh="st_cabinets_m2" material="st_cabinets_mat2" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_3" type="mesh" mesh="st_cabinets_m3" material="st_cabinets_mat3" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_4" type="mesh" mesh="st_cabinets_m4" material="st_cabinets_mat4" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_5" type="mesh" mesh="st_cabinets_m5" material="st_cabinets_mat5" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_6" type="mesh" mesh="st_cabinets_m6" material="st_cabinets_mat6" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_7" type="mesh" mesh="st_cabinets_m7" material="st_cabinets_mat7" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_8" type="mesh" mesh="st_cabinets_m8" material="st_cabinets_mat8" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_9" type="mesh" mesh="st_cabinets_m9" material="st_cabinets_mat9" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_10" type="mesh" mesh="st_cabinets_m10" material="st_cabinets_mat10" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_11" type="mesh" mesh="st_cabinets_m11" material="st_cabinets_mat11" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_12" type="mesh" mesh="st_cabinets_m12" material="st_cabinets_mat12" contype="0" conaffinity="0" group="1" />
+    <geom name="st_cabinets_13" type="mesh" mesh="st_cabinets_m13" material="st_cabinets_mat13" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_0" type="mesh" mesh="st_vision_sensor_m0" material="st_vision_sensor_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_1" type="mesh" mesh="st_vision_sensor_m1" material="st_vision_sensor_mat1" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_2" type="mesh" mesh="st_vision_sensor_m2" material="st_vision_sensor_mat2" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_3" type="mesh" mesh="st_vision_sensor_m3" material="st_vision_sensor_mat3" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_4" type="mesh" mesh="st_vision_sensor_m4" material="st_vision_sensor_mat4" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_5" type="mesh" mesh="st_vision_sensor_m5" material="st_vision_sensor_mat5" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_6" type="mesh" mesh="st_vision_sensor_m6" material="st_vision_sensor_mat6" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_7" type="mesh" mesh="st_vision_sensor_m7" material="st_vision_sensor_mat7" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_8" type="mesh" mesh="st_vision_sensor_m8" material="st_vision_sensor_mat8" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_9" type="mesh" mesh="st_vision_sensor_m9" material="st_vision_sensor_mat9" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_10" type="mesh" mesh="st_vision_sensor_m10" material="st_vision_sensor_mat10" contype="0" conaffinity="0" group="1" />
+    <geom name="st_vision_sensor_11" type="mesh" mesh="st_vision_sensor_m11" material="st_vision_sensor_mat11" contype="0" conaffinity="0" group="1" />
+    <geom name="st_stiff_spindle_0" type="mesh" mesh="st_stiff_spindle_m0" material="st_stiff_spindle_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="st_stiff_spindle_1" type="mesh" mesh="st_stiff_spindle_m1" material="st_stiff_spindle_mat1" contype="0" conaffinity="0" group="1" />
+    <geom name="st_stiff_spindle_2" type="mesh" mesh="st_stiff_spindle_m2" material="st_stiff_spindle_mat2" contype="0" conaffinity="0" group="1" />
+    <geom name="st_stiff_spindle_3" type="mesh" mesh="st_stiff_spindle_m3" material="st_stiff_spindle_mat3" contype="0" conaffinity="0" group="1" />
+    <geom name="st_stiff_spindle_4" type="mesh" mesh="st_stiff_spindle_m4" material="st_stiff_spindle_mat4" contype="0" conaffinity="0" group="1" />
+    <geom name="st_stiff_spindle_5" type="mesh" mesh="st_stiff_spindle_m5" material="st_stiff_spindle_mat5" contype="0" conaffinity="0" group="1" />
+    <geom name="st_stiff_spindle_6" type="mesh" mesh="st_stiff_spindle_m6" material="st_stiff_spindle_mat6" contype="0" conaffinity="0" group="1" />
+    <geom name="st_stiff_spindle_7" type="mesh" mesh="st_stiff_spindle_m7" material="st_stiff_spindle_mat7" contype="0" conaffinity="0" group="1" />
+    <geom name="st_stiff_spindle_8" type="mesh" mesh="st_stiff_spindle_m8" material="st_stiff_spindle_mat8" contype="0" conaffinity="0" group="1" />
+    <geom name="st_belt_grinder_0" type="mesh" mesh="st_belt_grinder_m0" material="st_belt_grinder_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="st_floor_0" type="mesh" mesh="st_floor_m0" material="st_floor_mat0" contype="0" conaffinity="0" group="1" />
+    <geom name="loading_pallet_col" type="box" pos="-0.400 -1.800 0.5935" size="0.275 0.275 0.0075" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <geom name="loading_base_col" type="box" pos="-0.400 -2.200 0.295" size="0.695 0.675 0.295" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <geom name="loading_gantry_col" type="box" pos="-0.400 -2.200 0.890" size="0.695 0.060 0.300" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <geom name="belt_grinder_base_col" type="box" pos="-1.825 0.295 0.430" size="0.575 0.512 0.420" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <geom name="belt_grinder_col_col" type="box" pos="-1.975 0.295 1.290" size="0.425 0.430 0.440" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <geom name="belt_grinder_wheel_col" type="cylinder" pos="-1.250 0.295 1.150" quat="0.70710678 0.70710678 0 0" size="0.140 0.120" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <geom name="stiff_spindle_stand_col" type="box" pos="-1.970 -1.125 0.625" size="0.195 0.140 0.625" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <geom name="stiff_spindle_head_col" type="cylinder" pos="-1.710 -1.125 1.135" quat="0.70710678 0 0.70710678 0" size="0.095 0.070" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <geom name="tool_tables_col" type="box" pos="0.029 1.327 0.437" size="0.882 0.250 0.437" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <geom name="columns_col" type="box" pos="-1.708 -2.192 0.690" size="0.452 0.472 0.690" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <geom name="cabinets_col" type="box" pos="0.576 1.997 1.052" size="0.964 0.392 1.052" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    <site name="loading_pallet_center" pos="-0.400 -1.800 0.601" size="0.020" rgba="0.2 0.8 1.0 0.9" />
+    <site name="belt_grinder_contact" pos="-1.150 0.295 1.150" size="0.025" rgba="1.0 0.5 0.1 0.9" />
+    <site name="stiff_spindle_tip" pos="-1.642 -1.125 1.135" size="0.022" rgba="1.0 0.85 0.1 0.9" />
+    <body name="ier220_base" pos="0 0 0.030" euler="0 0 3.14159265">
+      <inertial pos="0 0 0.14" mass="247.0" diaginertia="10 10 10" />
+      <geom name="rob_base_0" type="mesh" mesh="rob_base_m0" material="rob_base_mat0" contype="0" conaffinity="0" group="1" />
+      <geom name="rob_base_1" type="mesh" mesh="rob_base_m1" material="rob_base_mat1" contype="0" conaffinity="0" group="1" />
+      <geom name="rob_base_2" type="mesh" mesh="rob_base_m2" material="rob_base_mat2" contype="0" conaffinity="0" group="1" />
+      <geom name="rob_base_3" type="mesh" mesh="rob_base_m3" material="rob_base_mat3" contype="0" conaffinity="0" group="1" />
+      <geom name="rob_base_4" type="mesh" mesh="rob_base_m4" material="rob_base_mat4" contype="0" conaffinity="0" group="1" />
+      <geom name="rob_base_5" type="mesh" mesh="rob_base_m5" material="rob_base_mat5" contype="0" conaffinity="0" group="1" />
+      <geom name="rob_base_6" type="mesh" mesh="rob_base_m6" material="rob_base_mat6" contype="0" conaffinity="0" group="1" />
+      <geom name="rob_base_col" type="cylinder" pos="0 0 0.14" size="0.38 0.14" rgba="0 0 0 0" group="3" contype="2" conaffinity="3" />
+      <body name="ier220_link1" pos="0.0000 0.0000 0.0000" gravcomp="1">
+        <joint name="j1" type="hinge" axis="0 0 1" range="-3.14159 3.14159" />
+        <inertial pos="0 0 0" mass="450.0" diaginertia="5 5 5" />
+        <geom name="rob_link1_0" type="mesh" mesh="rob_link1_m0" material="rob_link1_mat0" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_1" type="mesh" mesh="rob_link1_m1" material="rob_link1_mat1" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_2" type="mesh" mesh="rob_link1_m2" material="rob_link1_mat2" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_3" type="mesh" mesh="rob_link1_m3" material="rob_link1_mat3" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_4" type="mesh" mesh="rob_link1_m4" material="rob_link1_mat4" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_5" type="mesh" mesh="rob_link1_m5" material="rob_link1_mat5" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_6" type="mesh" mesh="rob_link1_m6" material="rob_link1_mat6" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_7" type="mesh" mesh="rob_link1_m7" material="rob_link1_mat7" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_8" type="mesh" mesh="rob_link1_m8" material="rob_link1_mat8" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_9" type="mesh" mesh="rob_link1_m9" material="rob_link1_mat9" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_10" type="mesh" mesh="rob_link1_m10" material="rob_link1_mat10" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_11" type="mesh" mesh="rob_link1_m11" material="rob_link1_mat11" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_12" type="mesh" mesh="rob_link1_m12" material="rob_link1_mat12" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_13" type="mesh" mesh="rob_link1_m13" material="rob_link1_mat13" contype="0" conaffinity="0" group="1" />
+        <geom name="rob_link1_col" type="cylinder" size="0.35 0.32" rgba="0 0 0 0" group="3" contype="2" conaffinity="3" pos="0.06 0 0.56" />
+        <body name="ier220_link2" pos="0.2850 0.0000 0.6880" gravcomp="1">
+          <joint name="j2" type="hinge" axis="0 1 0" range="-1.04720 1.39626" />
+          <inertial pos="0 0 0" mass="222.0" diaginertia="5 5 5" />
+          <geom name="rob_link2_0" type="mesh" mesh="rob_link2_m0" material="rob_link2_mat0" contype="0" conaffinity="0" group="1" />
+          <geom name="rob_link2_1" type="mesh" mesh="rob_link2_m1" material="rob_link2_mat1" contype="0" conaffinity="0" group="1" />
+          <geom name="rob_link2_2" type="mesh" mesh="rob_link2_m2" material="rob_link2_mat2" contype="0" conaffinity="0" group="1" />
+          <geom name="rob_link2_3" type="mesh" mesh="rob_link2_m3" material="rob_link2_mat3" contype="0" conaffinity="0" group="1" />
+          <geom name="rob_link2_4" type="mesh" mesh="rob_link2_m4" material="rob_link2_mat4" contype="0" conaffinity="0" group="1" />
+          <geom name="rob_link2_5" type="mesh" mesh="rob_link2_m5" material="rob_link2_mat5" contype="0" conaffinity="0" group="1" />
+          <geom name="rob_link2_6" type="mesh" mesh="rob_link2_m6" material="rob_link2_mat6" contype="0" conaffinity="0" group="1" />
+          <geom name="rob_link2_col" type="capsule" size="0.18" rgba="0 0 0 0" group="3" contype="2" conaffinity="3" fromto="0 0 0 0 0 1.150" />
+          <body name="ier220_link3" pos="0.0000 0.0000 1.1500" gravcomp="1">
+            <joint name="j3" type="hinge" axis="0 1 0" range="-3.14159 1.39626" />
+            <inertial pos="0 0 0" mass="140.0" diaginertia="5 5 5" />
+            <geom name="rob_link3_0" type="mesh" mesh="rob_link3_m0" material="rob_link3_mat0" contype="0" conaffinity="0" group="1" />
+            <geom name="rob_link3_1" type="mesh" mesh="rob_link3_m1" material="rob_link3_mat1" contype="0" conaffinity="0" group="1" />
+            <geom name="rob_link3_2" type="mesh" mesh="rob_link3_m2" material="rob_link3_mat2" contype="0" conaffinity="0" group="1" />
+            <geom name="rob_link3_3" type="mesh" mesh="rob_link3_m3" material="rob_link3_mat3" contype="0" conaffinity="0" group="1" />
+            <geom name="rob_link3_4" type="mesh" mesh="rob_link3_m4" material="rob_link3_mat4" contype="0" conaffinity="0" group="1" />
+            <geom name="rob_link3_5" type="mesh" mesh="rob_link3_m5" material="rob_link3_mat5" contype="0" conaffinity="0" group="1" />
+            <geom name="rob_link3_6" type="mesh" mesh="rob_link3_m6" material="rob_link3_mat6" contype="0" conaffinity="0" group="1" />
+            <geom name="rob_link3_7" type="mesh" mesh="rob_link3_m7" material="rob_link3_mat7" contype="0" conaffinity="0" group="1" />
+            <geom name="rob_link3_8" type="mesh" mesh="rob_link3_m8" material="rob_link3_mat8" contype="0" conaffinity="0" group="1" />
+            <geom name="rob_link3_col" type="box" size="0.24 0.25 0.24" rgba="0 0 0 0" group="3" contype="2" conaffinity="3" pos="0.10 0 0.15" />
+            <body name="ier220_link4" pos="0.0000 0.0000 0.2300" gravcomp="1">
+              <joint name="j4" type="hinge" axis="1 0 0" range="-4.36332 4.36332" />
+              <inertial pos="0 0 0" mass="125.0" diaginertia="5 5 5" />
+              <geom name="rob_link4_0" type="mesh" mesh="rob_link4_m0" material="rob_link4_mat0" contype="0" conaffinity="0" group="1" />
+              <geom name="rob_link4_1" type="mesh" mesh="rob_link4_m1" material="rob_link4_mat1" contype="0" conaffinity="0" group="1" />
+              <geom name="rob_link4_2" type="mesh" mesh="rob_link4_m2" material="rob_link4_mat2" contype="0" conaffinity="0" group="1" />
+              <geom name="rob_link4_3" type="mesh" mesh="rob_link4_m3" material="rob_link4_mat3" contype="0" conaffinity="0" group="1" />
+              <geom name="rob_link4_4" type="mesh" mesh="rob_link4_m4" material="rob_link4_mat4" contype="0" conaffinity="0" group="1" />
+              <geom name="rob_link4_5" type="mesh" mesh="rob_link4_m5" material="rob_link4_mat5" contype="0" conaffinity="0" group="1" />
+              <geom name="rob_link4_6" type="mesh" mesh="rob_link4_m6" material="rob_link4_mat6" contype="0" conaffinity="0" group="1" />
+              <geom name="rob_link4_7" type="mesh" mesh="rob_link4_m7" material="rob_link4_mat7" contype="0" conaffinity="0" group="1" />
+              <geom name="rob_link4_8" type="mesh" mesh="rob_link4_m8" material="rob_link4_mat8" contype="0" conaffinity="0" group="1" />
+              <geom name="rob_link4_col" type="capsule" size="0.14" rgba="0 0 0 0" group="3" contype="2" conaffinity="3" fromto="0.35 0 0 1.265 0 0" />
+              <body name="ier220_link5" pos="1.2650 0.0000 0.0000" gravcomp="1">
+                <joint name="j5" type="hinge" axis="0 1 0" range="-2.18166 2.18166" />
+                <inertial pos="0 0 0" mass="86.0" diaginertia="5 5 5" />
+                <geom name="rob_link5_0" type="mesh" mesh="rob_link5_m0" material="rob_link5_mat0" contype="0" conaffinity="0" group="1" />
+                <geom name="rob_link5_1" type="mesh" mesh="rob_link5_m1" material="rob_link5_mat1" contype="0" conaffinity="0" group="1" />
+                <geom name="rob_link5_2" type="mesh" mesh="rob_link5_m2" material="rob_link5_mat2" contype="0" conaffinity="0" group="1" />
+                <geom name="rob_link5_col" type="capsule" size="0.11" rgba="0 0 0 0" group="3" contype="2" conaffinity="3" fromto="0 0 0 0.20 0 0" />
+                <body name="ier220_link6" pos="0.2400 0.0000 0.0000" gravcomp="1">
+                  <joint name="j6" type="hinge" axis="1 0 0" range="-6.28319 6.28319" />
+                  <inertial pos="0 0 0" mass="50.0" diaginertia="5 5 5" />
+                  <geom name="rob_link6_0" type="mesh" mesh="rob_link6_m0" material="rob_link6_mat0" contype="0" conaffinity="0" group="1" />
+                  <geom name="rob_link6_1" type="mesh" mesh="rob_link6_m1" material="rob_link6_mat1" contype="0" conaffinity="0" group="1" />
+                  <geom name="rob_link6_2" type="mesh" mesh="rob_link6_m2" material="rob_link6_mat2" contype="0" conaffinity="0" group="1" />
+                  <geom name="rob_link6_3" type="mesh" mesh="rob_link6_m3" material="rob_link6_mat3" contype="0" conaffinity="0" group="1" />
+                  <geom name="rob_link6_4" type="mesh" mesh="rob_link6_m4" material="rob_link6_mat4" contype="0" conaffinity="0" group="1" />
+                  <geom name="rob_link6_col" type="cylinder" size="0.085 0.015" rgba="0 0 0 0" group="3" contype="2" conaffinity="3" pos="-0.014 0 0" quat="0.70710678 0 0.70710678 0" />
+                  <site name="flange" pos="0 0 0" quat="0 0.70710678 0 0.70710678" size="0.025" rgba="0.1 0.9 0.9 0.8" />
+                  <body name="grinding_gripper" pos="0 0 0" quat="0 0.70710678 0 0.70710678" gravcomp="1">
+                    <inertial pos="-0.08 0 0.30" mass="42.0" diaginertia="1.2 1.2 1.2" />
+                    <geom name="grip_0" type="mesh" mesh="grip_m0" material="grip_mat0" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_1" type="mesh" mesh="grip_m1" material="grip_mat1" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_2" type="mesh" mesh="grip_m2" material="grip_mat2" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_3" type="mesh" mesh="grip_m3" material="grip_mat3" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_4" type="mesh" mesh="grip_m4" material="grip_mat4" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_5" type="mesh" mesh="grip_m5" material="grip_mat5" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_6" type="mesh" mesh="grip_m6" material="grip_mat6" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_7" type="mesh" mesh="grip_m7" material="grip_mat7" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_8" type="mesh" mesh="grip_m8" material="grip_mat8" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_9" type="mesh" mesh="grip_m9" material="grip_mat9" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_10" type="mesh" mesh="grip_m10" material="grip_mat10" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_11" type="mesh" mesh="grip_m11" material="grip_mat11" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_12" type="mesh" mesh="grip_m12" material="grip_mat12" contype="0" conaffinity="0" group="1" />
+                    <geom name="grip_board_col" type="box" pos="0 0 0.015" size="0.11 0.13 0.016" rgba="0 0 0 0" group="3" contype="2" conaffinity="3" />
+                    <geom name="grip_frame_col" type="box" pos="-0.01 0.03 0.28" size="0.09 0.18 0.25" rgba="0 0 0 0" group="3" contype="2" conaffinity="3" />
+                    <site name="gripper_tcp" pos="-0.171 -0.140 0.310" size="0.020" rgba="1 0.2 0.2 0.9" />
+                    <camera name="wrist_cam" pos="0.11 0 0.08" xyaxes="0 1 0 -0.8 0 0.6" fovy="65" />
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+    <body name="base_fixture" pos="-0.400 -1.800 0.601">
+      <geom name="fix_0" type="mesh" mesh="fix_m0" material="fix_mat0" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_1" type="mesh" mesh="fix_m1" material="fix_mat1" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_2" type="mesh" mesh="fix_m2" material="fix_mat2" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_3" type="mesh" mesh="fix_m3" material="fix_mat3" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_4" type="mesh" mesh="fix_m4" material="fix_mat4" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_5" type="mesh" mesh="fix_m5" material="fix_mat5" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_6" type="mesh" mesh="fix_m6" material="fix_mat6" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_7" type="mesh" mesh="fix_m7" material="fix_mat7" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_8" type="mesh" mesh="fix_m8" material="fix_mat8" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_9" type="mesh" mesh="fix_m9" material="fix_mat9" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_plate_col" type="box" pos="-0.0675 0 0.008" size="0.398 0.350 0.008" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+      <geom name="fix_ring_col" type="cylinder" pos="0 0 0.042" size="0.12 0.030" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+    </body>
+    <body name="workpiece_021" pos="-0.400 -1.800 0.601">
+      <inertial pos="-0.02 0 0.20" mass="65.0" diaginertia="1.5 1.5 1.5" />
+      <geom name="wp_0" type="mesh" mesh="wp_021_m0" material="wp_021_mat0" contype="0" conaffinity="0" group="1" />
+      <geom name="wp_flange_col" type="box" pos="-0.03 0 0.107" size="0.215 0.185 0.035" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+      <geom name="wp_hub_col" type="cylinder" pos="-0.03 0 0.255" size="0.165 0.115" rgba="0 0 0 0" group="3" contype="1" conaffinity="3" />
+      <site name="workpiece_datum" pos="0 0 0.071" size="0.015" rgba="0.2 1 0.3 0.9" />
+      <site name="workpiece_top" pos="-0.03 0 0.370" size="0.015" rgba="0.2 1 0.3 0.9" />
+    </body>
+  </worldbody>
+  <contact>
+    <exclude body1="ier220_base" body2="ier220_link1" />
+    <exclude body1="ier220_link1" body2="ier220_link2" />
+    <exclude body1="ier220_link2" body2="ier220_link3" />
+    <exclude body1="ier220_link3" body2="ier220_link4" />
+    <exclude body1="ier220_link4" body2="ier220_link5" />
+    <exclude body1="ier220_link5" body2="ier220_link6" />
+    <exclude body1="ier220_link6" body2="grinding_gripper" />
+  </contact>
+  <actuator>
+    <position name="act_j1" joint="j1" kp="90000" kv="9000" forcerange="-25000 25000" ctrlrange="-3.14159 3.14159" />
+    <position name="act_j2" joint="j2" kp="140000" kv="14000" forcerange="-35000 35000" ctrlrange="-1.04720 1.39626" />
+    <position name="act_j3" joint="j3" kp="100000" kv="10000" forcerange="-25000 25000" ctrlrange="-3.14159 1.39626" />
+    <position name="act_j4" joint="j4" kp="35000" kv="3000" forcerange="-10000 10000" ctrlrange="-4.36332 4.36332" />
+    <position name="act_j5" joint="j5" kp="25000" kv="2000" forcerange="-8000 8000" ctrlrange="-2.18166 2.18166" />
+    <position name="act_j6" joint="j6" kp="15000" kv="1200" forcerange="-5000 5000" ctrlrange="-6.28319 6.28319" />
+  </actuator>
+</mujoco>

@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "unexpected_contacts": [],
+  "contact_count": 0,
+  "max_joint_step_deg": 1.1732520161594184,
+  "scope": "sampled checks using conservative primitive link proxies; not certified collision clearance"
+}

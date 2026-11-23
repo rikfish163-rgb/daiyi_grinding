@@ -1,0 +1,119 @@
+{
+  "errors": [],
+  "video": {
+    "src": "/artifacts/results/interactive/.video/demo_v3.webm",
+    "currentTime": 0.37334
+  },
+  "roiExecuteDisabled": true,
+  "roiRunId": "c6732720c86f484a9e08b696f0c6a5b7",
+  "roiRequest": {
+    "seed": 7,
+    "case": "mixed",
+    "roi": [
+      [
+        95,
+        104
+      ],
+      [
+        639,
+        104
+      ],
+      [
+        639,
+        185
+      ],
+      [
+        95,
+        185
+      ]
+    ],
+    "execute": false
+  },
+  "roiResult": {
+    "roi": [
+      [
+        95,
+        104
+      ],
+      [
+        639,
+        104
+      ],
+      [
+        639,
+        185
+      ],
+      [
+        95,
+        185
+      ]
+    ],
+    "path_count": 3,
+    "selectedIds": 3,
+    "detection_ids": [
+      1,
+      2,
+      3
+    ]
+  },
+  "executionRunId": "7ce3c2c77bec43f299ec0b15719d06ec",
+  "executionRequest": {
+    "seed": 7,
+    "case": "mixed",
+    "roi": [
+      [
+        95,
+        104
+      ],
+      [
+        639,
+        104
+      ],
+      [
+        639,
+        185
+      ],
+      [
+        95,
+        185
+      ]
+    ],
+    "execute": true,
+    "ids": [
+      1
+    ],
+    "source_id": "c6732720c86f484a9e08b696f0c6a5b7"
+  },
+  "executionResult": {
+    "status": {
+      "stage": "complete",
+      "result": "result.json"
+    },
+    "paths": 1,
+    "selected_ids": [
+      1
+    ],
+    "motion_gate_passed": true,
+    "execution": {
+      "simulation_steps": 10371,
+      "simulated_seconds": 20.741999999999383,
+      "tracking_trace_rms_mm": 0.013181837247368045,
+      "tracking_trace_p95_mm": 0.01838502316383558,
+      "tracking_trace_max_mm": 0.12407125465668416,
+      "tracking_trace_orientation_p95_deg": 0.001890408087022356,
+      "unexpected_contact_count": 0,
+      "unexpected_contacts": [],
+      "max_contact_force_n": 0,
+      "abrasive_contact_steps": 0,
+      "contact_sampling_ms": 2,
+      "logging": "post-integration FK and contemporaneous interpolated target; TCP statistics sampled each 10ms",
+      "material_removal_simulated": false,
+      "force_control_validated": false,
+      "controller": "MuJoCo position servo + desired-velocity and model gravity feedforward; not FR5 controller emulation"
+    }
+  },
+  "mobile": {
+    "clientWidth": 390,
+    "scrollWidth": 390
+  }
+}

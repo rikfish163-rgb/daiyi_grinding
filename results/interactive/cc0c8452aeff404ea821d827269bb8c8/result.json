@@ -1,0 +1,49 @@
+{
+  "seed": 7,
+  "case": "mixed",
+  "method": "geometry",
+  "noise_mm": 0.06,
+  "dropout": 0.003,
+  "calibration_source": "image + FK solved eye-to-hand",
+  "roi": [
+    [
+      95,
+      104
+    ],
+    [
+      639,
+      104
+    ],
+    [
+      639,
+      185
+    ],
+    [
+      95,
+      185
+    ]
+  ],
+  "selected_ids": null,
+  "perception": {
+    "tp": 1497,
+    "fp": 248,
+    "fn": 1242,
+    "precision": 0.8578796561604585,
+    "recall": 0.5465498357064622,
+    "f1": 0.667707404103479,
+    "normal_structure_selected_pixels": 0,
+    "selected_pixels": 1745,
+    "unsupported_stump_selected_pixels": 0,
+    "auto_regions": 3,
+    "review_regions": 0,
+    "wrong_type_pixels": 0,
+    "defect_footprint_coverage_3mm": 0.6677619569185834,
+    "coverage_definition": "XY footprint within nominal 3 mm tool radius; not removal or finish quality"
+  },
+  "path_count": 3,
+  "path_length_mm": 198.87887443045366,
+  "clearance_mm": 3.0,
+  "simulation_only": true,
+  "material_removal_simulated": false,
+  "wall_time_s": 1.467765100998804
+}

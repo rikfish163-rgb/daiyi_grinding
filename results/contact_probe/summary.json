@@ -1,0 +1,165 @@
+{
+  "simulation_only": true,
+  "force_control_validated": false,
+  "material_removal_simulated": false,
+  "scope": "fixed position servo follows non-eroding surface; nominal TCP offsets and soft-contact time constants are experimental assumptions",
+  "source_hashes": {
+    "execution.py": "05228b3aefd4c4a3b6ea62319ac5cbd35bd7585f71c900a0e4130a16c4431bb6",
+    "contact_probe.py": "305d1eebae43d13c3505e27062c3183e93334fd4f3de3afe9c2076a11b2a6d36",
+    "evaluation.py": "27e3d7f3f3b05c0857712826d22cec5ca0ea0b96df43c6db4186ffb08ef6517a",
+    "vla_experiment.py": "a62c1bd8a686bbf6f7411f5ae7c3255f8059640a83ddd0607b1f003d2bc856c9",
+    "__init__.py": "665b2d54488bb397acfe76b03b86f084814b1f95947d413cd3425902c7b6db69",
+    "geometry.py": "1d93e4ade2064535c82ffb93e3596a8f98f448f8f04489dfd706f17ad3aef596",
+    "calibration_test.py": "2ba69afba25a08e4a8646b1aae6d47fc4dabb5fb63c48411709bfa249be4a8e2",
+    "test_roi.py": "332d4f5e0451fed59df87dc9edfc0e9666af4690dbe0889a6e4bb133dd741af6",
+    "planning.py": "22d83deca749ce95a3bf99f9806720a4d3cf67560ee583f77000f2c1f135ab7b",
+    "perception.py": "1fd484ddbde7c68e23110f7c514b5179f8507f8957e5df0493579b6169c24e20",
+    "serve.py": "33503e063397c4e1ef0eaa6f71a9a6e91cfc3f2fe09f01b4e2fccc862b7bdffd",
+    "benchmark.py": "2b2342b1bb1093a0586f465079939f467fc37175a26247049b3f5d821ac2ca35",
+    "calibration.py": "19e68cfb16ce34c0d8c8dc33e91ddb98a1fd601e5249b78398ea5913f60d32cb",
+    "sim.py": "ebe87e1093233b097ffd1ca42f14ad0bb129847bc3a8139314a7d60d32218765",
+    "run.py": "9828face0619c9aaea00620eca7d64e9f8ab76d04cf6e8953d348e5f8813d137"
+  },
+  "trials": [
+    {
+      "nominal_clearance_mm": 0.3,
+      "contact_solref_time_s": 0.015,
+      "planning": {
+        "ik_max_mm": 2.4721264222887522e-12,
+        "ik_max_deg": 5.931440746852934e-13,
+        "duration_s": 15.015839158515341,
+        "sample_count": 410,
+        "trace_length_mm": 18.926144086757006
+      },
+      "preflight": {
+        "passed": true,
+        "unexpected_contacts": [],
+        "contact_count": 0,
+        "max_joint_step_deg": 1.1732520161594184,
+        "scope": "sampled checks using conservative primitive link proxies; not certified collision clearance"
+      },
+      "execution": {
+        "simulation_steps": 7658,
+        "simulated_seconds": 15.316000000001784,
+        "tracking_trace_rms_mm": 0.041627208173045833,
+        "tracking_trace_p95_mm": 0.08685284317619164,
+        "tracking_trace_max_mm": 0.24877470512841052,
+        "tracking_trace_orientation_p95_deg": 0.007708621786980774,
+        "unexpected_contact_count": 0,
+        "unexpected_contacts": [],
+        "max_contact_force_n": 2.178453524200767,
+        "abrasive_contact_steps": 18,
+        "contact_sampling_ms": 2.0,
+        "logging": "post-integration FK and contemporaneous interpolated target; TCP statistics sampled each 10ms",
+        "material_removal_simulated": false,
+        "force_control_validated": false,
+        "controller": "MuJoCo position servo + desired-velocity and model gravity feedforward; not FR5 controller emulation"
+      }
+    },
+    {
+      "nominal_clearance_mm": 0.0,
+      "contact_solref_time_s": 0.015,
+      "planning": {
+        "ik_max_mm": 3.0524903307290027e-12,
+        "ik_max_deg": 5.804063535247451e-13,
+        "duration_s": 15.02514361965493,
+        "sample_count": 410,
+        "trace_length_mm": 18.92614408675696
+      },
+      "preflight": {
+        "passed": true,
+        "unexpected_contacts": [],
+        "contact_count": 0,
+        "max_joint_step_deg": 1.1732520161594184,
+        "scope": "sampled checks using conservative primitive link proxies; not certified collision clearance"
+      },
+      "execution": {
+        "simulation_steps": 7663,
+        "simulated_seconds": 15.326000000001788,
+        "tracking_trace_rms_mm": 0.13249963806853385,
+        "tracking_trace_p95_mm": 0.29255498704076377,
+        "tracking_trace_max_mm": 0.568480468728129,
+        "tracking_trace_orientation_p95_deg": 0.03958532351047964,
+        "unexpected_contact_count": 0,
+        "unexpected_contacts": [],
+        "max_contact_force_n": 3.1535738768861905,
+        "abrasive_contact_steps": 98,
+        "contact_sampling_ms": 2.0,
+        "logging": "post-integration FK and contemporaneous interpolated target; TCP statistics sampled each 10ms",
+        "material_removal_simulated": false,
+        "force_control_validated": false,
+        "controller": "MuJoCo position servo + desired-velocity and model gravity feedforward; not FR5 controller emulation"
+      }
+    },
+    {
+      "nominal_clearance_mm": -0.3,
+      "contact_solref_time_s": 0.015,
+      "planning": {
+        "ik_max_mm": 2.3864247303867905e-12,
+        "ik_max_deg": 7.232879372027456e-13,
+        "duration_s": 15.034448083098605,
+        "sample_count": 410,
+        "trace_length_mm": 18.92614408675691
+      },
+      "preflight": {
+        "passed": true,
+        "unexpected_contacts": [],
+        "contact_count": 0,
+        "max_joint_step_deg": 1.1732520161594184,
+        "scope": "sampled checks using conservative primitive link proxies; not certified collision clearance"
+      },
+      "execution": {
+        "simulation_steps": 7668,
+        "simulated_seconds": 15.33600000000179,
+        "tracking_trace_rms_mm": 0.400973714803915,
+        "tracking_trace_p95_mm": 0.709145196546979,
+        "tracking_trace_max_mm": 0.836119240874173,
+        "tracking_trace_orientation_p95_deg": 0.09633848805087217,
+        "unexpected_contact_count": 0,
+        "unexpected_contacts": [],
+        "max_contact_force_n": 14.849271638861905,
+        "abrasive_contact_steps": 316,
+        "contact_sampling_ms": 2.0,
+        "logging": "post-integration FK and contemporaneous interpolated target; TCP statistics sampled each 10ms",
+        "material_removal_simulated": false,
+        "force_control_validated": false,
+        "controller": "MuJoCo position servo + desired-velocity and model gravity feedforward; not FR5 controller emulation"
+      }
+    },
+    {
+      "nominal_clearance_mm": -0.3,
+      "contact_solref_time_s": 0.03,
+      "planning": {
+        "ik_max_mm": 2.3864247303867905e-12,
+        "ik_max_deg": 7.232879372027456e-13,
+        "duration_s": 15.034448083098605,
+        "sample_count": 410,
+        "trace_length_mm": 18.92614408675691
+      },
+      "preflight": {
+        "passed": true,
+        "unexpected_contacts": [],
+        "contact_count": 0,
+        "max_joint_step_deg": 1.1732520161594184,
+        "scope": "sampled checks using conservative primitive link proxies; not certified collision clearance"
+      },
+      "execution": {
+        "simulation_steps": 7668,
+        "simulated_seconds": 15.33600000000179,
+        "tracking_trace_rms_mm": 0.39650777873738946,
+        "tracking_trace_p95_mm": 0.6988047136628293,
+        "tracking_trace_max_mm": 0.824907620002296,
+        "tracking_trace_orientation_p95_deg": 0.09480172346120326,
+        "unexpected_contact_count": 0,
+        "unexpected_contacts": [],
+        "max_contact_force_n": 12.049162021795262,
+        "abrasive_contact_steps": 412,
+        "contact_sampling_ms": 2.0,
+        "logging": "post-integration FK and contemporaneous interpolated target; TCP statistics sampled each 10ms",
+        "material_removal_simulated": false,
+        "force_control_validated": false,
+        "controller": "MuJoCo position servo + desired-velocity and model gravity feedforward; not FR5 controller emulation"
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "simulation_only": true,
+  "real_robot_enabled": false,
+  "position_units": "millimeters",
+  "rotation": "extrinsic XYZ Euler degrees from scipy; FAIRINO convention must be checked on site",
+  "input_frame": "MuJoCo world",
+  "export_frame": "robot base",
+  "T_world_base": [
+    [
+      1,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      1,
+      0.72
+    ],
+    [
+      0,
+      0,
+      0,
+      1
+    ]
+  ],
+  "tcp": "nominal 6mm ball abrasive tip; requires actual TCP calibration",
+  "command_file": "preview of machining points; not a complete certified controller program",
+  "process": "surface clearance traversal; no spindle dynamics, removal or validated contact-force recipe"
+}

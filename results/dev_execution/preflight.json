@@ -1,0 +1,217 @@
+{
+  "info": {
+    "ik_max_mm": 2.877848529024832e-10,
+    "ik_max_deg": 9.570707034093384e-11,
+    "duration_s": 121.34160403084218,
+    "sample_count": 2152,
+    "trace_length_mm": 279.38421155672444
+  },
+  "check": {
+    "passed": false,
+    "unexpected_contacts": [
+      {
+        "index": 0,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 0,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 1,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 1,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 2,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 2,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 3,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 3,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 4,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 4,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 5,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 5,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 6,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 6,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 7,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 7,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 8,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 8,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 9,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 9,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 10,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 10,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 11,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 11,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      },
+      {
+        "index": 12,
+        "pair": [
+          "shoulder_link_collision",
+          "base_link_collision"
+        ],
+        "penetration_mm": 75.0
+      }
+    ],
+    "contact_count": 4304,
+    "max_joint_step_deg": 1.2259509572260123,
+    "scope": "sampled checks using conservative primitive link proxies; not certified collision clearance"
+  }
+}

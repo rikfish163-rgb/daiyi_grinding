@@ -1,0 +1,16 @@
+{
+  "info": {
+    "ik_max_mm": 2.877848529024832e-10,
+    "ik_max_deg": 9.570707034093384e-11,
+    "duration_s": 121.34160403084218,
+    "sample_count": 2152,
+    "trace_length_mm": 279.38421155672444
+  },
+  "check": {
+    "passed": true,
+    "unexpected_contacts": [],
+    "contact_count": 0,
+    "max_joint_step_deg": 1.2259509572260123,
+    "scope": "sampled checks using conservative primitive link proxies; not certified collision clearance"
+  }
+}

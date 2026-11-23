@@ -1,0 +1,13 @@
+{
+  "simulation_steps": 60435,
+  "simulated_seconds": 120.8699999998997,
+  "tracking_trace_rms_mm": 0.09206995085471342,
+  "tracking_trace_p95_mm": 0.06858390715211295,
+  "tracking_trace_max_mm": 1.0005384020134573,
+  "unexpected_contact_count": 0,
+  "unexpected_contacts": [],
+  "max_contact_force_n": 0.0,
+  "material_removal_simulated": false,
+  "force_control_validated": false,
+  "controller": "MuJoCo position servo + desired-velocity and model gravity feedforward; not FR5 controller emulation"
+}

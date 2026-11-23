@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "kind": "seam",
+    "pixels": 488,
+    "length_mm": 52.20054258914929,
+    "width_mm": 1.61668819122721,
+    "height_mm": 2.11256742477417,
+    "confidence": 0.845026969909668,
+    "reason": "narrow elongated positive ridge",
+    "bbox": [
+      332,
+      128,
+      471,
+      142
+    ]
+  },
+  {
+    "id": 2,
+    "kind": "seam",
+    "pixels": 532,
+    "length_mm": 53.93854180283712,
+    "width_mm": 1.61668819122721,
+    "height_mm": 1.7549991607666016,
+    "confidence": 0.7019996643066406,
+    "reason": "narrow elongated positive ridge",
+    "bbox": [
+      472,
+      131,
+      614,
+      155
+    ]
+  },
+  {
+    "id": 3,
+    "kind": "seam",
+    "pixels": 725,
+    "length_mm": 81.93634760860705,
+    "width_mm": 1.61668819122721,
+    "height_mm": 2.1466612815856934,
+    "confidence": 0.8586645126342773,
+    "reason": "narrow elongated positive ridge",
+    "bbox": [
+      112,
+      140,
+      328,
+      160
+    ]
+  }
+]

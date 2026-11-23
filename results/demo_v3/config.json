@@ -1,0 +1,14 @@
+{
+  "seed": 7,
+  "case": "mixed",
+  "output": "daiyi_grinding/results/demo_v3",
+  "method": "geometry",
+  "noise_mm": 0.06,
+  "dropout": 0.003,
+  "clearance_mm": 3.0,
+  "roi": null,
+  "ids": null,
+  "video": true,
+  "perception_only": false,
+  "started_utc": "2026-10-08T05:41:08.986026+00:00"
+}

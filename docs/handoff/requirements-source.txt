@@ -1,0 +1,11 @@
+# Use the workspace's existing MuJoCo environment.
+mujoco==3.14.0
+numpy==2.5.3
+scipy==1.18.1
+opencv-python-headless==4.14.0.94
+pillow==12.3.0
+imageio==2.37.4
+imageio-ffmpeg==0.6.0
+# Optional report rebuild dependencies (simulation does not import these).
+matplotlib==3.11.2
+reportlab==4.5.1

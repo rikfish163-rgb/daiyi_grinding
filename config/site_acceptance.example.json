@@ -1,0 +1,14 @@
+{
+  "source_kind": "example",
+  "part_id": "097",
+  "serial": "",
+  "cad_revision": "",
+  "fixture_revision": "",
+  "measurement_system": "",
+  "controller": "",
+  "reviewer": "",
+  "signed_limits_mm": {"lower": -0.30, "upper": 0.30},
+  "required_zones": ["machined_zone_id", "protected_zone_id"],
+  "measurements_file": "site_measurements.csv",
+  "measurements_sha256": ""
+}

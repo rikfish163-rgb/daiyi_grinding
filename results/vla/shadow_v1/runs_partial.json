@@ -1,0 +1,152 @@
+[
+  {
+    "id": "00_grind_observed_seed17",
+    "seed": 17,
+    "prompt_id": "grind",
+    "prompt": "Use the ball abrasive held by the left robot arm to trace the narrow casting parting seam and local burrs on the metal flange. Preserve the broad design rib, boss and recessed opening. Keep the other arm still.",
+    "visual": "observed",
+    "repeated": false,
+    "frame_array_sha256": [
+      "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+      "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+      "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7"
+    ],
+    "inference_seconds": 1.6167766150319949,
+    "raw_normalized_shape": [
+      40,
+      20
+    ],
+    "decoded_shape": [
+      20,
+      16
+    ],
+    "decoded_sha256": "d050541d6af12304f896ff501e632ec09c41317ed08630d69f8a4c2a20acd751",
+    "finite": true,
+    "execution_allowed": false
+  },
+  {
+    "id": "01_grind_observed_seed29",
+    "seed": 29,
+    "prompt_id": "grind",
+    "prompt": "Use the ball abrasive held by the left robot arm to trace the narrow casting parting seam and local burrs on the metal flange. Preserve the broad design rib, boss and recessed opening. Keep the other arm still.",
+    "visual": "observed",
+    "repeated": false,
+    "frame_array_sha256": [
+      "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+      "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+      "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7"
+    ],
+    "inference_seconds": 1.194207921042107,
+    "raw_normalized_shape": [
+      40,
+      20
+    ],
+    "decoded_shape": [
+      20,
+      16
+    ],
+    "decoded_sha256": "57817ca3dfad9b2ea6ac99234b8f4aff3122ab3ba610dd13414b457ecad70571",
+    "finite": true,
+    "execution_allowed": false
+  },
+  {
+    "id": "02_grind_observed_seed43",
+    "seed": 43,
+    "prompt_id": "grind",
+    "prompt": "Use the ball abrasive held by the left robot arm to trace the narrow casting parting seam and local burrs on the metal flange. Preserve the broad design rib, boss and recessed opening. Keep the other arm still.",
+    "visual": "observed",
+    "repeated": false,
+    "frame_array_sha256": [
+      "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+      "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+      "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7"
+    ],
+    "inference_seconds": 1.2099960109917447,
+    "raw_normalized_shape": [
+      40,
+      20
+    ],
+    "decoded_shape": [
+      20,
+      16
+    ],
+    "decoded_sha256": "8ceac128296767720846a72bfdfe5bcbb4b1b4a13463b15a072e7f302c1dc787",
+    "finite": true,
+    "execution_allowed": false
+  },
+  {
+    "id": "03_hold_observed_seed17",
+    "seed": 17,
+    "prompt_id": "hold",
+    "prompt": "Keep both robot arms still. Do not touch the metal flange.",
+    "visual": "observed",
+    "repeated": false,
+    "frame_array_sha256": [
+      "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+      "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+      "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7"
+    ],
+    "inference_seconds": 1.037423035944812,
+    "raw_normalized_shape": [
+      40,
+      20
+    ],
+    "decoded_shape": [
+      20,
+      16
+    ],
+    "decoded_sha256": "1b56670d2444da8302cd2098ec365ddf0c1887f8102c39da570d11bea3544583",
+    "finite": true,
+    "execution_allowed": false
+  },
+  {
+    "id": "04_grind_black_images_seed17",
+    "seed": 17,
+    "prompt_id": "grind",
+    "prompt": "Use the ball abrasive held by the left robot arm to trace the narrow casting parting seam and local burrs on the metal flange. Preserve the broad design rib, boss and recessed opening. Keep the other arm still.",
+    "visual": "black_images",
+    "repeated": false,
+    "frame_array_sha256": [
+      "7042a035e6fb284af271fca13b67f12c5f1c30f92d11ff37389a9ef951fac97f",
+      "7042a035e6fb284af271fca13b67f12c5f1c30f92d11ff37389a9ef951fac97f",
+      "7042a035e6fb284af271fca13b67f12c5f1c30f92d11ff37389a9ef951fac97f"
+    ],
+    "inference_seconds": 1.0549329799832776,
+    "raw_normalized_shape": [
+      40,
+      20
+    ],
+    "decoded_shape": [
+      20,
+      16
+    ],
+    "decoded_sha256": "66da5f7d8d53fa9d145d45d0a13c52abb19a03778d29784659607de80a2ea8b6",
+    "finite": true,
+    "execution_allowed": false
+  },
+  {
+    "id": "05_grind_observed_seed17_repeat",
+    "seed": 17,
+    "prompt_id": "grind",
+    "prompt": "Use the ball abrasive held by the left robot arm to trace the narrow casting parting seam and local burrs on the metal flange. Preserve the broad design rib, boss and recessed opening. Keep the other arm still.",
+    "visual": "observed",
+    "repeated": true,
+    "frame_array_sha256": [
+      "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+      "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+      "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7"
+    ],
+    "inference_seconds": 1.028734729043208,
+    "raw_normalized_shape": [
+      40,
+      20
+    ],
+    "decoded_shape": [
+      20,
+      16
+    ],
+    "decoded_sha256": "d050541d6af12304f896ff501e632ec09c41317ed08630d69f8a4c2a20acd751",
+    "finite": true,
+    "execution_allowed": false
+  }
+]

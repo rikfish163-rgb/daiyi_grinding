@@ -1,0 +1,65 @@
+{
+  "id": "62837cbc72ac427bbccc29375aa03c60",
+  "request": {
+    "seed": 7,
+    "case": "mixed",
+    "roi": [
+      [
+        169,
+        383
+      ],
+      [
+        249,
+        383
+      ],
+      [
+        254,
+        455
+      ],
+      [
+        164,
+        455
+      ]
+    ],
+    "execute": false
+  },
+  "result": {
+    "roi": [
+      [
+        169,
+        383
+      ],
+      [
+        249,
+        383
+      ],
+      [
+        254,
+        455
+      ],
+      [
+        164,
+        455
+      ]
+    ],
+    "path_count": 5,
+    "detections": [
+      {
+        "id": 8,
+        "kind": "burr",
+        "pixels": 363,
+        "length_mm": 8.926828251766691,
+        "width_mm": 5.11241695057583,
+        "height_mm": 2.507460117340088,
+        "confidence": 0.98,
+        "reason": "localized positive protrusion",
+        "bbox": [
+          192,
+          413,
+          218,
+          435
+        ]
+      }
+    ]
+  }
+}

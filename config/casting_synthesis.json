@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "profile": "research_casting_v1",
+  "seed_offset": 71833,
+  "coordinate_frame": "workpiece_097",
+  "root_sample_spacing_mm": 0.6,
+  "root_embedding_mm": 0.08,
+  "candidate_top_curve_inset_mm": 7.5,
+  "variable_flash": {
+    "length_mm": [65, 100],
+    "height_mm": [0.55, 2.6],
+    "full_width_mm": [0.55, 1.7]
+  },
+  "interrupted_flash": {
+    "length_mm": [36, 58],
+    "height_mm": [0.35, 1.7],
+    "full_width_mm": [0.45, 1.4],
+    "gap_mm": [1.5, 4.0]
+  },
+  "curled_flash": {
+    "length_mm": [38, 60],
+    "sheet_arc_mm": [4.2, 6.0],
+    "thickness_mm": [0.22, 0.65],
+    "bend_radians": [1.85, 2.5]
+  },
+  "torn_flash": {
+    "length_mm": [32, 50],
+    "sheet_arc_mm": [2.0, 4.8],
+    "thickness_mm": [0.20, 0.80],
+    "bend_radians": [0.4, 1.4],
+    "gap_mm": [1.5, 4.5]
+  },
+  "irregular_burr": {
+    "footprint_diameter_mm": [4.0, 8.0],
+    "height_mm": [0.8, 2.8]
+  },
+  "appearance": {
+    "material": "shared neutral cast-metal material for body and added excess",
+    "base_gray": [0.38, 0.52],
+    "specular": [0.12, 0.25],
+    "shininess": [0.10, 0.25],
+    "seed_offset": 83047,
+    "calibrated_from_real_images": false
+  },
+  "parting_curve_status": "CAD-supported candidate curves; actual mold parting lines and machining permission have not been confirmed",
+  "real_scan_fitted": false,
+  "sources": [
+    "feishu_docs/飞边缺陷合成__wiki-LcFzw9XUoiiPGrkdFzTc9TT0n5e.md",
+    "feishu_docs/工件样品概况__wiki-PgR0wKBsZitEVtk7LSzchUaKn5c.md",
+    "docs/defect_model_strategy_20261120.md",
+    "https://arxiv.org/abs/2606.29181v1",
+    "https://link.springer.com/article/10.1007/s10845-022-02036-6"
+  ]
+}

@@ -1,0 +1,4643 @@
+{
+  "date": "2026-11-16",
+  "status": "passed",
+  "script_SHA256": "755cb719257df1e14afcdc65d52e97e067be5b63b4240204c9b6888a510aa6e5",
+  "pointcloud_readback": {
+    "full_view_mm": {
+      "points": 167865,
+      "finite": true,
+      "max_coordinate_difference_m": 0.0
+    },
+    "object_mm": {
+      "points": 135096,
+      "finite": true,
+      "max_coordinate_difference_m": 0.0
+    },
+    "voxel1mm": {
+      "points": 32074,
+      "finite": true,
+      "max_coordinate_difference_m": 2.9775831467127034e-08
+    }
+  },
+  "path_markers_received": true,
+  "ordered_pose_checks": [
+    {
+      "knot_index": 0,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 1,
+      "flange_position_difference_m": 7.038446774289103e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 2,
+      "flange_position_difference_m": 6.662783593823664e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 3,
+      "flange_position_difference_m": 6.335327934766281e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 4,
+      "flange_position_difference_m": 4.977175294248819e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 5,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 6,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 7,
+      "flange_position_difference_m": 7.022009783614247e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 8,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 9,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 10,
+      "flange_position_difference_m": 3.1470771739840384e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 11,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 12,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 13,
+      "flange_position_difference_m": 4.969430220045889e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 14,
+      "flange_position_difference_m": 9.420810297539422e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 15,
+      "flange_position_difference_m": 2.423651445728339e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 16,
+      "flange_position_difference_m": 2.3479724158959924e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 17,
+      "flange_position_difference_m": 4.965553152773373e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 18,
+      "flange_position_difference_m": 6.318585897742263e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 19,
+      "flange_position_difference_m": 7.063030538266869e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 20,
+      "flange_position_difference_m": 3.1592929488711313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 21,
+      "flange_position_difference_m": 2.306595211858756e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 22,
+      "flange_position_difference_m": 9.94975446764215e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 23,
+      "flange_position_difference_m": 4.965553152773373e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 24,
+      "flange_position_difference_m": 7.033998881952434e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 25,
+      "flange_position_difference_m": 3.188872858294072e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 26,
+      "flange_position_difference_m": 1.3877787807814457e-17,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 27,
+      "flange_position_difference_m": 1.1369838727621963e-15,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 28,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 29,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 30,
+      "flange_position_difference_m": 4.969430220045889e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 31,
+      "flange_position_difference_m": 6.674335893081556e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 32,
+      "flange_position_difference_m": 2.3479724158959924e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 33,
+      "flange_position_difference_m": 2.2473876566261383e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 34,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 35,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999994
+    },
+    {
+      "knot_index": 36,
+      "flange_position_difference_m": 1.1102447084568522e-15,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 37,
+      "flange_position_difference_m": 2.2473876566261383e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 38,
+      "flange_position_difference_m": 4.988770360153297e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 39,
+      "flange_position_difference_m": 2.2729511820139823e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 40,
+      "flange_position_difference_m": 6.311342652303787e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 41,
+      "flange_position_difference_m": 6.674335893081556e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 42,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 43,
+      "flange_position_difference_m": 6.742162969878415e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 44,
+      "flange_position_difference_m": 6.670367046887758e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 45,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 46,
+      "flange_position_difference_m": 5.004188655705841e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 47,
+      "flange_position_difference_m": 3.1470771739840384e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 48,
+      "flange_position_difference_m": 5.137125174936474e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 49,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 50,
+      "flange_position_difference_m": 2.3479724158959924e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 51,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 52,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 53,
+      "flange_position_difference_m": 4.965553152773373e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 54,
+      "flange_position_difference_m": 2.45228796256662e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 55,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 56,
+      "flange_position_difference_m": 6.281902941027859e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 57,
+      "flange_position_difference_m": 6.283818797896651e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 58,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 59,
+      "flange_position_difference_m": 6.245004513516506e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 60,
+      "flange_position_difference_m": 4.441434166503682e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 61,
+      "flange_position_difference_m": 6.289945618411561e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 62,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 63,
+      "flange_position_difference_m": 3.3306690738754696e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 64,
+      "flange_position_difference_m": 9.161705179782676e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 65,
+      "flange_position_difference_m": 4.996003610813204e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 66,
+      "flange_position_difference_m": 2.2473876566261383e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 67,
+      "flange_position_difference_m": 4.965553152773373e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 68,
+      "flange_position_difference_m": 4.561234287365988e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 69,
+      "flange_position_difference_m": 3.1470771739840384e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 70,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 71,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 72,
+      "flange_position_difference_m": 3.1409514705139295e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 73,
+      "flange_position_difference_m": 3.1676639673831405e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 74,
+      "flange_position_difference_m": 7.063030538266869e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 75,
+      "flange_position_difference_m": 2.3714374201337736e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 76,
+      "flange_position_difference_m": 6.661338147750939e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 77,
+      "flange_position_difference_m": 7.022009783614247e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 78,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 79,
+      "flange_position_difference_m": 3.1775285574562636e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 80,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 81,
+      "flange_position_difference_m": 3.469446951953614e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 82,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 83,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 84,
+      "flange_position_difference_m": 3.2016811410571575e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 85,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 86,
+      "flange_position_difference_m": 8.020653026243851e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 87,
+      "flange_position_difference_m": 4.441434166503682e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 88,
+      "flange_position_difference_m": 6.938893903907228e-18,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 89,
+      "flange_position_difference_m": 1.3877787807814457e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 90,
+      "flange_position_difference_m": 3.2016811410571575e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 91,
+      "flange_position_difference_m": 9.155396550919762e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 92,
+      "flange_position_difference_m": 4.484587321511725e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 93,
+      "flange_position_difference_m": 2.3263411494723067e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 94,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 95,
+      "flange_position_difference_m": 4.454424009010536e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 96,
+      "flange_position_difference_m": 2.0816681711721685e-17,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 97,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 98,
+      "flange_position_difference_m": 4.445768331151997e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 99,
+      "flange_position_difference_m": 6.326581942030604e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 100,
+      "flange_position_difference_m": 3.287014905352939e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 101,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 0.9999999999999994
+    },
+    {
+      "knot_index": 102,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 103,
+      "flange_position_difference_m": 7.024751952920612e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 104,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 105,
+      "flange_position_difference_m": 3.1775285574562636e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 106,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 107,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 108,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999994
+    },
+    {
+      "knot_index": 109,
+      "flange_position_difference_m": 9.171947447016606e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 110,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 111,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 112,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 113,
+      "flange_position_difference_m": 6.326581942030604e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 114,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 115,
+      "flange_position_difference_m": 4.969430220045889e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 116,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 117,
+      "flange_position_difference_m": 4.977175294248819e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 118,
+      "flange_position_difference_m": 4.85722573273506e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 119,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 120,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 121,
+      "flange_position_difference_m": 6.667118051786499e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 122,
+      "flange_position_difference_m": 9.155396550919762e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 123,
+      "flange_position_difference_m": 6.667118051786499e-16,
+      "quaternion_abs_dot": 1.0000000000000007
+    },
+    {
+      "knot_index": 124,
+      "flange_position_difference_m": 7.033998881952434e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 125,
+      "flange_position_difference_m": 1.3877787807814457e-17,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 126,
+      "flange_position_difference_m": 8.013446148239309e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 127,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 128,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 129,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 130,
+      "flange_position_difference_m": 6.938893903907228e-18,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 131,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 132,
+      "flange_position_difference_m": 9.932318288112559e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 133,
+      "flange_position_difference_m": 6.281902941027859e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 134,
+      "flange_position_difference_m": 6.674335893081556e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 135,
+      "flange_position_difference_m": 3.1409514705139295e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 136,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 137,
+      "flange_position_difference_m": 4.47545209131181e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 138,
+      "flange_position_difference_m": 2.2729511820139823e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 139,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 140,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 141,
+      "flange_position_difference_m": 7.0302330827531915e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 142,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 143,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 144,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 145,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 146,
+      "flange_position_difference_m": 8.013446148239309e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 147,
+      "flange_position_difference_m": 3.1676639673831405e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 148,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 149,
+      "flange_position_difference_m": 7.049383475882955e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 150,
+      "flange_position_difference_m": 7.070865672341163e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 151,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 152,
+      "flange_position_difference_m": 3.1409514705139295e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 153,
+      "flange_position_difference_m": 6.245004513516506e-17,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 154,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 155,
+      "flange_position_difference_m": 8.891536662303994e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 156,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 157,
+      "flange_position_difference_m": 3.1409514705139295e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 158,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 159,
+      "flange_position_difference_m": 4.454424009010536e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 160,
+      "flange_position_difference_m": 9.155396550919762e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 161,
+      "flange_position_difference_m": 4.996003610813204e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 162,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 163,
+      "flange_position_difference_m": 2.2473876566261383e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 164,
+      "flange_position_difference_m": 4.441434166503682e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 165,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 166,
+      "flange_position_difference_m": 8.942562614587554e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 167,
+      "flange_position_difference_m": 7.063030538266869e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 168,
+      "flange_position_difference_m": 4.467376080957673e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 169,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 170,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 171,
+      "flange_position_difference_m": 5.023394977137847e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 172,
+      "flange_position_difference_m": 4.977175294248819e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 173,
+      "flange_position_difference_m": 3.2159359137519293e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 174,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 175,
+      "flange_position_difference_m": 4.163336342344337e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 176,
+      "flange_position_difference_m": 4.594889227755668e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 177,
+      "flange_position_difference_m": 3.1470771739840384e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 178,
+      "flange_position_difference_m": 3.1409514705139295e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 179,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 180,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 181,
+      "flange_position_difference_m": 4.85722573273506e-17,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 182,
+      "flange_position_difference_m": 7.055869121689407e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 183,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 184,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 185,
+      "flange_position_difference_m": 4.441434166503682e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 186,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 187,
+      "flange_position_difference_m": 9.964986097963502e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 188,
+      "flange_position_difference_m": 3.231618034892086e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 189,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 190,
+      "flange_position_difference_m": 7.043575467574348e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 191,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 192,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 193,
+      "flange_position_difference_m": 6.722137407118775e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 194,
+      "flange_position_difference_m": 7.024751952920612e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 195,
+      "flange_position_difference_m": 7.038446774289103e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 196,
+      "flange_position_difference_m": 6.281902941027859e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 197,
+      "flange_position_difference_m": 2.2473876566261383e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 198,
+      "flange_position_difference_m": 7.055869121689407e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 199,
+      "flange_position_difference_m": 7.098390111147108e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 200,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 201,
+      "flange_position_difference_m": 2.2473876566261383e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 202,
+      "flange_position_difference_m": 2.306595211858756e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 203,
+      "flange_position_difference_m": 4.163336342344337e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 204,
+      "flange_position_difference_m": 4.988770360153297e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 205,
+      "flange_position_difference_m": 4.47545209131181e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 206,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 207,
+      "flange_position_difference_m": 1.195827321860277e-15,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 208,
+      "flange_position_difference_m": 6.286500016609089e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 209,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 210,
+      "flange_position_difference_m": 4.988770360153297e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 211,
+      "flange_position_difference_m": 7.022009783614247e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 212,
+      "flange_position_difference_m": 1.1105699151271772e-15,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 213,
+      "flange_position_difference_m": 2.3714374201337736e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 214,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 215,
+      "flange_position_difference_m": 4.969430220045889e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 216,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 217,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 218,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 219,
+      "flange_position_difference_m": 6.280369834735101e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 220,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 221,
+      "flange_position_difference_m": 1.1369838727621963e-15,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 222,
+      "flange_position_difference_m": 4.445768331151997e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 223,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 224,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 225,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 226,
+      "flange_position_difference_m": 6.318585897742263e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 227,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 228,
+      "flange_position_difference_m": 4.47545209131181e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 229,
+      "flange_position_difference_m": 6.684427777288335e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 230,
+      "flange_position_difference_m": 4.445768331151997e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 231,
+      "flange_position_difference_m": 6.281902941027859e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 232,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 233,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 234,
+      "flange_position_difference_m": 8.013446148239309e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 235,
+      "flange_position_difference_m": 1.3877787807814457e-17,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 236,
+      "flange_position_difference_m": 3.267180239406185e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 237,
+      "flange_position_difference_m": 3.2159359137519293e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 238,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 239,
+      "flange_position_difference_m": 4.965553152773373e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 240,
+      "flange_position_difference_m": 1.1104181638668013e-15,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 241,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 242,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 243,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 244,
+      "flange_position_difference_m": 1.2951961742569703e-15,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 245,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 246,
+      "flange_position_difference_m": 8.008637959912779e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 247,
+      "flange_position_difference_m": 9.938860440091779e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 248,
+      "flange_position_difference_m": 9.157499910099985e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 249,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 250,
+      "flange_position_difference_m": 8.010741897413915e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 251,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 252,
+      "flange_position_difference_m": 7.021666937153402e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 253,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 254,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 255,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 256,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 257,
+      "flange_position_difference_m": 4.969430220045889e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 258,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 259,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 260,
+      "flange_position_difference_m": 1.1957467920563633e-15,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 261,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 262,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 263,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 264,
+      "flange_position_difference_m": 6.280369834735101e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 265,
+      "flange_position_difference_m": 9.156185367235439e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 266,
+      "flange_position_difference_m": 6.281902941027859e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 267,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 268,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 269,
+      "flange_position_difference_m": 8.005932084973442e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 270,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 271,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 272,
+      "flange_position_difference_m": 6.286500016609089e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 273,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 274,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 275,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 276,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 277,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 278,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 279,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 280,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 281,
+      "flange_position_difference_m": 1.4895204919483639e-15,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 282,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 283,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 284,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 285,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 286,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 287,
+      "flange_position_difference_m": 9.156185367235439e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 288,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 289,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 290,
+      "flange_position_difference_m": 9.156185367235439e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 291,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 292,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 293,
+      "flange_position_difference_m": 6.294154347968077e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 294,
+      "flange_position_difference_m": 9.156185367235439e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 295,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 296,
+      "flange_position_difference_m": 8.010741897413915e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 297,
+      "flange_position_difference_m": 8.010741897413915e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 298,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 299,
+      "flange_position_difference_m": 1.1102230246251565e-15,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 300,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 301,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 302,
+      "flange_position_difference_m": 8.005932084973442e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 303,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 304,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 305,
+      "flange_position_difference_m": 9.155133597044475e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 306,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 307,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 308,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 309,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 310,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 311,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 312,
+      "flange_position_difference_m": 6.281902941027859e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 313,
+      "flange_position_difference_m": 7.021666937153402e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 314,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 315,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 316,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 317,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 318,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 319,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 320,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 321,
+      "flange_position_difference_m": 7.033998881952434e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 322,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 323,
+      "flange_position_difference_m": 1.2950288782773939e-15,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 324,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 325,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 326,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 327,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 328,
+      "flange_position_difference_m": 4.445768331151997e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 329,
+      "flange_position_difference_m": 6.294154347968077e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 330,
+      "flange_position_difference_m": 7.021666937153402e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 331,
+      "flange_position_difference_m": 1.1325499295668598e-15,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 332,
+      "flange_position_difference_m": 4.965553152773373e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 333,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 334,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 335,
+      "flange_position_difference_m": 6.664589960562512e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 336,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 337,
+      "flange_position_difference_m": 3.1470771739840384e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 338,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 339,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 340,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 341,
+      "flange_position_difference_m": 4.445768331151997e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 342,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 343,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 344,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 345,
+      "flange_position_difference_m": 4.988770360153297e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 346,
+      "flange_position_difference_m": 8.013446148239309e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 347,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 348,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 349,
+      "flange_position_difference_m": 6.281902941027859e-16,
+      "quaternion_abs_dot": 0.9999999999999993
+    },
+    {
+      "knot_index": 350,
+      "flange_position_difference_m": 2.0816681711721685e-17,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 351,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 352,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999994
+    },
+    {
+      "knot_index": 353,
+      "flange_position_difference_m": 3.1676639673831405e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 354,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 355,
+      "flange_position_difference_m": 7.0302330827531915e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 356,
+      "flange_position_difference_m": 4.977175294248819e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 357,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 358,
+      "flange_position_difference_m": 2.482534153247273e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 359,
+      "flange_position_difference_m": 6.661338147750939e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 360,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 361,
+      "flange_position_difference_m": 4.163336342344337e-17,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 362,
+      "flange_position_difference_m": 3.1409514705139295e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 363,
+      "flange_position_difference_m": 4.445768331151997e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 364,
+      "flange_position_difference_m": 7.022009783614247e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 365,
+      "flange_position_difference_m": 5.174479785625174e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 366,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 367,
+      "flange_position_difference_m": 4.518280359883027e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 368,
+      "flange_position_difference_m": 3.1470771739840384e-16,
+      "quaternion_abs_dot": 1.0000000000000007
+    },
+    {
+      "knot_index": 369,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 370,
+      "flange_position_difference_m": 6.6973807122470445e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 371,
+      "flange_position_difference_m": 3.231618034892086e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 372,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 373,
+      "flange_position_difference_m": 4.969430220045889e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 374,
+      "flange_position_difference_m": 6.661699538672011e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 375,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 376,
+      "flange_position_difference_m": 3.1592929488711313e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 377,
+      "flange_position_difference_m": 2.0816681711721685e-17,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 378,
+      "flange_position_difference_m": 4.996003610813204e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 379,
+      "flange_position_difference_m": 6.294154347968077e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 380,
+      "flange_position_difference_m": 7.043575467574348e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 381,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 382,
+      "flange_position_difference_m": 4.969430220045889e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 383,
+      "flange_position_difference_m": 4.965553152773373e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 384,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 385,
+      "flange_position_difference_m": 3.1470771739840384e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 386,
+      "flange_position_difference_m": 8.008637959912779e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 387,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 388,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 389,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 390,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 391,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 392,
+      "flange_position_difference_m": 5.023394977137847e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 393,
+      "flange_position_difference_m": 2.2729511820139823e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 394,
+      "flange_position_difference_m": 4.965553152773373e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 395,
+      "flange_position_difference_m": 9.155396550919762e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 396,
+      "flange_position_difference_m": 3.1775285574562636e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 397,
+      "flange_position_difference_m": 4.969430220045889e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 398,
+      "flange_position_difference_m": 4.988770360153297e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 399,
+      "flange_position_difference_m": 8.010741897413915e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 400,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 401,
+      "flange_position_difference_m": 6.281902941027859e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 402,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 403,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 404,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 405,
+      "flange_position_difference_m": 8.020653026243851e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 406,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 407,
+      "flange_position_difference_m": 4.454424009010536e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 408,
+      "flange_position_difference_m": 3.1676639673831405e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 409,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 410,
+      "flange_position_difference_m": 4.506008925723787e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 411,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 412,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 413,
+      "flange_position_difference_m": 7.022009783614247e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 414,
+      "flange_position_difference_m": 4.988770360153297e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 415,
+      "flange_position_difference_m": 9.181391706371607e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 416,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 417,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 418,
+      "flange_position_difference_m": 6.661699538672011e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 419,
+      "flange_position_difference_m": 2.2473876566261383e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 420,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 421,
+      "flange_position_difference_m": 6.661338147750939e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 422,
+      "flange_position_difference_m": 8.008637959912779e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 423,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 424,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 425,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 426,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 427,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 428,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 429,
+      "flange_position_difference_m": 9.931106305546747e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 430,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 431,
+      "flange_position_difference_m": 6.662783593823664e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 432,
+      "flange_position_difference_m": 1.3877787807814457e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 433,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 434,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 435,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 436,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 437,
+      "flange_position_difference_m": 6.661338147750939e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 438,
+      "flange_position_difference_m": 1.1103097574110882e-15,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 439,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 440,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 441,
+      "flange_position_difference_m": 1.1105699151271772e-15,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 442,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 443,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 444,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 445,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 446,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 447,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 448,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 449,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 450,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 451,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 452,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 453,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 454,
+      "flange_position_difference_m": 7.027150473277823e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 455,
+      "flange_position_difference_m": 7.027150473277823e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 456,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 457,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 458,
+      "flange_position_difference_m": 6.684427777288335e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 459,
+      "flange_position_difference_m": 9.155133597044475e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 460,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 461,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 462,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 463,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 464,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 465,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 466,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 467,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 468,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 469,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 470,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 471,
+      "flange_position_difference_m": 6.280369834735101e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 472,
+      "flange_position_difference_m": 3.1676639673831405e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 473,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 474,
+      "flange_position_difference_m": 5.551115123125783e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 475,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 476,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 477,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 478,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 479,
+      "flange_position_difference_m": 5.034405433428661e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 480,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 481,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 482,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 483,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 484,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 485,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 486,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 487,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 488,
+      "flange_position_difference_m": 8.010741897413915e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 489,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 490,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 491,
+      "flange_position_difference_m": 8.03594618170779e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 492,
+      "flange_position_difference_m": 8.010741897413915e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 493,
+      "flange_position_difference_m": 9.931106305546747e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 494,
+      "flange_position_difference_m": 2.423651445728339e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 495,
+      "flange_position_difference_m": 3.188872858294072e-16,
+      "quaternion_abs_dot": 0.9999999999999994
+    },
+    {
+      "knot_index": 496,
+      "flange_position_difference_m": 6.280369834735101e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 497,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 498,
+      "flange_position_difference_m": 6.294154347968077e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 499,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 500,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 501,
+      "flange_position_difference_m": 9.155133597044475e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 502,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 503,
+      "flange_position_difference_m": 4.494775313252277e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 504,
+      "flange_position_difference_m": 3.188872858294072e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 505,
+      "flange_position_difference_m": 8.016750104886771e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 506,
+      "flange_position_difference_m": 6.661338147750939e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 507,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 508,
+      "flange_position_difference_m": 7.055869121689407e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 509,
+      "flange_position_difference_m": 3.188872858294072e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 510,
+      "flange_position_difference_m": 5.013320832966251e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 511,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 512,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 513,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 514,
+      "flange_position_difference_m": 4.163336342344337e-17,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 515,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 516,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 517,
+      "flange_position_difference_m": 6.286500016609089e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 518,
+      "flange_position_difference_m": 1.3877787807814457e-17,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 519,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0000000000000007
+    },
+    {
+      "knot_index": 520,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 521,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 522,
+      "flange_position_difference_m": 9.156185367235439e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 523,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 524,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 525,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 526,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 527,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 528,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 529,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 530,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 531,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 532,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 533,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 534,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 535,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 536,
+      "flange_position_difference_m": 7.033998881952434e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 537,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 538,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 539,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 540,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 541,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 542,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 543,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 544,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 545,
+      "flange_position_difference_m": 9.156185367235439e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 546,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 547,
+      "flange_position_difference_m": 7.033998881952434e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 548,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 549,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 550,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 551,
+      "flange_position_difference_m": 6.280369834735101e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 552,
+      "flange_position_difference_m": 6.662783593823664e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 553,
+      "flange_position_difference_m": 6.662783593823664e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 554,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 555,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 556,
+      "flange_position_difference_m": 6.674335893081556e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 557,
+      "flange_position_difference_m": 7.027150473277823e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 558,
+      "flange_position_difference_m": 1.1329749811598192e-15,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 559,
+      "flange_position_difference_m": 6.662783593823664e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 560,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 561,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 562,
+      "flange_position_difference_m": 8.005932084973442e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 563,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 564,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 565,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 566,
+      "flange_position_difference_m": 6.283818797896651e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 567,
+      "flange_position_difference_m": 4.518280359883027e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 568,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 569,
+      "flange_position_difference_m": 6.667118051786499e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 570,
+      "flange_position_difference_m": 4.965553152773373e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 571,
+      "flange_position_difference_m": 8.888557877610145e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 572,
+      "flange_position_difference_m": 9.176408447397648e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 573,
+      "flange_position_difference_m": 4.988770360153297e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 574,
+      "flange_position_difference_m": 6.664589960562512e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 575,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 576,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 577,
+      "flange_position_difference_m": 7.0302330827531915e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 578,
+      "flange_position_difference_m": 4.85722573273506e-17,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 579,
+      "flange_position_difference_m": 2.0816681711721685e-17,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 580,
+      "flange_position_difference_m": 5.023394977137847e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 581,
+      "flange_position_difference_m": 6.684427777288335e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 582,
+      "flange_position_difference_m": 3.1409514705139295e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 583,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 584,
+      "flange_position_difference_m": 4.494775313252277e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 585,
+      "flange_position_difference_m": 3.1409514705139295e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 586,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 587,
+      "flange_position_difference_m": 6.2991246756385145e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 588,
+      "flange_position_difference_m": 7.022009783614247e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 589,
+      "flange_position_difference_m": 6.684427777288335e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 590,
+      "flange_position_difference_m": 3.1775285574562636e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 591,
+      "flange_position_difference_m": 3.1592929488711313e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 592,
+      "flange_position_difference_m": 7.0302330827531915e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 593,
+      "flange_position_difference_m": 6.280369834735101e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 594,
+      "flange_position_difference_m": 6.938893903907228e-18,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 595,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 596,
+      "flange_position_difference_m": 2.306595211858756e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 597,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 598,
+      "flange_position_difference_m": 8.010741897413915e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 599,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 600,
+      "flange_position_difference_m": 1.1443916996305594e-15,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 601,
+      "flange_position_difference_m": 3.4618057540754037e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 602,
+      "flange_position_difference_m": 4.47545209131181e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 603,
+      "flange_position_difference_m": 1.3877787807814457e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 604,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 605,
+      "flange_position_difference_m": 2.2301825219878386e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 606,
+      "flange_position_difference_m": 4.85722573273506e-17,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 607,
+      "flange_position_difference_m": 3.231618034892086e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 608,
+      "flange_position_difference_m": 6.664589960562512e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 609,
+      "flange_position_difference_m": 6.245004513516506e-17,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 610,
+      "flange_position_difference_m": 3.188872858294072e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 611,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 612,
+      "flange_position_difference_m": 2.2473876566261383e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 613,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 614,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 615,
+      "flange_position_difference_m": 3.1775285574562636e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 616,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 617,
+      "flange_position_difference_m": 9.161705179782676e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 618,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 619,
+      "flange_position_difference_m": 3.1409514705139295e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 620,
+      "flange_position_difference_m": 7.024751952920612e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 621,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 622,
+      "flange_position_difference_m": 8.08254562088053e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 623,
+      "flange_position_difference_m": 4.977175294248819e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 624,
+      "flange_position_difference_m": 3.2487068343022356e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 625,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 626,
+      "flange_position_difference_m": 2.2473876566261383e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 627,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 628,
+      "flange_position_difference_m": 4.467376080957673e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 629,
+      "flange_position_difference_m": 7.632783294297951e-17,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 630,
+      "flange_position_difference_m": 1.1107649934270853e-15,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 631,
+      "flange_position_difference_m": 7.021666937153402e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 632,
+      "flange_position_difference_m": 3.267180239406185e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 633,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 634,
+      "flange_position_difference_m": 6.281902941027859e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 635,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 636,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 637,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 638,
+      "flange_position_difference_m": 4.484587321511725e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 639,
+      "flange_position_difference_m": 2.2215299868541707e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 640,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 641,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 642,
+      "flange_position_difference_m": 6.662783593823664e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 643,
+      "flange_position_difference_m": 6.280369834735101e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 644,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 645,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 646,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 647,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 648,
+      "flange_position_difference_m": 6.661338147750939e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 649,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 650,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 651,
+      "flange_position_difference_m": 9.421576892262128e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 652,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 653,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 654,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 655,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 656,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 657,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 658,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 659,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 660,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 661,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 662,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 663,
+      "flange_position_difference_m": 9.156185367235439e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 664,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 665,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 666,
+      "flange_position_difference_m": 7.021666937153402e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 667,
+      "flange_position_difference_m": 6.662783593823664e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 668,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 669,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 670,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 671,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 672,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 673,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 674,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 675,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 676,
+      "flange_position_difference_m": 6.667118051786499e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 677,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 678,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 679,
+      "flange_position_difference_m": 6.662783593823664e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 680,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 681,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 682,
+      "flange_position_difference_m": 4.996003610813204e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 683,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 684,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 685,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 686,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 687,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 688,
+      "flange_position_difference_m": 6.294154347968077e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 689,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 690,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 691,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 692,
+      "flange_position_difference_m": 9.421576892262128e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 693,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 694,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 695,
+      "flange_position_difference_m": 1.1986424564952127e-15,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 696,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 697,
+      "flange_position_difference_m": 6.280369834735101e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 698,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 699,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 700,
+      "flange_position_difference_m": 6.674335893081556e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 701,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 702,
+      "flange_position_difference_m": 3.1676639673831405e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 703,
+      "flange_position_difference_m": 9.931106305546747e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 704,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 705,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 706,
+      "flange_position_difference_m": 1.1103097574110882e-15,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 707,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 708,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 709,
+      "flange_position_difference_m": 3.188872858294072e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 710,
+      "flange_position_difference_m": 3.2487068343022356e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 711,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 712,
+      "flange_position_difference_m": 4.443059973708341e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 713,
+      "flange_position_difference_m": 7.027150473277823e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 714,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 715,
+      "flange_position_difference_m": 8.010741897413915e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 716,
+      "flange_position_difference_m": 4.494775313252277e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 717,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 718,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 719,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 720,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 721,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 722,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 723,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 724,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 725,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 726,
+      "flange_position_difference_m": 7.033998881952434e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 727,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 728,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 729,
+      "flange_position_difference_m": 2.3263411494723067e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 730,
+      "flange_position_difference_m": 5.087681048627601e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 731,
+      "flange_position_difference_m": 2.3263411494723067e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 732,
+      "flange_position_difference_m": 5.194446892679256e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 733,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 734,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 735,
+      "flange_position_difference_m": 7.043575467574348e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 736,
+      "flange_position_difference_m": 8.064654625088228e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 737,
+      "flange_position_difference_m": 6.377745716588144e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 738,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 739,
+      "flange_position_difference_m": 7.027150473277823e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 740,
+      "flange_position_difference_m": 4.996003610813204e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 741,
+      "flange_position_difference_m": 7.108895957933346e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 742,
+      "flange_position_difference_m": 3.2159359137519293e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 743,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 744,
+      "flange_position_difference_m": 2.3263411494723067e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 745,
+      "flange_position_difference_m": 8.03594618170779e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 746,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 747,
+      "flange_position_difference_m": 3.1676639673831405e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 748,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 749,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 750,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 751,
+      "flange_position_difference_m": 5.013320832966251e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 752,
+      "flange_position_difference_m": 3.1676639673831405e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 753,
+      "flange_position_difference_m": 4.577566798522237e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 754,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 755,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 756,
+      "flange_position_difference_m": 4.518280359883027e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 757,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 758,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 759,
+      "flange_position_difference_m": 6.713178136967714e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 760,
+      "flange_position_difference_m": 7.15749512893306e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 761,
+      "flange_position_difference_m": 3.554447978966673e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 762,
+      "flange_position_difference_m": 9.159339953157541e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 763,
+      "flange_position_difference_m": 5.087681048627601e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 764,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 765,
+      "flange_position_difference_m": 9.42055475210265e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 766,
+      "flange_position_difference_m": 4.577566798522237e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 767,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 768,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 769,
+      "flange_position_difference_m": 0.0,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 770,
+      "flange_position_difference_m": 6.335327934766281e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 771,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 772,
+      "flange_position_difference_m": 4.47545209131181e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 773,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 774,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 775,
+      "flange_position_difference_m": 8.920730087951354e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 776,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 777,
+      "flange_position_difference_m": 9.222205069512407e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 778,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 779,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 780,
+      "flange_position_difference_m": 3.188872858294072e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 781,
+      "flange_position_difference_m": 7.027150473277823e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 782,
+      "flange_position_difference_m": 4.577566798522237e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 783,
+      "flange_position_difference_m": 9.424642647609475e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 784,
+      "flange_position_difference_m": 6.304854800243424e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 785,
+      "flange_position_difference_m": 6.304854800243424e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 786,
+      "flange_position_difference_m": 4.47545209131181e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 787,
+      "flange_position_difference_m": 8.08254562088053e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 788,
+      "flange_position_difference_m": 6.661338147750939e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 789,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 790,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 791,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 792,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 793,
+      "flange_position_difference_m": 3.2487068343022356e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 794,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 795,
+      "flange_position_difference_m": 3.2487068343022356e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 796,
+      "flange_position_difference_m": 3.188872858294072e-16,
+      "quaternion_abs_dot": 0.9999999999999996
+    },
+    {
+      "knot_index": 797,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 798,
+      "flange_position_difference_m": 5.087681048627601e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 799,
+      "flange_position_difference_m": 4.996003610813204e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 800,
+      "flange_position_difference_m": 2.3714374201337736e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 801,
+      "flange_position_difference_m": 3.2487068343022356e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 802,
+      "flange_position_difference_m": 2.482534153247273e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 803,
+      "flange_position_difference_m": 7.027150473277823e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 804,
+      "flange_position_difference_m": 2.2887833992611187e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 805,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 806,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 807,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 808,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 809,
+      "flange_position_difference_m": 6.667118051786499e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 810,
+      "flange_position_difference_m": 6.304854800243424e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 811,
+      "flange_position_difference_m": 4.652682298944613e-16,
+      "quaternion_abs_dot": 0.9999999999999994
+    },
+    {
+      "knot_index": 812,
+      "flange_position_difference_m": 1.1102230246251565e-15,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 813,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 814,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 815,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 816,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 817,
+      "flange_position_difference_m": 4.518280359883027e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 818,
+      "flange_position_difference_m": 6.667118051786499e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 819,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 820,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 821,
+      "flange_position_difference_m": 3.2487068343022356e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 822,
+      "flange_position_difference_m": 6.318585897742263e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 823,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 824,
+      "flange_position_difference_m": 4.494775313252277e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 825,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 826,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 827,
+      "flange_position_difference_m": 3.2159359137519293e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 828,
+      "flange_position_difference_m": 9.421576892262128e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 829,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 830,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 831,
+      "flange_position_difference_m": 5.11975649256e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 832,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 833,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 834,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 835,
+      "flange_position_difference_m": 4.47545209131181e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 836,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 837,
+      "flange_position_difference_m": 7.021666937153402e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 838,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 839,
+      "flange_position_difference_m": 1.1322097734007351e-15,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 840,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 841,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 842,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 843,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 844,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 845,
+      "flange_position_difference_m": 6.667118051786499e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 846,
+      "flange_position_difference_m": 3.152427400121712e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 847,
+      "flange_position_difference_m": 5.034405433428661e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 848,
+      "flange_position_difference_m": 6.304854800243424e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 849,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 850,
+      "flange_position_difference_m": 7.027150473277823e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 851,
+      "flange_position_difference_m": 7.023038222575547e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 852,
+      "flange_position_difference_m": 9.192921513844874e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 853,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 854,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0000000000000004
+    },
+    {
+      "knot_index": 855,
+      "flange_position_difference_m": 3.1676639673831405e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 856,
+      "flange_position_difference_m": 6.674335893081556e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 857,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 858,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 859,
+      "flange_position_difference_m": 2.7755575615628914e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 860,
+      "flange_position_difference_m": 4.982493048981751e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 861,
+      "flange_position_difference_m": 4.996003610813204e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 862,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 863,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 864,
+      "flange_position_difference_m": 6.286500016609089e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 865,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 866,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 867,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 868,
+      "flange_position_difference_m": 7.027150473277823e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 869,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 870,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 871,
+      "flange_position_difference_m": 8.005932084973442e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 872,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 873,
+      "flange_position_difference_m": 4.460365043975677e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 874,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 875,
+      "flange_position_difference_m": 6.286500016609089e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 876,
+      "flange_position_difference_m": 6.661338147750939e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 877,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 878,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 879,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 880,
+      "flange_position_difference_m": 4.440892098500626e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 881,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 882,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 883,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 884,
+      "flange_position_difference_m": 4.449557262054371e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 885,
+      "flange_position_difference_m": 4.47545209131181e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 886,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 887,
+      "flange_position_difference_m": 9.42055475210265e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 888,
+      "flange_position_difference_m": 4.967007407645019e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 889,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 890,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 891,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 892,
+      "flange_position_difference_m": 4.47545209131181e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 893,
+      "flange_position_difference_m": 6.286500016609089e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 894,
+      "flange_position_difference_m": 3.1676639673831405e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 895,
+      "flange_position_difference_m": 8.007134808947023e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 896,
+      "flange_position_difference_m": 4.965068306494546e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 897,
+      "flange_position_difference_m": 7.021666937153402e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 898,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 899,
+      "flange_position_difference_m": 9.934014815290038e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 900,
+      "flange_position_difference_m": 3.1432500083045447e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 901,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 902,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 903,
+      "flange_position_difference_m": 6.280369834735101e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 904,
+      "flange_position_difference_m": 6.667118051786499e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 905,
+      "flange_position_difference_m": 1.3877787807814457e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 906,
+      "flange_position_difference_m": 2.237726045655905e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 907,
+      "flange_position_difference_m": 1.3877787807814457e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 908,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 909,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 910,
+      "flange_position_difference_m": 9.159339953157541e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 911,
+      "flange_position_difference_m": 2.2591401799415137e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 912,
+      "flange_position_difference_m": 4.972820174300706e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 913,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999997
+    },
+    {
+      "knot_index": 914,
+      "flange_position_difference_m": 2.220446049250313e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 915,
+      "flange_position_difference_m": 3.1401849173675503e-16,
+      "quaternion_abs_dot": 0.9999999999999998
+    },
+    {
+      "knot_index": 916,
+      "flange_position_difference_m": 6.679023307106313e-16,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 917,
+      "flange_position_difference_m": 3.267180239406185e-16,
+      "quaternion_abs_dot": 1.0000000000000002
+    },
+    {
+      "knot_index": 918,
+      "flange_position_difference_m": 4.969430220045889e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    },
+    {
+      "knot_index": 919,
+      "flange_position_difference_m": 4.85722573273506e-17,
+      "quaternion_abs_dot": 1.0
+    },
+    {
+      "knot_index": 920,
+      "flange_position_difference_m": 2.2247786310271853e-16,
+      "quaternion_abs_dot": 0.9999999999999999
+    }
+  ],
+  "camera_frame_translation_m": [
+    1.7359663390244267,
+    0.009564757668156523,
+    1.7049852386284265
+  ],
+  "camera_frame_is_virtual_placement": true,
+  "source_surface_path_points": 321,
+  "robot_pose_checks": 921,
+  "hardware_connected": false,
+  "robot_state_publisher_alive_during_check": true,
+  "screenshots_generated": false,
+  "scope": "ROS PointCloud2 readback and ordered fresh-TF verification of every trajectory knot; collision evidence is separate",
+  "owned_processes_stopped": true
+}

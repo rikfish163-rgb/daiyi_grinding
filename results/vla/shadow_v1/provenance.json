@@ -1,0 +1,36 @@
+{
+  "generated_utc": "2026-10-08T05:21:01.126207+00:00",
+  "experiment_script_sha256": "a62c1bd8a686bbf6f7411f5ae7c3255f8059640a83ddd0607b1f003d2bc856c9",
+  "experiment_script": "/home/hts/demo1/daiyi_grinding/vla_experiment.py",
+  "commands": [
+    ".venv/bin/python daiyi_grinding/vla_experiment.py prepare",
+    "CUDA_VISIBLE_DEVICES=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 hy_vla_repro/.venv/bin/python -u daiyi_grinding/vla_experiment.py infer",
+    ".venv/bin/python -u daiyi_grinding/vla_experiment.py audit"
+  ],
+  "artifact_sha256": {
+    "00_grind_observed_seed17.npz": "62b126b2f08b8fdaf29785b41fe4bfc9a48f9a0237fbbf63e3eafc79fff866ca",
+    "01_grind_observed_seed29.npz": "ceb4cf0c441896ef85bd57daf419b9b59fe97e422269cc53f84ef6972e869024",
+    "02_grind_observed_seed43.npz": "1dc86f0b68da2d4b2533062562eb1a31e47a0007f339cebe02a1140820badf65",
+    "03_hold_observed_seed17.npz": "b8706c5416f4fa07ec0e7c3cc6ecec6175c87168b3a6538e742eb64c05ecc55a",
+    "04_grind_black_images_seed17.npz": "c95116b468ecd15424485428bd787e210e683e4280d5612742996d6cb143fe8e",
+    "05_grind_observed_seed17_repeat.npz": "62b126b2f08b8fdaf29785b41fe4bfc9a48f9a0237fbbf63e3eafc79fff866ca",
+    "audit.json": "fd1aaa131314f36e1f8aac771e3c85e1b7db407c78cde5741811f0e734c647b5",
+    "audit.log": "5e9bfa09ed6668e3561040f0effdc93491706550e5904f074927ccf46d8bd525",
+    "baseline.json": "6625d4dba45191a6ef87701e6e3d10de61ac9356bfaa15fda1f375a8fda6ec6b",
+    "inference.json": "59870e23cdeed8fd926ceed9eddec3d1bc0e863efa6396bdfce6f97e7779adba",
+    "inference.log": "e0fa5d7cc7312dfaefe817747ab9c8e106587da7923874698ff2c663a1fd1008",
+    "input.npz": "cce6d8771cd02791b8121a9af446f36d76b28ca2bd979ea4e9b1dcb9499a0d52",
+    "input_manifest.json": "387e206cc50002fd24bf740bbc076bb6b5f114d9169c653649a9ed8a66d80d67",
+    "inspection.png": "b4804a597882a3faf0de0a3efb8375fab795ea7c82bd069af4005a43915a171e",
+    "overview.png": "33b71d7c24dc0e70498f8146e598bd083ffa499061dbd3dbffbd0d1319091bed",
+    "reference_points.npz": "65fe2c5c56cedf49b9727f71c7fe93dcbfcb1582edaf5ae74d69220d80e6def2",
+    "runs_partial.json": "6dfff3ec37c3dfbcc591d95ad75cd1228eecde5f0ceb4e0d5d5983c419c868c6",
+    "wrist.png": "e65c0993008ffbbd4aecc94adcddea781eaee02e904db4a43d25f50a96804d6f"
+  },
+  "source_verification_urls": [
+    "https://arxiv.org/abs/2606.14409",
+    "https://arxiv.org/abs/2604.15483",
+    "https://github.com/Tencent-Hunyuan/Hy-Embodied-0.5-VLA"
+  ],
+  "scope": "local simulation rendered inputs, released checkpoint inference, offline audit; no uploaded observations; no robot actions"
+}

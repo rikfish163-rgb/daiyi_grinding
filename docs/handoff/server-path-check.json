@@ -1,0 +1,10 @@
+{
+  "source_host": "amax",
+  "workspace": "/home/hts/demo1",
+  "gpu_project": "/home/hts/demo1/hy_vla_repro",
+  "checkpoint_link": "/home/hts/demo1/hy_vla_repro/checkpoints",
+  "checkpoint_target_exists": false,
+  "model_python_exists": false,
+  "weights_moved": false,
+  "gpu_environment_moved": false
+}

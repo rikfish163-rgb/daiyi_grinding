@@ -1,0 +1,8 @@
+# 新机器无法取得历史固定版本时使用。新依赖组合须重新验证。
+mujoco>=3.3,<4
+numpy>=2,<3
+scipy>=1.14,<2
+opencv-python-headless>=4.10,<5
+pillow>=10,<13
+imageio>=2.36,<3
+imageio-ffmpeg>=0.6,<1

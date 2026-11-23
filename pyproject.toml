@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "daiyi-grinding"
+version = "0.1.0"
+description = "Current ESTUN CAD cell: multi-view defect inspection, safe carried-workpiece grinding and reinspection"
+requires-python = ">=3.12"
+dependencies = [
+  "mujoco>=3.3,<4",
+  "numpy>=2,<3",
+  "scipy>=1.14,<2",
+  "opencv-python-headless>=4.10,<5",
+  "pillow>=10,<13",
+  "imageio>=2.36,<3",
+  "imageio-ffmpeg>=0.6,<1",
+  "trimesh>=4,<6",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.9,<1"]
+reports = ["matplotlib>=3.9,<4", "reportlab>=4.2,<5"]
+experiments = ["trimesh>=4,<6", "matplotlib>=3.9,<4"]
+learning = ["torch>=2.6,<3"]
+
+[project.scripts]
+daiyi-serve = "daiyi_grinding.serve:main"
+daiyi-workstation = "daiyi_grinding.workstation_run:main"
+daiyi-workstation-benchmark = "daiyi_grinding.workstation_benchmark:main"
+daiyi-run = "daiyi_grinding.run:main"
+daiyi-benchmark = "daiyi_grinding.benchmark:main"
+daiyi-calibrate = "daiyi_grinding.calibration:main"
+daiyi-vla = "daiyi_grinding.vla_experiment:main"
+daiyi-defect-study = "daiyi_grinding.defect_study:main"
+daiyi-cad-defects = "daiyi_grinding.cad_defects:main"
+daiyi-casting-synthesis = "daiyi_grinding.casting_synthesis:main"
+daiyi-team-data = "daiyi_grinding.team_data_reuse:main"
+daiyi-casting-scan = "daiyi_grinding.casting_scan_calibration:main"
+daiyi-defect-model = "daiyi_grinding.defect_training:main"
+daiyi-cad-resolution = "daiyi_grinding.cad_resolution:main"
+daiyi-cad-refinement = "daiyi_grinding.cad_refinement:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 80
+include = ["src/**/*.py", "tests/**/*.py"]
+
+[tool.ruff.lint]
+select = ["E4", "E9", "F", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["daiyi_grinding"]

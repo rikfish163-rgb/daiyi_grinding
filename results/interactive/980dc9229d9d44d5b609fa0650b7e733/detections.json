@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "kind": "preserve",
+    "pixels": 8169,
+    "length_mm": 136.44601513756604,
+    "width_mm": 8.123930488102294,
+    "height_mm": 1.2245535850524902,
+    "confidence": 0.4898214340209961,
+    "reason": "broad/design-like geometry or ambiguous feature",
+    "bbox": [
+      178,
+      349,
+      546,
+      375
+    ]
+  },
+  {
+    "id": 3,
+    "kind": "preserve",
+    "pixels": 569,
+    "length_mm": 17.96126417012745,
+    "width_mm": 4.850167779805544,
+    "height_mm": 2.459859848022461,
+    "confidence": 0.98,
+    "reason": "broad/design-like geometry or ambiguous feature",
+    "bbox": [
+      542,
+      372,
+      593,
+      386
+    ]
+  }
+]

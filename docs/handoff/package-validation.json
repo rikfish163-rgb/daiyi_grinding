@@ -1,0 +1,30 @@
+{
+  "layout": "Linux main/simulation host + remote GPU server",
+  "main_contains_gpu_project": false,
+  "server_weights_moved": false,
+  "server_training_environment_moved": false,
+  "gpu_server_connection_tested": false,
+  "target_host_tested": false,
+  "scripts_shell_syntax": "passed",
+  "unit_tests": "9 passed; main-runtime-validation.log",
+  "perception_smoke": "passed; seed7 mixed; 14 paths; normal structure selected pixels=0",
+  "http_checks": {
+    "initial": "demo_v3, 14 paths",
+    "/": 200,
+    "/docs/fr5_real_robot_plan.md": 200,
+    "/artifacts/results/vla/shadow_v1/audit.json": 200,
+    "/deliverables/%E6%88%B4%E5%B1%B9%E8%A7%86%E8%A7%89%E6%89%93%E7%A3%A8%E4%BB%BF%E7%9C%9F%E9%AA%8C%E8%AF%81%E4%B8%8EFR5%E8%AE%A1%E5%88%92.pdf": 200,
+    "/deliverables/%E6%88%B4%E5%B1%B9%E8%A7%86%E8%A7%89%E6%89%93%E7%A3%A8%E6%BC%94%E7%A4%BA%E5%8C%85.zip": 200,
+    "new_planning_subprocess": "passed; root .venv used; 14 paths"
+  },
+  "main_python_sources_unchanged": true,
+  "previous_full_motion_validation": "See previous-package-validation.json: independent Python3.14.4/MuJoCo3.17.0 full motion passed; main Python sources unchanged",
+  "excluded_from_main_archive": [
+    ".venv",
+    "hy_vla_repro",
+    "training weights/data/caches",
+    "full historical results",
+    "source snapshots",
+    "generated migration smoke outputs"
+  ]
+}

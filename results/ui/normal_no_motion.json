@@ -1,0 +1,11 @@
+{
+  "planning_id": "0672b5e42e054ef6bd78e2fb08358470",
+  "execution_id": "980dc9229d9d44d5b609fa0650b7e733",
+  "paths": 0,
+  "has_execution": false,
+  "status": {
+    "stage": "complete",
+    "result": "result.json"
+  },
+  "material_removal_simulated": false
+}

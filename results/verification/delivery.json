@@ -1,0 +1,19 @@
+{
+  "unit_tests": "9 passed; see tests.log",
+  "formal_perception_runs": 84,
+  "formal_scenes": 42,
+  "demo_motion_gate": true,
+  "browser_checks": "daiyi_grinding/results/ui/browser_regression.json",
+  "package_files": 71,
+  "package_hashes_verified": true,
+  "video_duration_s": 120.92,
+  "video_size": [
+    1280,
+    800
+  ],
+  "video_fps": 12.0,
+  "pdf_pages": 4,
+  "local_server": "http://127.0.0.1:8848",
+  "real_robot_connected": false,
+  "material_removal_validated": false
+}

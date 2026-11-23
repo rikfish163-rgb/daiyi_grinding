@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.gpu.env
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+runs/
+MUJOCO_LOG.TXT
+external/

@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>戴屹 ESTUN 整站打磨仿真控制台</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23087763'/%3E%3Cpath d='M9 8h6a8 8 0 010 16H9z' fill='none' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
+  <script type="importmap">{"imports":{"three":"/vendor/three.module.js"}}</script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <span class="mark" aria-hidden="true">D</span>
+        <span class="brand-text">
+          <strong>戴屹 ESTUN iER220-2700</strong>
+          <small>固定相机分度扫描与携件砂带打磨仿真</small>
+        </span>
+      </a>
+
+      <div class="topbar-status" aria-live="polite">
+        <div class="status-cluster">
+          <span id="record-kind" class="status-meta">载入当前整站</span>
+          <div class="status-headline">
+            <span class="status-dot" aria-hidden="true"></span>
+            <strong id="run-state">正在连接</strong>
+            <span id="task-outcome-pill" class="outcome-pill tone-neutral">等待状态</span>
+          </div>
+          <small id="run-detail" class="status-detail">机械臂、工具、夹具与工件独立建模</small>
+        </div>
+      </div>
+
+      <nav class="topbar-nav" aria-label="项目资料">
+        <a href="/docs/workstation_simulation.md" target="_blank" rel="noopener">工况与模型</a>
+        <a href="/docs/workstation_upgrade_20261119.md" target="_blank" rel="noopener">验证报告</a>
+        <a href="/docs/casting_synthesis_20261120.md" target="_blank" rel="noopener">缺陷样本</a>
+        <a href="/docs/team_data_reuse_20261121.md" target="_blank" rel="noopener">团队数据</a>
+        <a href="/docs/learned_grinding_20261121.md" target="_blank" rel="noopener">模型训练</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="command-deck panel" aria-label="工况配置与仿真控制">
+      <div class="controls-grid">
+        <label class="field" for="case">
+          <span>工件缺陷</span>
+          <select id="case">
+            <optgroup label="研究合成 · 候选分型线与实物形态">
+              <option value="casting_mixed">变厚批缝 + 卷曲 / 破裂 + 毛刺</option>
+              <option value="casting_flash">变厚弯曲批缝</option>
+              <option value="casting_interrupted">断续飞边</option>
+              <option value="casting_curled">卷曲薄片飞边</option>
+              <option value="casting_torn">破裂与缺口飞边</option>
+              <option value="casting_burr">不规则局部毛刺</option>
+              <option value="casting_normal">正常铸件（同材质对照）</option>
+            </optgroup>
+            <optgroup label="原有基线与对照">
+              <option value="mixed" selected>批缝 + 局部毛刺</option>
+              <option value="seam">批缝</option>
+              <option value="burr">局部毛刺</option>
+              <option value="thin">低矮薄批缝</option>
+              <option value="normal">正常工件（无缺陷）</option>
+              <option value="coarse">粗大余料（需复核）</option>
+              <option value="noisy">混合缺陷与深度噪声</option>
+            </optgroup>
+          </select>
+        </label>
+
+        <label class="field" for="mode">
+          <span>加工方式</span>
+          <select id="mode">
+            <option value="removal">缺陷几何去除仿真</option>
+            <option value="clearance">3 mm 间隙轨迹验证</option>
+          </select>
+        </label>
+
+        <label class="field" for="views">
+          <span>观测方式</span>
+          <select id="views">
+            <option value="multi">六视角编码器分度</option>
+            <option value="single">单视角对照实验</option>
+          </select>
+        </label>
+
+        <label class="field" for="targeted-rescan">
+          <span>遮挡区域补拍</span>
+          <select id="targeted-rescan"><option value="off">标准复检</option><option value="on">允许补拍缺测区域</option></select>
+        </label>
+
+        <label class="field" for="tool">
+          <span>固定磨具</span>
+          <select id="tool">
+            <option value="belt">固定砂带（当前工况）</option>
+            <option value="wheel">主轴磨轮（工具对照）</option>
+          </select>
+        </label>
+
+        <label class="field" for="grasp-setup">
+          <span>夹持方案</span>
+          <select id="grasp-setup">
+            <option value="original">原 CAD 夹持</option>
+            <option value="opposite_simulation">对侧夹持（仿真）</option>
+          </select>
+        </label>
+
+        <label class="field field-seed" for="seed">
+          <span>场景种子</span>
+          <input id="seed" type="number" min="0" max="1000000" value="7007" aria-describedby="parameter-error">
+        </label>
+
+        <div class="command-actions">
+          <button id="plan" type="button" class="btn-secondary">更新观测与预测</button>
+          <button id="execute" type="button" class="btn-primary" disabled>运行整站仿真</button>
+        </div>
+      </div>
+
+      <div class="profile-row">
+        <label class="field profile-field" for="workpiece-profile">
+          <span>工件配置</span>
+          <select id="workpiece-profile"><option value="">手动配置</option></select>
+        </label>
+        <label class="field profile-field" for="casting-profile">
+          <span>缺陷构造来源</span>
+          <select id="casting-profile" aria-describedby="profile-detail">
+            <option value="team_prior_20261121">杨的方法 + 曹的数据先验</option>
+            <option value="research_casting_v1">研究合成 v1 · 原始参数</option>
+          </select>
+        </label>
+        <label class="field profile-field" for="detector">
+          <span>缺陷识别方式</span>
+          <select id="detector" aria-describedby="detector-detail">
+            <option value="hybrid">批缝几何与专用网络组合</option>
+            <option value="learned">专用 RGB-D 分割模型</option>
+            <option value="geometric">原几何规则（对照）</option>
+          </select>
+        </label>
+        <p id="profile-detail" class="profile-detail">团队先验与真实点云校准分别记录。</p>
+      </div>
+      <p id="detector-detail" class="profile-detail">模型识别缺陷，三维测量与整站检查决定可执行路径。</p>
+
+      <div class="command-feedback">
+        <div id="notice" role="status" aria-live="polite">正在读取当前 ESTUN 整站并采集工件。</div>
+        <p id="parameter-error" class="field-error" role="alert" hidden></p>
+      </div>
+    </section>
+
+    <section class="panel station-panel" aria-labelledby="station-title">
+      <div class="panelhead station-head">
+        <div class="panel-title-group">
+          <h1 id="station-title">ESTUN 整站数字孪生</h1>
+          <span id="model-state" class="meta-badge">读取 CAD 网格</span>
+        </div>
+        <div class="layer-toggles" role="group" aria-label="三维辅助图层">
+          <label class="toggle-chip"><input id="semantic-colors" type="checkbox" checked><span>部件分色</span></label>
+          <label class="toggle-chip"><input id="show-cloud" type="checkbox"><span>观测点云</span></label>
+          <label class="toggle-chip"><input id="show-motion" type="checkbox" checked><span>已验收转场路线</span></label>
+        </div>
+      </div>
+
+      <div class="station-grid">
+        <div class="scene-area">
+          <div class="viewbar">
+            <div class="view-presets" role="group" aria-label="三维场景视角">
+              <button id="view-overview" type="button" class="active">整站</button>
+              <button id="view-loading" type="button">扫描与装夹</button>
+              <button id="view-process" type="button">工具区</button>
+              <button id="view-workpiece" type="button">跟随工件</button>
+            </div>
+            <div class="viewbar-right">
+              <div class="path-legend" aria-label="三维轨迹图例">
+                <span class="legend-item"><i class="swatch-trace" aria-hidden="true"></i>工件路径</span>
+                <span class="legend-item"><i class="swatch-motion" aria-hidden="true"></i>转场路线</span>
+              </div>
+              <div class="orbit-controls" role="group" aria-label="视角微调控制">
+                <button id="rotate-left" type="button" title="向左旋转" aria-label="向左旋转视角">↶</button>
+                <button id="rotate-right" type="button" title="向右旋转" aria-label="向右旋转视角">↷</button>
+                <button id="zoom-in" type="button" title="放大" aria-label="放大场景">＋</button>
+                <button id="zoom-out" type="button" title="缩小" aria-label="缩小场景">−</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="scene3d" tabindex="0" role="region" aria-label="可旋转的整站 CAD 场景，左右方向键旋转，上下方向键调整俯仰，加减键缩放">
+            <div id="scene-loading">正在载入现有设备与工件模型…</div>
+            <div class="scene-hud">
+              <span id="phase-name" class="hud-phase">检查工件</span>
+              <span id="sim-clock" class="hud-clock">t = 0.0 s</span>
+            </div>
+            <div class="scene-hint" aria-hidden="true">左键拖动旋转 / 滚轮缩放 / 点击部件高亮详情</div>
+          </div>
+        </div>
+
+        <aside class="assembly-panel" aria-label="独立场景部件">
+          <div class="assembly-heading">
+            <div>
+              <h2>场景部件</h2>
+              <span id="component-count" class="muted">等待模型</span>
+            </div>
+            <button id="show-all-components" type="button" class="btn-ghost-sm">全部显示</button>
+          </div>
+          <div id="component-list" class="component-list"></div>
+          <div id="component-detail" class="component-detail" aria-live="polite">
+            <strong>点选部件查看职责</strong>
+            <p>安装底座承载机械臂，定位夹具支撑工件，底座铸件是待打磨产品；抓手负责携件，固定砂带负责加工。</p>
+          </div>
+        </aside>
+      </div>
+
+      <div class="telemetry-dock" aria-label="实时仿真遥测与关节反馈">
+        <div class="telemetry-primary">
+          <div class="playback-group">
+            <button id="replay" type="button" class="btn-replay" disabled>回放这次仿真</button>
+            <div class="progress-wrap">
+              <div class="progress-meta">
+                <span>仿真进度</span>
+                <strong id="progress-pct">0%</strong>
+              </div>
+              <progress id="progress" max="1" value="0" aria-label="当前仿真进度"></progress>
+            </div>
+          </div>
+
+          <div class="telemetry-readouts">
+            <div class="telemetry-cell">
+              <span>夹持状态</span>
+              <strong id="grasp-state">工件在定位夹具中</strong>
+            </div>
+            <div class="telemetry-cell">
+              <span>转台编码器</span>
+              <strong id="table-angle" class="num">0.00°</strong>
+            </div>
+            <div class="telemetry-cell">
+              <span>预测状态</span>
+              <strong id="prediction-revision">正在采集</strong>
+            </div>
+            <div class="telemetry-cell">
+              <span>抓手原点误差</span>
+              <strong id="tracking-error" class="num">—</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="joint-strip" aria-label="MuJoCo 六轴实际关节角">
+          <span class="joint-strip-label">MuJoCo 六轴关节角</span>
+          <div id="joint-values"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel verification-band" aria-labelledby="verification-title">
+      <div class="panelhead verification-head">
+        <h2 id="verification-title">本次验证指标</h2>
+        <p id="preflight-state" class="verification-summary">逐段检查六轴可达性、携件碰撞及进出段。</p>
+      </div>
+      <div id="metrics" class="metric-groups"></div>
+    </section>
+
+    <nav class="stage-switcher" aria-label="工艺分析模块视图切换">
+      <div class="stage-tabs" role="group" aria-label="选择要显示的工艺分析阶段">
+        <button type="button" data-stage-filter="all" class="active" aria-pressed="true">全部模块</button>
+        <button type="button" data-stage-filter="vision" aria-pressed="false">视觉观测与加工区域</button>
+        <button type="button" data-stage-filter="safety" aria-pressed="false">逐段安全验收</button>
+        <button id="stage-btn-after" type="button" data-stage-filter="after" aria-pressed="false" hidden>加工后复检</button>
+      </div>
+      <span class="stage-hint">工艺顺序：分度采集 → 选区与检测 → 逐段安全验收 → 携件加工与复检</span>
+    </nav>
+
+    <div class="analysis-stack">
+      <section class="stage-group" data-stage-section="vision" aria-label="视觉观测、选区与加工区域">
+        <section class="workspace-grid">
+          <article class="panel vision-card">
+            <div class="panelhead">
+              <h2>工件观测与处理范围</h2>
+              <span id="roi-status" class="meta-badge">全工件检测</span>
+            </div>
+            <div class="canvas-wrap">
+              <img id="raw" alt="当前底座铸件零度视角的原始仿真 RGB 观测">
+              <canvas id="roi-canvas" width="1024" height="768" aria-label="工件处理范围，支持下方坐标输入"></canvas>
+              <span class="image-label">固定 3D 相机（零度 RGB-D）</span>
+            </div>
+            <div class="drawbar" role="group" aria-label="工件选区绘制">
+              <button type="button" data-tool="none" class="active">浏览</button>
+              <button type="button" data-tool="rect">矩形选区</button>
+              <button type="button" data-tool="polygon">多边形选区</button>
+              <button id="finish-roi" type="button">完成选区</button>
+              <button id="clear-roi" type="button">清除</button>
+            </div>
+            <details class="roi-input">
+              <summary>按像素坐标添加顶点</summary>
+              <div class="roi-coord-row">
+                <label for="roi-x"><span>X（0–1023）</span><input id="roi-x" type="number" min="0" max="1023" value="300"></label>
+                <label for="roi-y"><span>Y（0–767）</span><input id="roi-y" type="number" min="0" max="767" value="250"></label>
+                <button id="add-roi-point" type="button">添加顶点</button>
+              </div>
+            </details>
+            <p class="card-note">选区绑定零度观测中的同一可见表面，转台旋转后保持约束，需容纳固定砂带包络（约 75 × 140 mm）。</p>
+          </article>
+
+          <article class="panel vision-card">
+            <div class="panelhead">
+              <h2>缺陷检测与预测路径</h2>
+              <span id="path-count" class="meta-badge">等待观测</span>
+            </div>
+            <div class="media-frame">
+              <img id="overlay" class="result-image" alt="底座铸件的检测区域和预测打磨路径">
+              <span class="image-label">检测叠加与局部轨迹投影</span>
+            </div>
+            <div class="legend">
+              <span class="seam">批缝</span>
+              <span class="burr">毛刺</span>
+              <span class="review">待复核</span>
+              <span class="trace">预测路径</span>
+            </div>
+            <p class="card-note">由实测深度与同姿态正常 CAD 参考计算余量；路径绑定在工件局部坐标系中，携件搬运时随工件变换。</p>
+          </article>
+
+          <aside class="panel regions-panel" aria-labelledby="regions-title">
+            <div class="panelhead">
+              <h2 id="regions-title">加工区域清单</h2>
+              <span id="region-count" class="meta-badge">—</span>
+            </div>
+            <div class="region-tools">
+              <button id="select-auto" type="button">勾选可加工缺陷</button>
+              <button id="select-none" type="button">清空选择</button>
+            </div>
+            <div id="region-list" class="region-list">
+              <p class="empty">等待本次工件观测</p>
+            </div>
+          </aside>
+        </section>
+
+        <section class="panel scan-panel" aria-labelledby="scan-title">
+          <div class="panelhead">
+            <h2 id="scan-title">固定相机分度观测</h2>
+            <span id="scan-detail" class="muted">每 60° 采集一帧，按编码器位姿统一到工件坐标</span>
+          </div>
+          <div id="scan-views" class="scan-views">
+            <p class="empty">等待第一帧 RGB-D</p>
+          </div>
+        </section>
+      </section>
+
+      <section class="panel safety-panel" data-stage-section="safety" aria-labelledby="safety-title">
+        <div class="panelhead safety-head">
+          <div class="panel-title-group">
+            <h2 id="safety-title">逐段安全验收与自动修复</h2>
+            <span id="segment-summary" class="meta-badge">等待路径</span>
+          </div>
+          <div class="segment-filters" role="group" aria-label="按验收状态筛选路径段">
+            <button type="button" data-seg-filter="all" class="active" aria-pressed="true">全部</button>
+            <button type="button" data-seg-filter="passed" aria-pressed="false">完整通过</button>
+            <button type="button" data-seg-filter="blocked" aria-pressed="false">受阻</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>路径段</th>
+                <th>所属区域</th>
+                <th>采集视角</th>
+                <th>验收状态</th>
+                <th>姿态参数 / 拒绝原因</th>
+              </tr>
+            </thead>
+            <tbody id="segment-rows">
+              <tr><td colspan="5">等待六轴可达性与携件避障检查</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="after-panel" class="panel after-panel" data-stage-section="after" hidden>
+        <div class="panelhead">
+          <h2>加工后复检与补磨预测</h2>
+          <span id="after-state" class="meta-badge"></span>
+        </div>
+        <div class="after-grid">
+          <figure class="after-figure">
+            <img id="after-raw" alt="几何去除后新采集的工件图像">
+            <figcaption>复检原始 RGB-D 观测</figcaption>
+          </figure>
+          <figure class="after-figure">
+            <img id="after-overlay" alt="加工后重新检测的剩余缺陷与预测路径">
+            <figcaption>残余检测与补磨候选轨迹</figcaption>
+          </figure>
+          <div class="after-summary">
+            <span class="after-kicker">新观测复检结论</span>
+            <strong id="remaining-regions">—</strong>
+            <div class="after-callout">
+              <p id="removal-detail"></p>
+              <p id="followup-detail"></p>
+            </div>
+            <p class="after-disclaimer">几何余料去除用于验证闭环流程；真实接触力、去除速率、热效应与表面粗糙度尚未建立实测模型。</p>
+          </div>
+        </div>
+        <div id="reinspection-region-table" class="table-scroll" hidden>
+          <table aria-label="已登记 CAD 区域的复检证据">
+            <thead>
+              <tr><th>区域</th><th>类型</th><th>实测点 / 登记点</th><th>峰值 mm</th><th>计入不确定度的峰值 mm</th><th>结论</th></tr>
+            </thead>
+            <tbody id="reinspection-region-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <section class="exports-bar" aria-label="运行产物与导出">
+      <span class="exports-label">运行产物导出</span>
+      <div class="downloads">
+        <a id="download-path" aria-disabled="true"><span>工件轨迹</span><small>CSV</small></a>
+        <a id="download-result" aria-disabled="true"><span>完整运行记录</span><small>JSON</small></a>
+        <a id="download-cycle" aria-disabled="true"><span>节拍与验收回执</span><small>JSON</small></a>
+        <a id="download-scene" aria-disabled="true"><span>当前 MuJoCo 场景</span><small>XML</small></a>
+        <a id="download-metrics" aria-disabled="true"><span>逐视角识别指标</span><small>JSON</small></a>
+      </div>
+    </section>
+
+    <footer class="app-footer">
+      <span>ESTUN iER220-2700 独立设备建模 / 固定相机与编码器分度 / 安全规划与闭环复检</span>
+      <span>砂带加工面依附 CAD 背板配置，转台与相机为参数模型，识别指标来自合成缺陷仿真。</span>
+    </footer>
+  </main>
+
+  <dialog id="view-dialog" aria-labelledby="view-dialog-title">
+    <div class="panelhead dialog-head">
+      <h2 id="view-dialog-title">分度观测</h2>
+      <button id="close-view-dialog" type="button" aria-label="关闭观测详情">关闭</button>
+    </div>
+    <img id="view-dialog-image" alt="指定角度的缺陷检测与轨迹投影">
+    <p id="view-dialog-detail"></p>
+  </dialog>
+
+  <script type="module" src="/workstation-app.js"></script>
+</body>
+</html>

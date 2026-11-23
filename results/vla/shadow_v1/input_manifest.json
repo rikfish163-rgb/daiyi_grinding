@@ -1,0 +1,44 @@
+{
+  "scope": "MuJoCo rendered FR5 single-arm casting scene; shadow inference only",
+  "scene_seed": 7,
+  "scene_case": "mixed",
+  "input_file_sha256": "cce6d8771cd02791b8121a9af446f36d76b28ca2bd979ea4e9b1dcb9499a0d52",
+  "array_sha256": {
+    "head": "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+    "left": "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+    "right": "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7",
+    "eef": "183a76135ad3228d19c33a32752c81b61b611a76c314f4ea1d6933102c601294",
+    "depth": "1eed2c0a75be78adca44f6d8d055f9f0588fd9d636208f008894dcffd5287a1b",
+    "K": "83e9185879df07aee266e291b3d47623c7c81940bbd5c709a4bbcc8644d2ffcc",
+    "T_world_camera": "d7dea67662dfd07312f8c31cecd8b2a1cd5fb5609a3fc9d85c934bc56ec06d48"
+  },
+  "frame_shape": [
+    576,
+    768,
+    3
+  ],
+  "camera_mapping": {
+    "top_head": "overview",
+    "hand_left": "FR5 wrist",
+    "hand_right": "inspection (fixed camera substituted for absent right wrist)"
+  },
+  "state_semantics": "[left xyz m,wxyz,gripper; right xyz m,wxyz,gripper]; left=FR5 ball tip TCP; right=duplicated virtual TCP; grippers=0 placeholders",
+  "coordinate_assumption": "MuJoCo world numbers passed as RoboTwin world; no learned or calibrated cross-embodiment transform",
+  "depth_usage": "used by geometric baseline and audit only; Hy RGB/state input does not consume depth",
+  "history": "first observation only; 6 history slots at interval 5, startup zero padding, no invented temporal motion",
+  "tool": "nominal 6mm spherical abrasive, TCP at ball tip; RoboTwin EEF/gripper/tool convention uncalibrated",
+  "source_hashes": {
+    "daiyi_grinding/sim.py": "13039ee2aa41a050e996e3bb85b8de466f471dda3ad1ca05054ce21197bea773",
+    "daiyi_grinding/geometry.py": "1d93e4ade2064535c82ffb93e3596a8f98f448f8f04489dfd706f17ad3aef596",
+    "daiyi_grinding/perception.py": "0203b0e2e5696fa8773f08c5ca95a0df8ff30099b67ec2c78ca8ed8a7a510584",
+    "daiyi_grinding/planning.py": "55ee14bbcd17008faf62619210351f136444a522e504b7cbe15c542241089055"
+  },
+  "input_schema_version": 1,
+  "unconditional_execution_blockers": [
+    "dual_arm_to_FR5_mapping_not_calibrated",
+    "missing_second_arm_and_right_wrist",
+    "RoboTwin_EEF_to_ball_tool_TCP_not_calibrated",
+    "no_casting_grinding_finetune_or_task_success_validation",
+    "no_action_timebase_force_or_material_removal_model"
+  ]
+}

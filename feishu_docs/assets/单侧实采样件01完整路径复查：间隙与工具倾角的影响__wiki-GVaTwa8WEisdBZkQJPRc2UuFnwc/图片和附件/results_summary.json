@@ -1,0 +1,77 @@
+{
+  "date": "2026-11-16",
+  "status": "passed",
+  "sample_id": "unidentified_sample_20261116_01",
+  "unit": "mm",
+  "source_surface_points": 321,
+  "source_surface_path_SHA256": "b7a598e88c0b2cbc7c82b4b72e26c38e88c88cb7f60a548714d1d99bc69065c9",
+  "source_scan_SHA256": "01aa4c4a02ec347d7e21dca434bde26d3bcaf39ea85f9ad5bbe4dbc2e9f2cbde",
+  "trial_results": [
+    {
+      "case": "A",
+      "clearance_mm": 8,
+      "tool_tilt_deg": 0,
+      "native_pose_count": 1911,
+      "self_collision_poses": 74,
+      "combined_collision_poses": 188
+    },
+    {
+      "case": "B",
+      "clearance_mm": 16,
+      "tool_tilt_deg": 0,
+      "native_pose_count": 1909,
+      "self_collision_poses": 70,
+      "combined_collision_poses": 70
+    },
+    {
+      "case": "C",
+      "clearance_mm": 16,
+      "tool_tilt_deg": -15,
+      "native_pose_count": 1841,
+      "self_collision_poses": 0,
+      "combined_collision_poses": 0
+    }
+  ],
+  "new_full_path": {
+    "knots": 921,
+    "native_pose_count": 1841,
+    "holdout_samples": 3680,
+    "max_holdout_position_mm": 0.006302818157379567,
+    "max_holdout_orientation_deg": 0.0009448940236866459,
+    "ordered_ROS_knots_checked": 921,
+    "max_ordered_ROS_FK_difference_m": 1.4895204919483639e-15
+  },
+  "unchanged_surface_points_and_normals_verified": true,
+  "unchanged_B_from_scan_verified": true,
+  "unchanged_collision_geometry_and_exclusions_verified": true,
+  "positive_negative_controls": [
+    {
+      "name": "occupied_cell_probe",
+      "collision": true,
+      "expected": true
+    },
+    {
+      "name": "far_probe",
+      "collision": false,
+      "expected": false
+    },
+    {
+      "name": "nominal_tool_16mm_gap",
+      "collision": false,
+      "expected": false
+    },
+    {
+      "name": "tool_extended_21mm",
+      "collision": true,
+      "expected": true
+    }
+  ],
+  "geometry_scope": "2mm cubes enclosing measured object points only; unseen surfaces/interior/support fixtures are not represented",
+  "hardware_connected": false,
+  "physical_joint_mapping_verified": false,
+  "source_files": {
+    "native": "8770f69a3b59df8517e2996298d21040900f9c39875b289ddb1222b5d9936b38",
+    "ordered_ROS": "c42d2a75a7ed7ae0258d88b0c2aab52b8c933f934e144936960a260cef01f855",
+    "URDF": "755568e8d82ab88b28b1742a444f77cba0b1355419890d2b0b96f60326bd553b"
+  }
+}

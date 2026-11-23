@@ -1,0 +1,73 @@
+{
+  "source_files_unchanged": true,
+  "copied_file_count": 815,
+  "python_syntax_files": 281,
+  "http_checks": {
+    "initial_demo": "demo_v3; motion_gate_passed=true",
+    "/": {
+      "status": 200,
+      "bytes": "5870"
+    },
+    "/app.js": {
+      "status": 200,
+      "bytes": "12310"
+    },
+    "/style.css": {
+      "status": 200,
+      "bytes": "8427"
+    },
+    "/docs/fr5_real_robot_plan.md": {
+      "status": 200,
+      "bytes": "11496"
+    },
+    "/deliverables/%E6%88%B4%E5%B1%B9%E8%A7%86%E8%A7%89%E6%89%93%E7%A3%A8%E4%BB%BF%E7%9C%9F%E9%AA%8C%E8%AF%81%E4%B8%8EFR5%E8%AE%A1%E5%88%92.pdf": {
+      "status": 200,
+      "bytes": "231158"
+    },
+    "/deliverables/%E6%88%B4%E5%B1%B9%E8%A7%86%E8%A7%89%E6%89%93%E7%A3%A8%E6%BC%94%E7%A4%BA%E5%8C%85.zip": {
+      "status": 200,
+      "bytes": "14742218"
+    },
+    "video_range": "206; 1024 bytes"
+  },
+  "fresh_environment_install": "passed; isolated .venv; compatible dependencies frozen in handoff/requirements-validated.txt",
+  "full_motion_rerun": true,
+  "new_host_tested": false,
+  "shell_syntax": "bootstrap.sh and verify.sh passed bash -n",
+  "excluded_from_archive": [
+    ".venv",
+    "__pycache__",
+    "*.pyc",
+    ".pytest_cache",
+    ".git"
+  ],
+  "archive_scope": "All existing grinding source, results, deliverables and assets, plus optional Hy source/environment rebuild files",
+  "validation_python": "3.14.4",
+  "validation_mujoco": "3.17.0",
+  "unit_tests": "9 passed; handoff/runtime-validation.log",
+  "perception_smoke": "passed; seed7 mixed; 14 paths; normal_structure_selected_pixels=0",
+  "full_motion_video_regenerated": false,
+  "motion_validation": {
+    "result": "daiyi_grinding/results/migration_motion_validation/result.json",
+    "motion_gate_passed": true,
+    "simulation_seconds": 120.8699999998997,
+    "execution": {
+      "simulation_steps": 60435,
+      "simulated_seconds": 120.8699999998997,
+      "tracking_trace_rms_mm": 0.0305775809933066,
+      "tracking_trace_p95_mm": 0.054552328735505834,
+      "tracking_trace_max_mm": 0.29676019921716257,
+      "tracking_trace_orientation_p95_deg": 0.005045495169160372,
+      "unexpected_contact_count": 0,
+      "unexpected_contacts": [],
+      "max_contact_force_n": 0.0,
+      "abrasive_contact_steps": 0,
+      "contact_sampling_ms": 2.0,
+      "logging": "post-integration FK and contemporaneous interpolated target; TCP statistics sampled each 10ms",
+      "material_removal_simulated": false,
+      "force_control_validated": false,
+      "controller": "MuJoCo position servo + desired-velocity and model gravity feedforward; not FR5 controller emulation"
+    }
+  },
+  "historical_outputs_overwritten": false
+}

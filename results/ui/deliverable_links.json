@@ -1,0 +1,15 @@
+{
+  "report": {
+    "status": 200,
+    "type": "application/pdf",
+    "length": "231158"
+  },
+  "package": {
+    "status": 200,
+    "type": "application/zip",
+    "length": "7347523"
+  },
+  "traversal": {
+    "status": 404
+  }
+}

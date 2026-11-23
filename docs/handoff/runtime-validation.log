@@ -1,0 +1,18 @@
+test_c_shaped_roi_cannot_average_trace_into_hole (daiyi_grinding.test_roi.RoiBoundaryTests.test_c_shaped_roi_cannot_average_trace_into_hole) ... ok
+test_concave_notch_splits_continuous_trace (daiyi_grinding.test_roi.RoiBoundaryTests.test_concave_notch_splits_continuous_trace) ... ok
+test_large_roi_keeps_usable_trace_and_four_mm_margin (daiyi_grinding.test_roi.RoiBoundaryTests.test_large_roi_keeps_usable_trace_and_four_mm_margin) ... ok
+test_no_roi_still_plans_nonempty_trace (daiyi_grinding.test_roi.RoiBoundaryTests.test_no_roi_still_plans_nonempty_trace) ... ok
+test_roi_fragment_of_normal_rib_stays_preserve (daiyi_grinding.test_roi.RoiBoundaryTests.test_roi_fragment_of_normal_rib_stays_preserve) ... ok
+test_blank_image_is_rejected (daiyi_grinding.calibration_test.ConventionTests.test_blank_image_is_rejected) ... ok
+test_eye_to_hand_inverse_input_returns_base_camera (daiyi_grinding.calibration_test.ConventionTests.test_eye_to_hand_inverse_input_returns_base_camera) ... ok
+test_loader_rejects_wrong_seed_placement (daiyi_grinding.calibration_test.ConventionTests.test_loader_rejects_wrong_seed_placement) ... ok
+test_transform_inverse_and_optical_axes (daiyi_grinding.calibration_test.ConventionTests.test_transform_inverse_and_optical_axes) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.803s
+
+OK
+{"seed": 7, "case": "mixed", "method": "geometry", "noise_mm": 0.06, "dropout": 0.003, "calibration_source": "image + FK solved eye-to-hand", "roi": null, "selected_ids": null, "perception": {"tp": 2294, "fp": 274, "fn": 445, "precision": 0.8933021806853583, "recall": 0.8375319459656809, "f1": 0.8645185603919352, "normal_structure_selected_pixels": 0, "selected_pixels": 2568, "unsupported_stump_selected_pixels": 0, "auto_regions": 5, "review_regions": 0, "wrong_type_pixels": 0, "defect_footprint_coverage_3mm": 1.0, "coverage_definition": "XY footprint within nominal 3 mm tool radius; not removal or finish quality"}, "path_count": 14, "path_length_mm": 280.8161331821794, "clearance_mm": 3.0, "simulation_only": true, "material_removal_simulated": false, "wall_time_s": 1.3290915380348451}
+Migration perception smoke passed: daiyi_grinding/results/migration_check_3b7cba56e81e400c854e820e6ccef734
+path_count = 14
+This check does not execute the robot motion; see HANDOFF.md for full validation.

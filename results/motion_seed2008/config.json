@@ -1,0 +1,14 @@
+{
+  "seed": 2008,
+  "case": "mixed",
+  "output": "daiyi_grinding/results/motion_seed2008",
+  "method": "geometry",
+  "noise_mm": 0.06,
+  "dropout": 0.003,
+  "clearance_mm": 3.0,
+  "roi": null,
+  "ids": null,
+  "video": false,
+  "perception_only": false,
+  "started_utc": "2026-10-08T05:34:41.153261+00:00"
+}

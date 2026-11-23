@@ -1,0 +1,44 @@
+{
+  "seeds": [
+    1007,
+    1008,
+    1009,
+    1010
+  ],
+  "development_seeds": [
+    7
+  ],
+  "cases": [
+    "mixed",
+    "seam",
+    "burr",
+    "normal",
+    "thin",
+    "coarse",
+    "noisy"
+  ],
+  "methods": [
+    "threshold",
+    "geometry"
+  ],
+  "noise_mm": 0.06,
+  "stress_noise_mm": 0.25,
+  "dropout": 0.003,
+  "stress_dropout": 0.025,
+  "scope": "paired perception and generated-path footprint only; dynamics assessed separately",
+  "frozen_before_run": true,
+  "source_hashes": {
+    "execution.py": "ad50925ef1e6d983ea652d8cdc97ebdce92addb459a68ec52dc8e59cd087ff31",
+    "evaluation.py": "901782bd62bdee7d113017d186dac970201033985d02423c117dea3d4efff6bf",
+    "vla_experiment.py": "a62c1bd8a686bbf6f7411f5ae7c3255f8059640a83ddd0607b1f003d2bc856c9",
+    "__init__.py": "665b2d54488bb397acfe76b03b86f084814b1f95947d413cd3425902c7b6db69",
+    "geometry.py": "1d93e4ade2064535c82ffb93e3596a8f98f448f8f04489dfd706f17ad3aef596",
+    "calibration_test.py": "2ba69afba25a08e4a8646b1aae6d47fc4dabb5fb63c48411709bfa249be4a8e2",
+    "planning.py": "55ee14bbcd17008faf62619210351f136444a522e504b7cbe15c542241089055",
+    "perception.py": "0203b0e2e5696fa8773f08c5ca95a0df8ff30099b67ec2c78ca8ed8a7a510584",
+    "benchmark.py": "16816d403256737f9e513798e49001f7aab38153ef2eb70acdfbcf847826376c",
+    "calibration.py": "19e68cfb16ce34c0d8c8dc33e91ddb98a1fd601e5249b78398ea5913f60d32cb",
+    "sim.py": "ebe87e1093233b097ffd1ca42f14ad0bb129847bc3a8139314a7d60d32218765",
+    "run.py": "68c6b6279036e05a4943618f1a1901f635d82801727c7c6ce1a2cde37af95b61"
+  }
+}

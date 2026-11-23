@@ -1,0 +1,17 @@
+{
+  "simulation_steps": 10371,
+  "simulated_seconds": 20.741999999999383,
+  "tracking_trace_rms_mm": 0.013181837247368045,
+  "tracking_trace_p95_mm": 0.01838502316383558,
+  "tracking_trace_max_mm": 0.12407125465668416,
+  "tracking_trace_orientation_p95_deg": 0.001890408087022356,
+  "unexpected_contact_count": 0,
+  "unexpected_contacts": [],
+  "max_contact_force_n": 0.0,
+  "abrasive_contact_steps": 0,
+  "contact_sampling_ms": 2.0,
+  "logging": "post-integration FK and contemporaneous interpolated target; TCP statistics sampled each 10ms",
+  "material_removal_simulated": false,
+  "force_control_validated": false,
+  "controller": "MuJoCo position servo + desired-velocity and model gravity feedforward; not FR5 controller emulation"
+}

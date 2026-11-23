@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco model="Base_Gripper_Fixture_Workpieces_Inspection">
+  <compiler angle="radian" autolimits="true" meshdir="meshes" />
+  <option timestep="0.002" gravity="0 0 -9.81" />
+  <visual>
+    <global offwidth="1600" offheight="1200" />
+    <map znear="0.01" zfar="10" />
+  </visual>
+  <asset>
+    <mesh name="grip_m0" file="gripper/gripper_c0.stl" inertia="shell" />
+    <material name="grip_mat0" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m1" file="gripper/gripper_c1.stl" inertia="shell" />
+    <material name="grip_mat1" rgba="1.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m2" file="gripper/gripper_c2.stl" inertia="shell" />
+    <material name="grip_mat2" rgba="0.59 0.64 0.85 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m3" file="gripper/gripper_c3.stl" inertia="shell" />
+    <material name="grip_mat3" rgba="0.36 0.46 0.93 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m4" file="gripper/gripper_c4.stl" inertia="shell" />
+    <material name="grip_mat4" rgba="0.09 0.10 0.10 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m5" file="gripper/gripper_c5.stl" inertia="shell" />
+    <material name="grip_mat5" rgba="0.00 1.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m6" file="gripper/gripper_c6.stl" inertia="shell" />
+    <material name="grip_mat6" rgba="0.00 0.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m7" file="gripper/gripper_c7.stl" inertia="shell" />
+    <material name="grip_mat7" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m8" file="gripper/gripper_c8.stl" inertia="shell" />
+    <material name="grip_mat8" rgba="0.22 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m9" file="gripper/gripper_c9.stl" inertia="shell" />
+    <material name="grip_mat9" rgba="0.00 0.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m10" file="gripper/gripper_c10.stl" inertia="shell" />
+    <material name="grip_mat10" rgba="0.60 0.64 0.86 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m11" file="gripper/gripper_c11.stl" inertia="shell" />
+    <material name="grip_mat11" rgba="1.00 1.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="grip_m12" file="gripper/gripper_c12.stl" inertia="shell" />
+    <material name="grip_mat12" rgba="1.00 1.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m0" file="fixture/fixture_c0.stl" inertia="shell" />
+    <material name="fix_mat0" rgba="0.89 0.39 0.07 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m1" file="fixture/fixture_c1.stl" inertia="shell" />
+    <material name="fix_mat1" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m2" file="fixture/fixture_c2.stl" inertia="shell" />
+    <material name="fix_mat2" rgba="0.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m3" file="fixture/fixture_c3.stl" inertia="shell" />
+    <material name="fix_mat3" rgba="0.75 0.74 0.71 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m4" file="fixture/fixture_c4.stl" inertia="shell" />
+    <material name="fix_mat4" rgba="0.00 0.00 0.22 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m5" file="fixture/fixture_c5.stl" inertia="shell" />
+    <material name="fix_mat5" rgba="0.00 0.00 1.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m6" file="fixture/fixture_c6.stl" inertia="shell" />
+    <material name="fix_mat6" rgba="0.36 0.46 0.93 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m7" file="fixture/fixture_c7.stl" inertia="shell" />
+    <material name="fix_mat7" rgba="0.22 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m8" file="fixture/fixture_c8.stl" inertia="shell" />
+    <material name="fix_mat8" rgba="1.00 0.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="fix_m9" file="fixture/fixture_c9.stl" inertia="shell" />
+    <material name="fix_mat9" rgba="1.00 1.00 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="wp_097_m0" file="workpiece/wp_097_c0.stl" inertia="shell" />
+    <material name="wp_097_mat0" rgba="1.00 0.32 0.00 1" specular="0.35" shininess="0.3" />
+    <mesh name="wp_021_m0" file="workpiece/wp_021_c0.stl" inertia="shell" />
+    <material name="wp_021_mat0" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+    <mesh name="wp_surface_m0" file="workpiece/wp_surface_c0.stl" inertia="shell" />
+    <material name="wp_surface_mat0" rgba="0.05 0.52 0.69 1" specular="0.35" shininess="0.3" />
+    <mesh name="wp_surface_m1" file="workpiece/wp_surface_c1.stl" inertia="shell" />
+    <material name="wp_surface_mat1" rgba="0.32 0.32 0.32 1" specular="0.35" shininess="0.3" />
+  </asset>
+  <worldbody>
+    <light pos="1.5 -1.5 2.5" dir="-0.4 0.4 -0.8" diffuse="0.95 0.95 0.95" castshadow="true" />
+    <light pos="-1.5 1.5 2.0" dir="0.4 -0.4 -0.8" diffuse="0.5 0.55 0.6" castshadow="false" />
+    <camera name="iso_assembly" pos="0.85 -1.35 0.85" xyaxes="0.82 0.57 0 -0.22 0.31 0.92" fovy="44" />
+    <camera name="side_compare" pos="0.20 -2.15 0.45" xyaxes="1 0 0 0 0 1" fovy="38" />
+    <geom name="table_plane" type="plane" pos="0 0 0" size="3 3 0.1" rgba="0.18 0.21 0.25 1" />
+    <body name="assembled_station" pos="-0.60 0 0">
+      <geom name="fix_0" type="mesh" mesh="fix_m0" material="fix_mat0" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_1" type="mesh" mesh="fix_m1" material="fix_mat1" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_2" type="mesh" mesh="fix_m2" material="fix_mat2" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_3" type="mesh" mesh="fix_m3" material="fix_mat3" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_4" type="mesh" mesh="fix_m4" material="fix_mat4" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_5" type="mesh" mesh="fix_m5" material="fix_mat5" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_6" type="mesh" mesh="fix_m6" material="fix_mat6" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_7" type="mesh" mesh="fix_m7" material="fix_mat7" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_8" type="mesh" mesh="fix_m8" material="fix_mat8" contype="0" conaffinity="0" group="1" />
+      <geom name="fix_9" type="mesh" mesh="fix_m9" material="fix_mat9" contype="0" conaffinity="0" group="1" />
+      <geom name="wp097_asm_0" type="mesh" mesh="wp_097_m0" material="wp_097_mat0" contype="0" conaffinity="0" group="1" />
+      <body name="gripper_mated" pos="0.090 -0.310 0.421" quat="0.5 0.5 0.5 -0.5">
+        <geom name="grip_asm_0" type="mesh" mesh="grip_m0" material="grip_mat0" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_1" type="mesh" mesh="grip_m1" material="grip_mat1" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_2" type="mesh" mesh="grip_m2" material="grip_mat2" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_3" type="mesh" mesh="grip_m3" material="grip_mat3" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_4" type="mesh" mesh="grip_m4" material="grip_mat4" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_5" type="mesh" mesh="grip_m5" material="grip_mat5" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_6" type="mesh" mesh="grip_m6" material="grip_mat6" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_7" type="mesh" mesh="grip_m7" material="grip_mat7" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_8" type="mesh" mesh="grip_m8" material="grip_mat8" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_9" type="mesh" mesh="grip_m9" material="grip_mat9" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_10" type="mesh" mesh="grip_m10" material="grip_mat10" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_11" type="mesh" mesh="grip_m11" material="grip_mat11" contype="0" conaffinity="0" group="1" />
+        <geom name="grip_asm_12" type="mesh" mesh="grip_m12" material="grip_mat12" contype="0" conaffinity="0" group="1" />
+      </body>
+    </body>
+    <body name="workpiece_021_standalone" pos="0.25 0 0">
+      <geom name="wp021_0" type="mesh" mesh="wp_021_m0" material="wp_021_mat0" contype="0" conaffinity="0" group="1" />
+    </body>
+    <body name="workpiece_surface_standalone" pos="0.85 0 0">
+      <geom name="wpsurf_0" type="mesh" mesh="wp_surface_m0" material="wp_surface_mat0" contype="0" conaffinity="0" group="1" />
+      <geom name="wpsurf_1" type="mesh" mesh="wp_surface_m1" material="wp_surface_mat1" contype="0" conaffinity="0" group="1" />
+    </body>
+  </worldbody>
+</mujoco>

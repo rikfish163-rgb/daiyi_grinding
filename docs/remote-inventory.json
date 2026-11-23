@@ -1,0 +1,541 @@
+{
+  "inventory_date": "2026-11-17",
+  "ssh_host": "4090",
+  "original_package": "/home/hts/demo1/packages/daiyi_grinding_main_20261115",
+  "workspace_source": "/home/hts/demo1/daiyi_grinding",
+  "package_files": [
+    {
+      "path": ".gitignore",
+      "bytes": 157
+    },
+    {
+      "path": "HANDOFF.md",
+      "bytes": 10889
+    },
+    {
+      "path": "README.md",
+      "bytes": 848
+    },
+    {
+      "path": "assets/fairino5_v6/base_link.STL",
+      "bytes": 119984
+    },
+    {
+      "path": "assets/fairino5_v6/forearm_link.STL",
+      "bytes": 450784
+    },
+    {
+      "path": "assets/fairino5_v6/shoulder_link.STL",
+      "bytes": 435584
+    },
+    {
+      "path": "assets/fairino5_v6/upperarm_link.STL",
+      "bytes": 534684
+    },
+    {
+      "path": "assets/fairino5_v6/wrist1_link.STL",
+      "bytes": 452484
+    },
+    {
+      "path": "assets/fairino5_v6/wrist2_link.STL",
+      "bytes": 458984
+    },
+    {
+      "path": "assets/fairino5_v6/wrist3_link.STL",
+      "bytes": 472184
+    },
+    {
+      "path": "daiyi_grinding/PLAN.md",
+      "bytes": 2096
+    },
+    {
+      "path": "daiyi_grinding/README.md",
+      "bytes": 4836
+    },
+    {
+      "path": "daiyi_grinding/__init__.py",
+      "bytes": 164
+    },
+    {
+      "path": "daiyi_grinding/benchmark.py",
+      "bytes": 4170
+    },
+    {
+      "path": "daiyi_grinding/build_delivery.py",
+      "bytes": 18739
+    },
+    {
+      "path": "daiyi_grinding/calibration.py",
+      "bytes": 15465
+    },
+    {
+      "path": "daiyi_grinding/calibration_test.py",
+      "bytes": 2627
+    },
+    {
+      "path": "daiyi_grinding/contact_probe.py",
+      "bytes": 2453
+    },
+    {
+      "path": "daiyi_grinding/deliverables/perception_benchmark.png",
+      "bytes": 34231
+    },
+    {
+      "path": "daiyi_grinding/deliverables/戴屹视觉打磨仿真验证与FR5计划.pdf",
+      "bytes": 231158
+    },
+    {
+      "path": "daiyi_grinding/deliverables/戴屹视觉打磨演示包.zip",
+      "bytes": 7346181
+    },
+    {
+      "path": "daiyi_grinding/docs/calibration.md",
+      "bytes": 6108
+    },
+    {
+      "path": "daiyi_grinding/docs/contact_probe.md",
+      "bytes": 1362
+    },
+    {
+      "path": "daiyi_grinding/docs/demo_script.md",
+      "bytes": 6342
+    },
+    {
+      "path": "daiyi_grinding/docs/experiment_journal.md",
+      "bytes": 11533
+    },
+    {
+      "path": "daiyi_grinding/docs/fr5_real_robot_plan.md",
+      "bytes": 11176
+    },
+    {
+      "path": "daiyi_grinding/docs/research.md",
+      "bytes": 12212
+    },
+    {
+      "path": "daiyi_grinding/docs/vla_experiment.md",
+      "bytes": 8127
+    },
+    {
+      "path": "daiyi_grinding/evaluation.py",
+      "bytes": 1842
+    },
+    {
+      "path": "daiyi_grinding/execution.py",
+      "bytes": 8517
+    },
+    {
+      "path": "daiyi_grinding/geometry.py",
+      "bytes": 2974
+    },
+    {
+      "path": "daiyi_grinding/perception.py",
+      "bytes": 6756
+    },
+    {
+      "path": "daiyi_grinding/planning.py",
+      "bytes": 5274
+    },
+    {
+      "path": "daiyi_grinding/requirements.txt",
+      "bytes": 291
+    },
+    {
+      "path": "daiyi_grinding/results/benchmark_v3/episodes.jsonl",
+      "bytes": 44538
+    },
+    {
+      "path": "daiyi_grinding/results/benchmark_v3/protocol.json",
+      "bytes": 1947
+    },
+    {
+      "path": "daiyi_grinding/results/benchmark_v3/summary.json",
+      "bytes": 7327
+    },
+    {
+      "path": "daiyi_grinding/results/calibration/calibration.json",
+      "bytes": 5126
+    },
+    {
+      "path": "daiyi_grinding/results/contact_probe/summary.json",
+      "bytes": 7471
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/camera_rgb.png",
+      "bytes": 576163
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/config.json",
+      "bytes": 295
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/demo.mp4",
+      "bytes": 5869555
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/detection_paths.png",
+      "bytes": 573706
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/detections.json",
+      "bytes": 2223
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/execution.json",
+      "bytes": 737
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/fr5_path_preview.csv",
+      "bytes": 26499
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/frame_050.jpg",
+      "bytes": 137175
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/path_contract.json",
+      "bytes": 756
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/paths.json",
+      "bytes": 32659
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/preflight.json",
+      "bytes": 221
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/result.json",
+      "bytes": 2161
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/scene.png",
+      "bytes": 93847
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/source_hashes.json",
+      "bytes": 1292
+    },
+    {
+      "path": "daiyi_grinding/results/demo_v3/status.json",
+      "bytes": 52
+    },
+    {
+      "path": "daiyi_grinding/results/verification/delivery.json",
+      "bytes": 484
+    },
+    {
+      "path": "daiyi_grinding/results/verification/tests.log",
+      "bytes": 1360
+    },
+    {
+      "path": "daiyi_grinding/results/vla/shadow_v1/audit.json",
+      "bytes": 68985
+    },
+    {
+      "path": "daiyi_grinding/results/vla/shadow_v1/inference.json",
+      "bytes": 8069
+    },
+    {
+      "path": "daiyi_grinding/results/vla/shadow_v1/input_manifest.json",
+      "bytes": 2411
+    },
+    {
+      "path": "daiyi_grinding/run.py",
+      "bytes": 9715
+    },
+    {
+      "path": "daiyi_grinding/serve.py",
+      "bytes": 15023
+    },
+    {
+      "path": "daiyi_grinding/sim.py",
+      "bytes": 7977
+    },
+    {
+      "path": "daiyi_grinding/test_roi.py",
+      "bytes": 6354
+    },
+    {
+      "path": "daiyi_grinding/vla_experiment.py",
+      "bytes": 17855
+    },
+    {
+      "path": "daiyi_grinding/web/app.js",
+      "bytes": 12310
+    },
+    {
+      "path": "daiyi_grinding/web/index.html",
+      "bytes": 5870
+    },
+    {
+      "path": "daiyi_grinding/web/style.css",
+      "bytes": 8427
+    },
+    {
+      "path": "fetch_assets.py",
+      "bytes": 1747
+    },
+    {
+      "path": "gpu.env.example",
+      "bytes": 273
+    },
+    {
+      "path": "handoff/SHA256SUMS",
+      "bytes": 8353
+    },
+    {
+      "path": "handoff/main-runtime-validation.log",
+      "bytes": 2362
+    },
+    {
+      "path": "handoff/motion-validation.log",
+      "bytes": 1951
+    },
+    {
+      "path": "handoff/package-validation.json",
+      "bytes": 1349
+    },
+    {
+      "path": "handoff/previous-package-validation.json",
+      "bytes": 2665
+    },
+    {
+      "path": "handoff/requirements-source-freeze.txt",
+      "bytes": 464
+    },
+    {
+      "path": "handoff/requirements-validated.txt",
+      "bytes": 260
+    },
+    {
+      "path": "handoff/runtime-validation.log",
+      "bytes": 2362
+    },
+    {
+      "path": "handoff/server-path-check.json",
+      "bytes": 305
+    },
+    {
+      "path": "requirements-compatible.txt",
+      "bytes": 216
+    },
+    {
+      "path": "scene.py",
+      "bytes": 8012
+    },
+    {
+      "path": "scripts/bootstrap.sh",
+      "bytes": 1412
+    },
+    {
+      "path": "scripts/sync_gpu.sh",
+      "bytes": 1867
+    },
+    {
+      "path": "scripts/verify.sh",
+      "bytes": 1022
+    }
+  ],
+  "result_directories": [
+    {
+      "name": "benchmark_v1",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/benchmark_v1",
+      "files": 17,
+      "bytes": 8022676,
+      "summaries": [
+        "results/benchmark_v1/summary.json",
+        "results/benchmark_v1/protocol.json"
+      ]
+    },
+    {
+      "name": "benchmark_v2",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/benchmark_v2",
+      "files": 17,
+      "bytes": 7755480,
+      "summaries": [
+        "results/benchmark_v2/summary.json",
+        "results/benchmark_v2/protocol.json"
+      ]
+    },
+    {
+      "name": "benchmark_v3",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/benchmark_v3",
+      "files": 17,
+      "bytes": 7684488,
+      "summaries": [
+        "results/benchmark_v3/summary.json",
+        "results/benchmark_v3/protocol.json"
+      ]
+    },
+    {
+      "name": "calibration",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/calibration",
+      "files": 61,
+      "bytes": 2721287,
+      "summaries": [
+        "results/calibration/calibration.json"
+      ]
+    },
+    {
+      "name": "contact_probe",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/contact_probe",
+      "files": 13,
+      "bytes": 1083249,
+      "summaries": [
+        "results/contact_probe/summary.json",
+        "results/contact_probe/trial_3/result.json",
+        "results/contact_probe/trial_0/result.json",
+        "results/contact_probe/trial_2/result.json",
+        "results/contact_probe/trial_1/result.json"
+      ]
+    },
+    {
+      "name": "demo_v1",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/demo_v1",
+      "files": 35,
+      "bytes": 12199572,
+      "summaries": [
+        "results/demo_v1/result.json",
+        "results/demo_v1/calibration.json"
+      ]
+    },
+    {
+      "name": "demo_v2",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/demo_v2",
+      "files": 35,
+      "bytes": 11681236,
+      "summaries": [
+        "results/demo_v2/result.json",
+        "results/demo_v2/calibration.json"
+      ]
+    },
+    {
+      "name": "demo_v3",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/demo_v3",
+      "files": 37,
+      "bytes": 11700693,
+      "summaries": [
+        "results/demo_v3/result.json",
+        "results/demo_v3/calibration.json"
+      ]
+    },
+    {
+      "name": "dev_execution",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/dev_execution",
+      "files": 1,
+      "bytes": 4615,
+      "summaries": []
+    },
+    {
+      "name": "dev_execution_v2",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/dev_execution_v2",
+      "files": 3,
+      "bytes": 2067769,
+      "summaries": []
+    },
+    {
+      "name": "dev_initial",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/dev_initial",
+      "files": 7,
+      "bytes": 3779068,
+      "summaries": []
+    },
+    {
+      "name": "interactive",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/interactive",
+      "files": 227,
+      "bytes": 36330763,
+      "summaries": [
+        "results/interactive/c6732720c86f484a9e08b696f0c6a5b7/result.json",
+        "results/interactive/c6732720c86f484a9e08b696f0c6a5b7/calibration.json",
+        "results/interactive/980dc9229d9d44d5b609fa0650b7e733/result.json",
+        "results/interactive/980dc9229d9d44d5b609fa0650b7e733/calibration.json",
+        "results/interactive/9036d6e11fee4feea3381577a603520d/result.json",
+        "results/interactive/9036d6e11fee4feea3381577a603520d/calibration.json",
+        "results/interactive/0672b5e42e054ef6bd78e2fb08358470/result.json",
+        "results/interactive/0672b5e42e054ef6bd78e2fb08358470/calibration.json",
+        "results/interactive/cc0c8452aeff404ea821d827269bb8c8/result.json",
+        "results/interactive/cc0c8452aeff404ea821d827269bb8c8/calibration.json",
+        "results/interactive/7ce3c2c77bec43f299ec0b15719d06ec/result.json",
+        "results/interactive/7ce3c2c77bec43f299ec0b15719d06ec/calibration.json",
+        "results/interactive/62837cbc72ac427bbccc29375aa03c60/result.json",
+        "results/interactive/62837cbc72ac427bbccc29375aa03c60/calibration.json"
+      ]
+    },
+    {
+      "name": "motion_seed2007",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/motion_seed2007",
+      "files": 30,
+      "bytes": 5024304,
+      "summaries": [
+        "results/motion_seed2007/result.json",
+        "results/motion_seed2007/calibration.json"
+      ]
+    },
+    {
+      "name": "motion_seed2008",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/motion_seed2008",
+      "files": 30,
+      "bytes": 4762858,
+      "summaries": [
+        "results/motion_seed2008/result.json",
+        "results/motion_seed2008/calibration.json"
+      ]
+    },
+    {
+      "name": "storage_repair_20261115",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/storage_repair_20261115",
+      "files": 3,
+      "bytes": 104359,
+      "summaries": []
+    },
+    {
+      "name": "ui",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/ui",
+      "files": 13,
+      "bytes": 4150017,
+      "summaries": []
+    },
+    {
+      "name": "verification",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/verification",
+      "files": 3,
+      "bytes": 2308,
+      "summaries": []
+    },
+    {
+      "name": "vla",
+      "remote_path": "/home/hts/demo1/daiyi_grinding/results/vla",
+      "files": 19,
+      "bytes": 10230746,
+      "summaries": [
+        "results/vla/shadow_v1/audit.json"
+      ]
+    }
+  ],
+  "path_state": [
+    {
+      "path": "/home/hts/demo1/hy_vla_repro/.venv",
+      "exists": false,
+      "link_target": "/home/data2/hts/codex-artifacts/hy_vla_repro/.venv"
+    },
+    {
+      "path": "/home/hts/demo1/hy_vla_repro/checkpoints",
+      "exists": false,
+      "link_target": "/home/data2/hts/codex-artifacts/hy_vla_repro/checkpoints"
+    },
+    {
+      "path": "/home/data4/hts/demo1/fr5-learning",
+      "exists": true,
+      "link_target": null
+    },
+    {
+      "path": "/home/hts/demo1/packages/daiyi_grinding",
+      "exists": false,
+      "link_target": null
+    }
+  ],
+  "gpu_job_data_root": "/home/data4/hts/demo1/fr5-learning/grinding",
+  "original_experiment_timestamps_preserved": true
+}

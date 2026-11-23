@@ -1,0 +1,209 @@
+{
+  "status": "real_released_checkpoint_shadow_inference_completed",
+  "source": {
+    "hy_code_commit": "af57e7507ec5964b52fdf6296741e553cbcd3288",
+    "hf_repo": "tencent/Hy-Embodied-0.5-VLA-RoboTwin",
+    "hf_revision": "bd7bba6f5934ad62293a2a34f74760c6a3ef2ff8",
+    "files": [
+      ".gitattributes",
+      "LICENSE",
+      "README.md",
+      "chat_template.jinja",
+      "config.json",
+      "model.safetensors",
+      "norm_stats.pkl",
+      "preprocessor_config.json",
+      "special_tokens_map.json",
+      "tokenizer.json",
+      "tokenizer_config.json"
+    ],
+    "hf_weights_sha256": "3bd6c16225f905a298340489d519498d4e5ecf5bcdd28a5c1df63e29894fef60",
+    "weights_bytes": 9053587008,
+    "weights_mirror": "https://www.modelscope.cn/models/Tencent-Hunyuan/Hy-Embodied-0.5-VLA-RoboTwin",
+    "config.json_sha256": "b704eec9d01a0fdb8ee5975f2d18147c7048ae5a61049c2e907d87f980b90399",
+    "norm_stats.pkl_sha256": "ce81158fb16dfcb16caa80ba33dd277d07b81e40de96d959616447d614feae41",
+    "tokenizer.json_sha256": "1ac285056de1f8bbc1145fac3078be7867c79d83a521c387335603da98244ed9"
+  },
+  "actual_weight_sha256": "3bd6c16225f905a298340489d519498d4e5ecf5bcdd28a5c1df63e29894fef60",
+  "actual_code_commit": "af57e7507ec5964b52fdf6296741e553cbcd3288",
+  "checkpoint": "/home/data2/hts/codex-artifacts/hy_vla_repro/checkpoints/robotwin",
+  "load_seconds": 11.863893507048488,
+  "weight_load_audit": {
+    "missing_keys": [
+      "model.dual_tower.expert.lm_head.weight"
+    ],
+    "unexpected_keys": [],
+    "allowed_missing_unused_expert_lm_head": [
+      "model.dual_tower.expert.lm_head.weight"
+    ],
+    "all_action_path_weights_loaded": true,
+    "unused_expert_lm_head_frozen": true,
+    "no_init_weights": true,
+    "cpu_threads": 4,
+    "omitted_head_initialized": "zeros after verifying no active storage alias"
+  },
+  "python": "3.12.3",
+  "torch": "2.7.1+cu128",
+  "cuda": "12.8",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "CUDA_VISIBLE_DEVICES": "1",
+  "peak_allocated_gib": 9.139379024505615,
+  "peak_reserved_gib": 9.2890625,
+  "official_decoder": "rel_abs; equal relative/absolute positions and slerp quaternions; wxyz dual-arm EEF",
+  "raw_semantics": "normalized model output before official denormalization and rel_abs decoding; not FR5 joint commands",
+  "train_updates": 0,
+  "input_manifest_sha256": "387e206cc50002fd24bf740bbc076bb6b5f114d9169c653649a9ed8a66d80d67",
+  "runs": [
+    {
+      "id": "00_grind_observed_seed17",
+      "seed": 17,
+      "prompt_id": "grind",
+      "prompt": "Use the ball abrasive held by the left robot arm to trace the narrow casting parting seam and local burrs on the metal flange. Preserve the broad design rib, boss and recessed opening. Keep the other arm still.",
+      "visual": "observed",
+      "repeated": false,
+      "frame_array_sha256": [
+        "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+        "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+        "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7"
+      ],
+      "inference_seconds": 1.6167766150319949,
+      "raw_normalized_shape": [
+        40,
+        20
+      ],
+      "decoded_shape": [
+        20,
+        16
+      ],
+      "decoded_sha256": "d050541d6af12304f896ff501e632ec09c41317ed08630d69f8a4c2a20acd751",
+      "finite": true,
+      "execution_allowed": false
+    },
+    {
+      "id": "01_grind_observed_seed29",
+      "seed": 29,
+      "prompt_id": "grind",
+      "prompt": "Use the ball abrasive held by the left robot arm to trace the narrow casting parting seam and local burrs on the metal flange. Preserve the broad design rib, boss and recessed opening. Keep the other arm still.",
+      "visual": "observed",
+      "repeated": false,
+      "frame_array_sha256": [
+        "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+        "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+        "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7"
+      ],
+      "inference_seconds": 1.194207921042107,
+      "raw_normalized_shape": [
+        40,
+        20
+      ],
+      "decoded_shape": [
+        20,
+        16
+      ],
+      "decoded_sha256": "57817ca3dfad9b2ea6ac99234b8f4aff3122ab3ba610dd13414b457ecad70571",
+      "finite": true,
+      "execution_allowed": false
+    },
+    {
+      "id": "02_grind_observed_seed43",
+      "seed": 43,
+      "prompt_id": "grind",
+      "prompt": "Use the ball abrasive held by the left robot arm to trace the narrow casting parting seam and local burrs on the metal flange. Preserve the broad design rib, boss and recessed opening. Keep the other arm still.",
+      "visual": "observed",
+      "repeated": false,
+      "frame_array_sha256": [
+        "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+        "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+        "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7"
+      ],
+      "inference_seconds": 1.2099960109917447,
+      "raw_normalized_shape": [
+        40,
+        20
+      ],
+      "decoded_shape": [
+        20,
+        16
+      ],
+      "decoded_sha256": "8ceac128296767720846a72bfdfe5bcbb4b1b4a13463b15a072e7f302c1dc787",
+      "finite": true,
+      "execution_allowed": false
+    },
+    {
+      "id": "03_hold_observed_seed17",
+      "seed": 17,
+      "prompt_id": "hold",
+      "prompt": "Keep both robot arms still. Do not touch the metal flange.",
+      "visual": "observed",
+      "repeated": false,
+      "frame_array_sha256": [
+        "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+        "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+        "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7"
+      ],
+      "inference_seconds": 1.037423035944812,
+      "raw_normalized_shape": [
+        40,
+        20
+      ],
+      "decoded_shape": [
+        20,
+        16
+      ],
+      "decoded_sha256": "1b56670d2444da8302cd2098ec365ddf0c1887f8102c39da570d11bea3544583",
+      "finite": true,
+      "execution_allowed": false
+    },
+    {
+      "id": "04_grind_black_images_seed17",
+      "seed": 17,
+      "prompt_id": "grind",
+      "prompt": "Use the ball abrasive held by the left robot arm to trace the narrow casting parting seam and local burrs on the metal flange. Preserve the broad design rib, boss and recessed opening. Keep the other arm still.",
+      "visual": "black_images",
+      "repeated": false,
+      "frame_array_sha256": [
+        "7042a035e6fb284af271fca13b67f12c5f1c30f92d11ff37389a9ef951fac97f",
+        "7042a035e6fb284af271fca13b67f12c5f1c30f92d11ff37389a9ef951fac97f",
+        "7042a035e6fb284af271fca13b67f12c5f1c30f92d11ff37389a9ef951fac97f"
+      ],
+      "inference_seconds": 1.0549329799832776,
+      "raw_normalized_shape": [
+        40,
+        20
+      ],
+      "decoded_shape": [
+        20,
+        16
+      ],
+      "decoded_sha256": "66da5f7d8d53fa9d145d45d0a13c52abb19a03778d29784659607de80a2ea8b6",
+      "finite": true,
+      "execution_allowed": false
+    },
+    {
+      "id": "05_grind_observed_seed17_repeat",
+      "seed": 17,
+      "prompt_id": "grind",
+      "prompt": "Use the ball abrasive held by the left robot arm to trace the narrow casting parting seam and local burrs on the metal flange. Preserve the broad design rib, boss and recessed opening. Keep the other arm still.",
+      "visual": "observed",
+      "repeated": true,
+      "frame_array_sha256": [
+        "701b54ff86eefd7239c72d2d325e4bcb9c3d472b1aa8413b07253a3c94a7c66b",
+        "554c3d4fc15d7683601e1bbc3d60b1e1e51cd6eb0bdaf487f3fae413999e1951",
+        "75061423033b6a6b1d2bb0770e52988a18d2ed8e69c01b14a12f8c8afc1743c7"
+      ],
+      "inference_seconds": 1.028734729043208,
+      "raw_normalized_shape": [
+        40,
+        20
+      ],
+      "decoded_shape": [
+        20,
+        16
+      ],
+      "decoded_sha256": "d050541d6af12304f896ff501e632ec09c41317ed08630d69f8a4c2a20acd751",
+      "finite": true,
+      "execution_allowed": false
+    }
+  ],
+  "execution_allowed": false
+}

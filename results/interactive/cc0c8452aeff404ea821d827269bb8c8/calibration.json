@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "simulation_only": true,
+  "demo_seed": 7,
+  "acquisition_seed": 7,
+  "camera": "inspection",
+  "frame_convention": "T_A_B maps B column coordinates to A; meters; OpenCV camera +X right +Y down +Z forward",
+  "width": 768,
+  "height": 576,
+  "fovy_deg": 26.0,
+  "K": [
+    [
+      1247.4650517938367,
+      0.0,
+      383.5
+    ],
+    [
+      0.0,
+      1247.4650517938367,
+      287.5
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "distortion_coefficients": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "intrinsics_source": "known configured MuJoCo pinhole FOV; intrinsics are not estimated",
+  "robot_pose_source": "ideal FR5 FK using scene.JOINTS; no encoder or mechanical errors",
+  "board_inner_corners": [
+    8,
+    5
+  ],
+  "square_m": 0.02,
+  "T_world_base": [
+    [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0,
+      0.72
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_base_camera": [
+    [
+      0.9999999756507116,
+      -3.99320695812594e-05,
+      0.00021703457254386308,
+      -0.4871277559322171
+    ],
+    [
+      -3.994615973995874e-05,
+      -0.9999999970950231,
+      6.491731656650679e-05,
+      -0.12051675107329883
+    ],
+    [
+      0.00021703197963056668,
+      -6.492598468355038e-05,
+      -0.9999999743408674,
+      0.41000706165006207
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_camera": [
+    [
+      0.9999999756507116,
+      -3.99320695812594e-05,
+      0.00021703457254386308,
+      -0.4871277559322171
+    ],
+    [
+      -3.994615973995874e-05,
+      -0.9999999970950231,
+      6.491731656650679e-05,
+      -0.12051675107329883
+    ],
+    [
+      0.00021703197963056668,
+      -6.492598468355038e-05,
+      -0.9999999743408674,
+      1.130007061650062
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_gripper_target_estimated": [
+    [
+      0.9999999879234497,
+      2.315857464090902e-05,
+      -0.00015367752323613046,
+      0.0119688169696208
+    ],
+    [
+      2.3169963331427616e-05,
+      -0.9999999969857009,
+      7.410635122447539e-05,
+      -0.007974048607815067
+    ],
+    [
+      -0.00015367580657543422,
+      -7.410991103210454e-05,
+      -0.9999999854457337,
+      0.04499258094301627
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "camera_configuration": {
+    "position_world_m": [
+      -0.48699770880148796,
+      -0.12046686877673018,
+      1.13
+    ],
+    "xyaxes": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "estimator": "detected checkerboard+RGB orientation marker -> PnP -> OpenCV PARK eye-to-hand",
+  "successful_views": 27,
+  "training_views": 21,
+  "holdout_views": 6,
+  "failures": [
+    {
+      "index": 8,
+      "reason": "checkerboard_not_detected"
+    },
+    {
+      "index": 16,
+      "reason": "orientation_marker_not_detected"
+    },
+    {
+      "index": 26,
+      "reason": "orientation_marker_not_detected"
+    }
+  ],
+  "multiaxis_rotation_span_deg": [
+    43.56967493161067,
+    40.215847202525644,
+    67.31256019925337
+  ],
+  "camera_truth_error": {
+    "translation_mm": 0.1394645712123219,
+    "rotation_deg": 0.013179697917233495
+  },
+  "mount_truth_error": {
+    "translation_mm": 0.041241951293484964,
+    "rotation_deg": 0.00986504816691722
+  },
+  "reprojection_mean_rms_px": 0.03173523758378191,
+  "holdout": [
+    {
+      "index": 0,
+      "point_rms_mm": 0.05215586413625452,
+      "point_max_mm": 0.05550993392991197,
+      "closure_error": {
+        "translation_mm": 0.02171198677895636,
+        "rotation_deg": 0.005004423975990549
+      }
+    },
+    {
+      "index": 5,
+      "point_rms_mm": 0.06874360116999656,
+      "point_max_mm": 0.11415130986887269,
+      "closure_error": {
+        "translation_mm": 0.039809946717521395,
+        "rotation_deg": 0.06524924474443106
+      }
+    },
+    {
+      "index": 10,
+      "point_rms_mm": 0.049362967860299756,
+      "point_max_mm": 0.06613880296388597,
+      "closure_error": {
+        "translation_mm": 0.01775553824670243,
+        "rotation_deg": 0.030697521042902798
+      }
+    },
+    {
+      "index": 15,
+      "point_rms_mm": 0.04809749421636423,
+      "point_max_mm": 0.057584626717543094,
+      "closure_error": {
+        "translation_mm": 0.029832876266878455,
+        "rotation_deg": 0.020593203483118078
+      }
+    },
+    {
+      "index": 20,
+      "point_rms_mm": 0.04990240047806125,
+      "point_max_mm": 0.06681316825376032,
+      "closure_error": {
+        "translation_mm": 0.027652306338389103,
+        "rotation_deg": 0.009879857995567579
+      }
+    },
+    {
+      "index": 25,
+      "point_rms_mm": 0.053292957577045275,
+      "point_max_mm": 0.07911895411416874,
+      "closure_error": {
+        "translation_mm": 0.02061776080093286,
+        "rotation_deg": 0.025277603785314098
+      }
+    }
+  ],
+  "holdout_worst_point_mm": 0.11415130986887269,
+  "truth_usage": "renderer fixture placement and evaluation only; not passed to corner detector, PnP or hand-eye solver",
+  "acceptance_passed": true
+}

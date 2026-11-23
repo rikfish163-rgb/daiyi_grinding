@@ -1,0 +1,54 @@
+{
+  "schema_version": 2,
+  "robot": "ESTUN iER220-2700",
+  "workpiece": "CAD 097 from supplied gripper/fixture assembly",
+  "operation": "robot carries workpiece to a fixed abrasive tool",
+  "default_tool": "belt",
+  "belt": {
+    "abrasive_face_mm": [75.192, 139.99],
+    "contact_world_m": [-1.2608838, -0.0024748, 1.1165946],
+    "source": "functional abrasive layer on the supplied CAD backing plate",
+    "layer_thickness_mm": 1.0,
+    "calibrated": false
+  },
+  "camera": {
+    "position_world_m": [-0.4, -1.25, 1.4],
+    "target_world_m": [-0.428, -1.8, 0.87],
+    "fovy_deg": 44.0,
+    "width": 1024,
+    "height": 768,
+    "depth_noise_sigma_mm": 0.06,
+    "dropout_probability": 0.003,
+    "pose_source": "configured fixed virtual 3D camera; real ALSON extrinsics pending calibration",
+    "acquisition_reference": "3D相机的使用: fixed camera, 60 degree steps, six views; 10 ms exposure, enhancement, decoding threshold 4"
+  },
+  "turntable": {
+    "axis_world_m": [-0.4, -1.8, 0.601],
+    "radius_m": 0.27,
+    "half_thickness_m": 0.014,
+    "angles_deg": [0, 60, 120, 180, 240, 300],
+    "speed_deg_s": 60,
+    "geometry_source": "parametric inspection turntable; supplied files contain no verified turntable CAD or controller specification"
+  },
+  "planning": {
+    "segment_length_mm": 32,
+    "position_step_mm": 2.0,
+    "max_search_seconds_per_segment": 12,
+    "max_roll_candidates": 24,
+    "transfer_clearance_mm": 60,
+    "material_allowance_mm": 0.08,
+    "tracking_p95_limit_mm": 1.0,
+    "target_remaining_height_mm": 0.3,
+    "max_reinspection_passes": 2,
+    "trajectory_time_scale": 1.5
+  },
+  "sources": [
+    "INDEX_LOCAL.md",
+    "feishu_docs/阶段进展汇报11.19__wiki-FCaxwgXVui5vZQky5CPceyAsnYg.md",
+    "feishu_docs/具身打磨算法V1_NOV12：__wiki-CwPRw3ikDiw6XbkRyMYcDQqEnoD.md",
+    "feishu_docs/3D相机的使用__wiki-SNEFwM9pEitxaykEJfQcDZGnnwb.md",
+    "feishu_docs/20261112_具身打磨工作会议纪要__wiki-BczAw8DTqi9gEQkOtAvcmodunJg.md",
+    "feishu_docs/工件CAD路径接入与点云下采样验证__docx-CuaPdIowZoeiZxxQuencm05Xnac.md",
+    "feishu_docs/具身打磨项目愿景技术指标__wiki-CZfWwvWKsimxGNkRFsHcSuvjncV.md"
+  ]
+}

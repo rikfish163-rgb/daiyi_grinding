@@ -1,0 +1,238 @@
+{
+  "protocol": {
+    "seeds": [
+      2007,
+      2008,
+      2009,
+      2010
+    ],
+    "development_seeds": [
+      7
+    ],
+    "prior_audit_seeds": [
+      1007,
+      1008,
+      1009,
+      1010
+    ],
+    "cases": [
+      "mixed",
+      "seam",
+      "burr",
+      "normal",
+      "thin",
+      "coarse",
+      "noisy"
+    ],
+    "methods": [
+      "threshold",
+      "geometry"
+    ],
+    "noise_mm": 0.06,
+    "stress_noise_mm": 0.25,
+    "dropout": 0.003,
+    "stress_dropout": 0.025,
+    "scope": "paired perception and generated-path footprint only; dynamics assessed separately",
+    "frozen_before_run": true,
+    "source_hashes": {
+      "execution.py": "05228b3aefd4c4a3b6ea62319ac5cbd35bd7585f71c900a0e4130a16c4431bb6",
+      "evaluation.py": "27e3d7f3f3b05c0857712826d22cec5ca0ea0b96df43c6db4186ffb08ef6517a",
+      "vla_experiment.py": "a62c1bd8a686bbf6f7411f5ae7c3255f8059640a83ddd0607b1f003d2bc856c9",
+      "__init__.py": "665b2d54488bb397acfe76b03b86f084814b1f95947d413cd3425902c7b6db69",
+      "geometry.py": "1d93e4ade2064535c82ffb93e3596a8f98f448f8f04489dfd706f17ad3aef596",
+      "calibration_test.py": "2ba69afba25a08e4a8646b1aae6d47fc4dabb5fb63c48411709bfa249be4a8e2",
+      "test_roi.py": "332d4f5e0451fed59df87dc9edfc0e9666af4690dbe0889a6e4bb133dd741af6",
+      "planning.py": "22d83deca749ce95a3bf99f9806720a4d3cf67560ee583f77000f2c1f135ab7b",
+      "perception.py": "4c594356b910a50930b890acae4b7b857f88f6ff1e224b999a7ce0d9a0d34c4a",
+      "benchmark.py": "02fa39f7cbd39af689b4da00b660e4e3490d8371b475e6c27279c66d7f7d1f9d",
+      "calibration.py": "19e68cfb16ce34c0d8c8dc33e91ddb98a1fd601e5249b78398ea5913f60d32cb",
+      "sim.py": "ebe87e1093233b097ffd1ca42f14ad0bb129847bc3a8139314a7d60d32218765",
+      "run.py": "4e93063c21b84812fe535fbd9ba01e09c2048322a3d5515765ae7c65ac48f826"
+    }
+  },
+  "summary": [
+    {
+      "case": "mixed",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.027348427374020823,
+      "recall": 0.7091727897606068,
+      "f1": 0.052665856964320294,
+      "normal_structure_selected_pixels": 103420,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "mixed",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.9353838201085551,
+      "recall": 0.8577862052619104,
+      "f1": 0.8949060336300692,
+      "normal_structure_selected_pixels": 0,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 4,
+      "mean_coverage_3mm": 1.0
+    },
+    {
+      "case": "seam",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.020806214122617954,
+      "recall": 0.6905099150141643,
+      "f1": 0.04039525200422596,
+      "normal_structure_selected_pixels": 103440,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "seam",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.9278101307548621,
+      "recall": 0.8543099959530555,
+      "f1": 0.8895443771398474,
+      "normal_structure_selected_pixels": 0,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 4,
+      "mean_coverage_3mm": 1.0
+    },
+    {
+      "case": "burr",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.0071314789854184536,
+      "recall": 0.7929155313351499,
+      "f1": 0.01413582046050714,
+      "normal_structure_selected_pixels": 103537,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "burr",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.9735249621785174,
+      "recall": 0.8767029972752044,
+      "f1": 0.9225806451612903,
+      "normal_structure_selected_pixels": 0,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 4,
+      "mean_coverage_3mm": 1.0
+    },
+    {
+      "case": "normal",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "normal_structure_selected_pixels": 103570,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": null
+    },
+    {
+      "case": "normal",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "normal_structure_selected_pixels": 0,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 4,
+      "review_episodes": 4,
+      "mean_coverage_3mm": null
+    },
+    {
+      "case": "thin",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.008606585002665621,
+      "recall": 0.3449588603708707,
+      "f1": 0.016794162399371038,
+      "normal_structure_selected_pixels": 103521,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "thin",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.9653831194087904,
+      "recall": 0.3048016701461378,
+      "f1": 0.46331902184058243,
+      "normal_structure_selected_pixels": 0,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 4,
+      "mean_coverage_3mm": 0.5113133617880962
+    },
+    {
+      "case": "coarse",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.020494093411987158,
+      "recall": 0.6864629704573048,
+      "f1": 0.03979997360355472,
+      "normal_structure_selected_pixels": 103390,
+      "unsupported_stump_selected_pixels": 6110,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "coarse",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.9278101307548621,
+      "recall": 0.8543099959530555,
+      "f1": 0.8895443771398474,
+      "normal_structure_selected_pixels": 0,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 4,
+      "mean_coverage_3mm": 1.0
+    },
+    {
+      "case": "noisy",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.026331583121970932,
+      "recall": 0.6898159121434779,
+      "f1": 0.05072682694430564,
+      "normal_structure_selected_pixels": 103260,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "noisy",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.882782475019216,
+      "recall": 0.907403018092755,
+      "f1": 0.8949234425526942,
+      "normal_structure_selected_pixels": 0,
+      "unsupported_stump_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 4,
+      "mean_coverage_3mm": 1.0
+    }
+  ],
+  "completed": 56
+}

@@ -1,0 +1,18 @@
+{
+  "097_standard": {
+    "label": "097 底座 · 综合缺陷",
+    "cad_id": "097",
+    "case": "mixed",
+    "detector": "hybrid",
+    "tool": "belt",
+    "views": "multi"
+  },
+  "097_thin_seam": {
+    "label": "097 底座 · 低矮薄批缝",
+    "cad_id": "097",
+    "case": "thin",
+    "detector": "geometric",
+    "tool": "belt",
+    "views": "multi"
+  }
+}

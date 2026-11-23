@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "kind": "seam",
+    "pixels": 1848,
+    "length_mm": 185.70516272760494,
+    "width_mm": 1.616896705822008,
+    "height_mm": 2.0938515663146973,
+    "confidence": 0.8375406265258789,
+    "reason": "narrow elongated positive ridge",
+    "bbox": [
+      127,
+      152,
+      614,
+      183
+    ]
+  },
+  {
+    "id": 2,
+    "kind": "burr",
+    "pixels": 512,
+    "length_mm": 10.323401573660465,
+    "width_mm": 5.829803979970064,
+    "height_mm": 3.609776496887207,
+    "confidence": 0.98,
+    "reason": "localized positive protrusion",
+    "bbox": [
+      620,
+      259,
+      649,
+      283
+    ]
+  },
+  {
+    "id": 3,
+    "kind": "preserve",
+    "pixels": 8341,
+    "length_mm": 136.8204771130543,
+    "width_mm": 8.440448601014769,
+    "height_mm": 1.2476444244384766,
+    "confidence": 0.4990577697753906,
+    "reason": "broad/design-like geometry or ambiguous feature",
+    "bbox": [
+      184,
+      374,
+      554,
+      400
+    ]
+  },
+  {
+    "id": 4,
+    "kind": "review",
+    "pixels": 639,
+    "length_mm": 18.091536631383555,
+    "width_mm": 5.423236420220235,
+    "height_mm": 2.734982967376709,
+    "confidence": 0.98,
+    "reason": "above the light-deburring height envelope (local or dominant surface)",
+    "bbox": [
+      548,
+      396,
+      600,
+      413
+    ]
+  },
+  {
+    "id": 5,
+    "kind": "burr",
+    "pixels": 363,
+    "length_mm": 8.615040975909158,
+    "width_mm": 5.176595243237116,
+    "height_mm": 2.4375319480895996,
+    "confidence": 0.9750127792358398,
+    "reason": "localized positive protrusion",
+    "bbox": [
+      204,
+      465,
+      228,
+      485
+    ]
+  }
+]

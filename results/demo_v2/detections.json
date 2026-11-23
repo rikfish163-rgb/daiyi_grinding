@@ -1,0 +1,114 @@
+[
+  {
+    "id": 1,
+    "kind": "seam",
+    "pixels": 488,
+    "length_mm": 52.20054258914929,
+    "width_mm": 1.61668819122721,
+    "height_mm": 2.11256742477417,
+    "confidence": 0.845026969909668,
+    "reason": "narrow elongated positive ridge",
+    "bbox": [
+      332,
+      128,
+      471,
+      142
+    ]
+  },
+  {
+    "id": 2,
+    "kind": "seam",
+    "pixels": 532,
+    "length_mm": 53.93854180283712,
+    "width_mm": 1.61668819122721,
+    "height_mm": 1.7549991607666016,
+    "confidence": 0.7019996643066406,
+    "reason": "narrow elongated positive ridge",
+    "bbox": [
+      472,
+      131,
+      614,
+      155
+    ]
+  },
+  {
+    "id": 3,
+    "kind": "seam",
+    "pixels": 725,
+    "length_mm": 81.93634760860705,
+    "width_mm": 1.61668819122721,
+    "height_mm": 2.1466612815856934,
+    "confidence": 0.8586645126342773,
+    "reason": "narrow elongated positive ridge",
+    "bbox": [
+      112,
+      140,
+      328,
+      160
+    ]
+  },
+  {
+    "id": 4,
+    "kind": "burr",
+    "pixels": 460,
+    "length_mm": 9.842878509639965,
+    "width_mm": 5.7158559154048705,
+    "height_mm": 3.4763336181640625,
+    "confidence": 0.98,
+    "reason": "localized positive protrusion",
+    "bbox": [
+      619,
+      248,
+      648,
+      273
+    ]
+  },
+  {
+    "id": 5,
+    "kind": "preserve",
+    "pixels": 8169,
+    "length_mm": 136.44601513756604,
+    "width_mm": 8.123757619984183,
+    "height_mm": 1.2245535850524902,
+    "confidence": 0.4898214340209961,
+    "reason": "broad/design-like geometry or ambiguous feature",
+    "bbox": [
+      178,
+      349,
+      546,
+      375
+    ]
+  },
+  {
+    "id": 7,
+    "kind": "review",
+    "pixels": 569,
+    "length_mm": 17.96126417012745,
+    "width_mm": 4.850064573681629,
+    "height_mm": 2.459859848022461,
+    "confidence": 0.98,
+    "reason": "above the light-deburring height envelope (local or dominant surface)",
+    "bbox": [
+      542,
+      372,
+      593,
+      386
+    ]
+  },
+  {
+    "id": 8,
+    "kind": "burr",
+    "pixels": 363,
+    "length_mm": 8.926828251766691,
+    "width_mm": 5.11241695057583,
+    "height_mm": 2.507460117340088,
+    "confidence": 0.98,
+    "reason": "localized positive protrusion",
+    "bbox": [
+      192,
+      413,
+      218,
+      435
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "source": "First execution observed before fixing corner ordering",
+  "acceptance_passed": false,
+  "camera_truth_error": {
+    "translation_mm": 0.13946455169530958,
+    "rotation_deg": 0.013179697394805312
+  },
+  "reprojection_mean_rms_px": 0.03173523758378248,
+  "holdout_worst_point_mm": 80.051935614186,
+  "mount_truth_error": {
+    "translation_mm": 0.04124192708286284,
+    "rotation_deg": 179.99575391618748
+  },
+  "diagnosis": "Initial detector assumed only 180-degree ambiguity; SB row order can also be reversed. Corrected to select among all four row/column corner-origin permutations using rendered red marker.",
+  "status": "Fixed; current calibration.json passes acceptance."
+}

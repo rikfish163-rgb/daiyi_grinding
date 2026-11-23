@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "name": "097 synthetic RGB-D DefectUNet v1",
+  "checkpoint": "runs/learned_grinding_20261121/training_01/model.pt",
+  "checkpoint_sha256": "972f7fad8177f47ce47097d8c6eb277c8ddd31d1fe29c0f99a76a9d7c098b1c9",
+  "feature_version": "rgbd_registered_v1",
+  "parameter_count": 387683,
+  "selected_step": 800,
+  "probability_threshold": 0.35,
+  "training_receipt": "runs/learned_grinding_20261121/training_01/training_receipt.json",
+  "validation": "runs/learned_grinding_20261121/training_01/selected_validation.json",
+  "frozen_test": "runs/learned_grinding_20261121/test_01/evaluation.json",
+  "split_plan": "runs/learned_grinding_20261121/split_plan.json",
+  "real_scans_used": false,
+  "cad_count": 1,
+  "scope": "synthetic 097 casting defect segmentation; measured CAD reference required; final robot commands use independent IK/collision/motion checks"
+}

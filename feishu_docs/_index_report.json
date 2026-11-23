@@ -1,0 +1,55 @@
+{
+  "generated_at": "2026-11-19 19:12:57 CST",
+  "source_files": [
+    "/home/dianrobot/daiyi_grinding/source_snapshots/具身打磨项目组会.md",
+    "/home/dianrobot/daiyi_grinding/source_snapshots/具身打磨工作会议.md"
+  ],
+  "root_documents": 77,
+  "root_documents_downloaded": 77,
+  "downloaded_documents": 164,
+  "not_downloaded_documents": 164,
+  "depth_limit_documents": 161,
+  "failed_documents": [
+    {
+      "key": "wiki:IpezwcW45iuuBlk2PaTcPGbdnye",
+      "url": "https://hustdian.feishu.cn/wiki/IpezwcW45iuuBlk2PaTcPGbdnye",
+      "error": "没有权限访问"
+    },
+    {
+      "key": "wiki:Mtu0we4hLifBTJkJxJOcK0VYnSb",
+      "url": "https://hustdian.feishu.cn/wiki/Mtu0we4hLifBTJkJxJOcK0VYnSb",
+      "error": "该文档已被删除"
+    },
+    {
+      "key": "wiki:SUM0wRWQiiLOpLkUtmlc035Xnig",
+      "url": "https://hustdian.feishu.cn/wiki/SUM0wRWQiiLOpLkUtmlc035Xnig",
+      "error": "没有权限访问"
+    }
+  ],
+  "attachment_links": 44,
+  "attachments_downloaded": 36,
+  "attachment_bytes": 1287241810,
+  "source_attachment_links": 4,
+  "recursive_attachment_links": 40,
+  "document_media_files": 253,
+  "document_media_types": {
+    "docx": 1,
+    "jpg": 39,
+    "json": 3,
+    "jsonl": 2,
+    "mp4": 14,
+    "pcd": 3,
+    "pdf": 3,
+    "png": 177,
+    "props": 2,
+    "rar": 1,
+    "stp": 2,
+    "xlsx": 2,
+    "zip": 4
+  },
+  "rewritten_document_files": 7,
+  "unresolved_links_in_downloaded_documents": 199,
+  "unresolved_source_links_in_index": 0,
+  "remaining_feishu_links_in_index": 0,
+  "missing_local_targets_in_index": []
+}

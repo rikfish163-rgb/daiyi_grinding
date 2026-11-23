@@ -1,0 +1,83 @@
+{
+  "seed": 7,
+  "case": "mixed",
+  "method": "geometry",
+  "noise_mm": 0.06,
+  "dropout": 0.003,
+  "calibration_source": "image + FK solved eye-to-hand",
+  "roi": [
+    [
+      95,
+      104
+    ],
+    [
+      639,
+      104
+    ],
+    [
+      639,
+      185
+    ],
+    [
+      95,
+      185
+    ]
+  ],
+  "selected_ids": [
+    1
+  ],
+  "perception": {
+    "tp": 1497,
+    "fp": 248,
+    "fn": 1242,
+    "precision": 0.8578796561604585,
+    "recall": 0.5465498357064622,
+    "f1": 0.667707404103479,
+    "normal_structure_selected_pixels": 0,
+    "selected_pixels": 1745,
+    "unsupported_stump_selected_pixels": 0,
+    "auto_regions": 3,
+    "review_regions": 0,
+    "wrong_type_pixels": 0,
+    "defect_footprint_coverage_3mm": 0.20153340635268346,
+    "coverage_definition": "XY footprint within nominal 3 mm tool radius; not removal or finish quality"
+  },
+  "path_count": 1,
+  "path_length_mm": 54.683507160260945,
+  "clearance_mm": 3.0,
+  "simulation_only": true,
+  "material_removal_simulated": false,
+  "planning": {
+    "ik_max_mm": 8.14785400798295e-09,
+    "ik_max_deg": 2.4183901158892983e-09,
+    "duration_s": 20.44124543477853,
+    "sample_count": 678,
+    "trace_length_mm": 54.683507160260945
+  },
+  "preflight": {
+    "passed": true,
+    "unexpected_contacts": [],
+    "contact_count": 0,
+    "max_joint_step_deg": 1.1732520161594184,
+    "scope": "sampled checks using conservative primitive link proxies; not certified collision clearance"
+  },
+  "execution": {
+    "simulation_steps": 10371,
+    "simulated_seconds": 20.741999999999383,
+    "tracking_trace_rms_mm": 0.013181837247368045,
+    "tracking_trace_p95_mm": 0.01838502316383558,
+    "tracking_trace_max_mm": 0.12407125465668416,
+    "tracking_trace_orientation_p95_deg": 0.001890408087022356,
+    "unexpected_contact_count": 0,
+    "unexpected_contacts": [],
+    "max_contact_force_n": 0.0,
+    "abrasive_contact_steps": 0,
+    "contact_sampling_ms": 2.0,
+    "logging": "post-integration FK and contemporaneous interpolated target; TCP statistics sampled each 10ms",
+    "material_removal_simulated": false,
+    "force_control_validated": false,
+    "controller": "MuJoCo position servo + desired-velocity and model gravity feedforward; not FR5 controller emulation"
+  },
+  "motion_gate_passed": true,
+  "wall_time_s": 20.138339154887944
+}

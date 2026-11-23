@@ -1,0 +1,14 @@
+test_c_shaped_roi_cannot_average_trace_into_hole (daiyi_grinding.test_roi.RoiBoundaryTests.test_c_shaped_roi_cannot_average_trace_into_hole) ... ok
+test_concave_notch_splits_continuous_trace (daiyi_grinding.test_roi.RoiBoundaryTests.test_concave_notch_splits_continuous_trace) ... ok
+test_large_roi_keeps_usable_trace_and_four_mm_margin (daiyi_grinding.test_roi.RoiBoundaryTests.test_large_roi_keeps_usable_trace_and_four_mm_margin) ... ok
+test_no_roi_still_plans_nonempty_trace (daiyi_grinding.test_roi.RoiBoundaryTests.test_no_roi_still_plans_nonempty_trace) ... ok
+test_roi_fragment_of_normal_rib_stays_preserve (daiyi_grinding.test_roi.RoiBoundaryTests.test_roi_fragment_of_normal_rib_stays_preserve) ... ok
+test_blank_image_is_rejected (daiyi_grinding.calibration_test.ConventionTests.test_blank_image_is_rejected) ... ok
+test_eye_to_hand_inverse_input_returns_base_camera (daiyi_grinding.calibration_test.ConventionTests.test_eye_to_hand_inverse_input_returns_base_camera) ... ok
+test_loader_rejects_wrong_seed_placement (daiyi_grinding.calibration_test.ConventionTests.test_loader_rejects_wrong_seed_placement) ... ok
+test_transform_inverse_and_optical_axes (daiyi_grinding.calibration_test.ConventionTests.test_transform_inverse_and_optical_axes) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 1.183s
+
+OK

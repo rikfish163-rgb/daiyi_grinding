@@ -1,0 +1,217 @@
+{
+  "protocol": {
+    "seeds": [
+      1007,
+      1008,
+      1009,
+      1010
+    ],
+    "development_seeds": [
+      7
+    ],
+    "cases": [
+      "mixed",
+      "seam",
+      "burr",
+      "normal",
+      "thin",
+      "coarse",
+      "noisy"
+    ],
+    "methods": [
+      "threshold",
+      "geometry"
+    ],
+    "noise_mm": 0.06,
+    "stress_noise_mm": 0.25,
+    "dropout": 0.003,
+    "stress_dropout": 0.025,
+    "scope": "paired perception and generated-path footprint only; dynamics assessed separately",
+    "frozen_before_run": true,
+    "source_hashes": {
+      "execution.py": "ad50925ef1e6d983ea652d8cdc97ebdce92addb459a68ec52dc8e59cd087ff31",
+      "evaluation.py": "901782bd62bdee7d113017d186dac970201033985d02423c117dea3d4efff6bf",
+      "vla_experiment.py": "a62c1bd8a686bbf6f7411f5ae7c3255f8059640a83ddd0607b1f003d2bc856c9",
+      "__init__.py": "665b2d54488bb397acfe76b03b86f084814b1f95947d413cd3425902c7b6db69",
+      "geometry.py": "1d93e4ade2064535c82ffb93e3596a8f98f448f8f04489dfd706f17ad3aef596",
+      "calibration_test.py": "2ba69afba25a08e4a8646b1aae6d47fc4dabb5fb63c48411709bfa249be4a8e2",
+      "planning.py": "55ee14bbcd17008faf62619210351f136444a522e504b7cbe15c542241089055",
+      "perception.py": "0203b0e2e5696fa8773f08c5ca95a0df8ff30099b67ec2c78ca8ed8a7a510584",
+      "benchmark.py": "16816d403256737f9e513798e49001f7aab38153ef2eb70acdfbcf847826376c",
+      "calibration.py": "19e68cfb16ce34c0d8c8dc33e91ddb98a1fd601e5249b78398ea5913f60d32cb",
+      "sim.py": "ebe87e1093233b097ffd1ca42f14ad0bb129847bc3a8139314a7d60d32218765",
+      "run.py": "68c6b6279036e05a4943618f1a1901f635d82801727c7c6ce1a2cde37af95b61"
+    }
+  },
+  "summary": [
+    {
+      "case": "mixed",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.03544100920277117,
+      "recall": 0.7226112491529252,
+      "f1": 0.06756809085116644,
+      "normal_structure_selected_pixels": 104122,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "mixed",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.9366080318619316,
+      "recall": 0.8499359987952715,
+      "f1": 0.8911696206529034,
+      "normal_structure_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 1.0
+    },
+    {
+      "case": "seam",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.026803079266714488,
+      "recall": 0.7170837867247007,
+      "f1": 0.051674668434540556,
+      "normal_structure_selected_pixels": 104170,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "seam",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.9264658244250081,
+      "recall": 0.8487486398258978,
+      "f1": 0.8859060402684565,
+      "normal_structure_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 1.0
+    },
+    {
+      "case": "burr",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.00946884972115356,
+      "recall": 0.8050713153724247,
+      "f1": 0.01871755286419089,
+      "normal_structure_selected_pixels": 104260,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "burr",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.9705150976909414,
+      "recall": 0.8659270998415214,
+      "f1": 0.9152428810720268,
+      "normal_structure_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 1.0
+    },
+    {
+      "case": "normal",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "normal_structure_selected_pixels": 104313,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": null
+    },
+    {
+      "case": "normal",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "normal_structure_selected_pixels": 0,
+      "no_action_episodes": 4,
+      "review_episodes": 0,
+      "mean_coverage_3mm": null
+    },
+    {
+      "case": "thin",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.012699935663576287,
+      "recall": 0.4085416915899031,
+      "f1": 0.024634095319161213,
+      "normal_structure_selected_pixels": 104251,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "thin",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.9707046714172605,
+      "recall": 0.2933365235075966,
+      "f1": 0.450528249885163,
+      "normal_structure_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.4912908155288224
+    },
+    {
+      "case": "coarse",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.026419548273228555,
+      "recall": 0.715204273419725,
+      "f1": 0.05095676075695105,
+      "normal_structure_selected_pixels": 104129,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "coarse",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.7015535568274734,
+      "recall": 0.8487486398258978,
+      "f1": 0.7681633018487847,
+      "normal_structure_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 1.0
+    },
+    {
+      "case": "noisy",
+      "method": "threshold",
+      "episodes": 4,
+      "precision": 0.03401714215569467,
+      "recall": 0.7094345305323394,
+      "f1": 0.0649213288821363,
+      "normal_structure_selected_pixels": 104007,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 0.0
+    },
+    {
+      "case": "noisy",
+      "method": "geometry",
+      "episodes": 4,
+      "precision": 0.8879495736002966,
+      "recall": 0.9015887357879677,
+      "f1": 0.8947171785100501,
+      "normal_structure_selected_pixels": 0,
+      "no_action_episodes": 0,
+      "review_episodes": 0,
+      "mean_coverage_3mm": 1.0
+    }
+  ],
+  "completed": 56
+}
