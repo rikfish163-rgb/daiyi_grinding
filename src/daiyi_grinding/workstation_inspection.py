@@ -276,7 +276,9 @@ def observed_paths(detection, observation):
                             detection, observation
                         ),
                         "machining_required": True,
-                        "coordinate_frame": "workpiece_097",
+                        "coordinate_frame": observation.get(
+                            "coordinate_frame", "workpiece_097"
+                        ),
                         "clearance_mm": 3,
                         "material_allowance_mm": CELL_CONFIG["planning"][
                             "material_allowance_mm"
@@ -354,8 +356,33 @@ class Inspection:
         self.whole_workpiece = whole_workpiece
         self.targeted_rescan = targeted_rescan
         self.removal_rate_mm_s = removal_rate_mm_s
+        package = getattr(sim, "workpiece_package", None)
+        self.workpiece_package = package
+        self.coordinate_frame = (
+            package.coordinate_frame if package is not None else "workpiece_097"
+        )
+        if package is not None and package.workpiece_id != "097":
+            pad_low = np.array([0.05, 0.05, 0.035])
+            pad_high = np.array([0.05, 0.05, 0.04])
+            self.inspection_bounds = (
+                (package.bounds_m[0] - pad_low).tolist(),
+                (package.bounds_m[1] + pad_high).tolist(),
+            )
+        else:
+            self.inspection_bounds = BOUNDS
         self.reinspection = (
-            Reinspection(targets) if targets is not None else None
+            Reinspection(
+                targets,
+                protected_zones=(
+                    package.protected_zones if package is not None else ()
+                ),
+                coordinate_frame=self.coordinate_frame,
+                exclusion_radius_m=max(
+                    float(sim.tool.footprint_radius) + 0.008, 0.015
+                ),
+            )
+            if targets is not None
+            else None
         )
         self.permitted_paths = permitted_paths or []
         self.geometric_review = []
@@ -560,7 +587,7 @@ class Inspection:
                 reference,
                 intrinsics,
                 camera,
-                inspection_bounds=BOUNDS,
+                inspection_bounds=self.inspection_bounds,
                 roi=self.roi if index == 0 else None,
                 reference_object_mask=reference_mask,
                 selection_mask=selection_mask,
@@ -570,6 +597,7 @@ class Inspection:
             measured["normals"] = surface_normals(
                 measured["reference_xyz"], camera
             )
+            measured["coordinate_frame"] = self.coordinate_frame
             observed_counts = sample_counts[measured["surface"]]
             if len(observed_counts):
                 # Noise is estimated on the averaged depth. Account for the
@@ -616,7 +644,15 @@ class Inspection:
                 acquisition_reason = "signed_interval_confirmation"
         geometric = detections
         if self.reinspection is not None:
-            self.reinspection.observe(observation, index)
+            defect_mask = np.zeros(depth.shape, dtype=bool)
+            for candidate in geometric:
+                if candidate.kind in {"seam", "burr", "review"} and len(
+                    candidate.pixels
+                ):
+                    defect_mask[tuple(candidate.pixels.T)] = True
+            self.reinspection.observe(
+                observation, index, excluded_mask=defect_mask
+            )
             self.geometric_review.extend(
                 {
                     "view": index,
@@ -777,7 +813,7 @@ class Inspection:
             "detections": summaries,
             "views": self.views,
             "camera_fixed": True,
-            "coordinate_frame": "workpiece_097",
+            "coordinate_frame": self.coordinate_frame,
             "source": "new fixed-camera RGB-D at measured encoder angle, registered nominal CAD reference",
             "truth_used_for_inference": False,
             "machining_eligibility_source": "positive measured displacement projected onto visible registered CAD normals, quantile 0.8",
@@ -831,7 +867,7 @@ class Inspection:
         write_json(
             self.sim.output / f"{self.prefix}pointcloud.json",
             {
-                "frame": "workpiece_097",
+                "frame": self.coordinate_frame,
                 "points": points.round(6).tolist(),
                 "source": "camera observations transformed by measured encoder pose; no ICP or mesh point substitution",
             },
@@ -918,7 +954,7 @@ class Inspection:
                         "detections": self.summaries(),
                         "views": self.views,
                         "camera_fixed": True,
-                        "coordinate_frame": "workpiece_097",
+                        "coordinate_frame": self.coordinate_frame,
                         "source": "current signed anchor measurements and new fixed-camera detections",
                         "truth_used_for_inference": False,
                         "region_reinspection": quality,

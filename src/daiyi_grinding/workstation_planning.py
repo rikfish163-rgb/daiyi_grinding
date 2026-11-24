@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 import time
 from numbers import Integral, Real
@@ -121,7 +123,9 @@ class Commands:
     def __init__(self, sim, budget=None):
         self.sim = sim
         self.config = getattr(sim, "cell_config", CELL_CONFIG)
-        self.search = getattr(sim, "workpiece_package", DEFAULT_WORKPIECE_PACKAGE).contact_search
+        self.search = getattr(
+            sim, "workpiece_package", DEFAULT_WORKPIECE_PACKAGE
+        ).contact_search
         self.budget = budget
         self.items = []
         self.pose = sim.body_transform(sim.gripper)
@@ -247,7 +251,11 @@ class Commands:
                     start_pose[:3, 3] * (1 - amount) + goal[:3, 3] * amount,
                 )
                 candidate, error, _ = self.solve_ik(pose, q)
-                if phase == "trace" and np.max(np.abs(candidate - q)) > self.search.max_joint_jump_rad:
+                if (
+                    phase == "trace"
+                    and np.max(np.abs(candidate - q))
+                    > self.search.max_joint_jump_rad
+                ):
                     raise MotionBlocked("加工轨迹关节跳变，需独立切段进退刀")
                 if not self.edge(q, candidate, phase, step=0.012):
                     raise MotionBlocked("段间插值与整站障碍干涉")
@@ -335,32 +343,85 @@ def segment_candidates(path, tool, search=None, *, max_roll_candidates=None):
     normal = np.asarray(path["normal"], dtype=float)
     alignment = Rotation.align_vectors([NORMAL], [normal])[0]
     rolls = (
-        45, 60, 30, 90, 120, 150, 180, 210, 0, 240, 270, 300,
-        330, 75, 105, 135, 165, 195, 225, 255, 285, 315, 345, 15,
-    )[:max_roll_candidates if max_roll_candidates is not None else CELL_CONFIG["planning"].get("max_roll_candidates", 24)]
-    contacts = _belt_contacts(tool, search) if tool.key == "belt" and hasattr(tool, "half_size") else list(tool.candidates())
+        45,
+        60,
+        30,
+        90,
+        120,
+        150,
+        180,
+        210,
+        0,
+        240,
+        270,
+        300,
+        330,
+        75,
+        105,
+        135,
+        165,
+        195,
+        225,
+        255,
+        285,
+        315,
+        345,
+        15,
+    )[
+        : max_roll_candidates
+        if max_roll_candidates is not None
+        else CELL_CONFIG["planning"].get("max_roll_candidates", 24)
+    ]
+    contacts = (
+        _belt_contacts(tool, search)
+        if tool.key == "belt" and hasattr(tool, "half_size")
+        else list(tool.candidates())
+    )
     for refinement in search.roll_refinement_deg:
         for tilt in search.tilt_candidates_deg:
-            for axis in ((1,) if tilt == 0 else (1, 2)):
-                deviation = Rotation.from_rotvec(np.eye(3)[axis] * np.deg2rad(tilt))
+            for axis in (1,) if tilt == 0 else (1, 2):
+                deviation = Rotation.from_rotvec(
+                    np.eye(3)[axis] * np.deg2rad(tilt)
+                )
                 for roll in rolls:
                     rotation = (
-                        deviation * Rotation.from_rotvec(NORMAL * np.deg2rad(roll + refinement)) * alignment
+                        deviation
+                        * Rotation.from_rotvec(
+                            NORMAL * np.deg2rad(roll + refinement)
+                        )
+                        * alignment
                     ).as_matrix()
                     for contact in contacts:
                         yield rotation, contact, roll + refinement
 
 
 def _belt_contacts(tool, search):
-    half = np.asarray(tool.half_size[1:], dtype=float) - search.edge_margin_mm / 1000
+    half = (
+        np.asarray(tool.half_size[1:], dtype=float)
+        - search.edge_margin_mm / 1000
+    )
     if np.any(half <= 0):
         raise MotionBlocked("砂带留边耗尽有效磨削面")
     width, length = half
     offsets = [
-        (0, 0), (width, 0), (-width, 0), (0, length), (0, -length),
-        (width, length), (-width, length), (width, -length), (-width, -length),
-        *[tuple(np.asarray(point)[1:] - tool.contact[1:]) for point in tool.candidates()],
-        *[(y, z) for z in np.linspace(-length, length, 5) for y in np.linspace(-width, width, 5)],
+        (0, 0),
+        (width, 0),
+        (-width, 0),
+        (0, length),
+        (0, -length),
+        (width, length),
+        (-width, length),
+        (width, -length),
+        (-width, -length),
+        *[
+            tuple(np.asarray(point)[1:] - tool.contact[1:])
+            for point in tool.candidates()
+        ],
+        *[
+            (y, z)
+            for z in np.linspace(-length, length, 5)
+            for y in np.linspace(-width, width, 5)
+        ],
     ]
     return [
         tool.contact + [0, y, z]
@@ -380,7 +441,8 @@ def separate_nominal_tool(builder, points, rotation, contact, gap, mode):
     initial_penetration = 0.0
     if (
         mode == "removal"
-        and gap * 1000 > builder.config["planning"]["target_remaining_height_mm"]
+        and gap * 1000
+        > builder.config["planning"]["target_remaining_height_mm"]
     ):
         raise MotionBlocked(
             f"名义工件脱离砂带所需留量超过剩余高度目标：{gap * 1000:.3f} mm"
@@ -445,7 +507,10 @@ def separate_nominal_tool(builder, points, rotation, contact, gap, mode):
             if separation < math.inf
             else math.inf
         )
-        if gap * 1000 > builder.config["planning"]["target_remaining_height_mm"]:
+        if (
+            gap * 1000
+            > builder.config["planning"]["target_remaining_height_mm"]
+        ):
             raise MotionBlocked(
                 f"名义工件脱离砂带所需留量超过剩余高度目标：{gap * 1000:.3f} mm"
             )
@@ -518,8 +583,12 @@ def _build_grasp_cycle(sim, paths, mode="removal", publish=None):
         }
         attempts = 0
         for rotation, contact, roll in segment_candidates(
-            path, sim.tool, builder.search,
-            max_roll_candidates=builder.config["planning"].get("max_roll_candidates", 24),
+            path,
+            sim.tool,
+            builder.search,
+            max_roll_candidates=builder.config["planning"].get(
+                "max_roll_candidates", 24
+            ),
         ):
             try:
                 builder.budget.check()
@@ -570,8 +639,12 @@ def _build_grasp_cycle(sim, paths, mode="removal", publish=None):
                 last = workpiece_target(points[-1], rotation, gap, contact)
                 last[:3, 3] -= NORMAL * PROCESS_RETREAT_M
                 builder.leg(
-                    last, "retract", speed=0.04, point=points[-1],
-                    detection_id=path["detection_id"], segment_id=path["segment_id"],
+                    last,
+                    "retract",
+                    speed=0.04,
+                    point=points[-1],
+                    detection_id=path["detection_id"],
+                    segment_id=path["segment_id"],
                 )
                 builder.leg(process_staging, "return")
                 builder.leg(staging, "return")
@@ -601,9 +674,26 @@ def _build_grasp_cycle(sim, paths, mode="removal", publish=None):
                     workpiece_rotation_world=rotation.tolist(),
                     tool=sim.tool.key,
                     grasp_setup=getattr(sim, "grasp_setup", "original"),
-                    surface_normal_world=(rotation @ np.asarray(path["normal"])).tolist(),
-                    normal_deviation_deg=float(np.rad2deg(np.arccos(np.clip(np.dot(rotation @ np.asarray(path["normal"]), NORMAL), -1, 1)))),
-                    belt_edge_margin_mm=getattr(sim, "workpiece_package", DEFAULT_WORKPIECE_PACKAGE).contact_search.edge_margin_mm,
+                    surface_normal_world=(
+                        rotation @ np.asarray(path["normal"])
+                    ).tolist(),
+                    normal_deviation_deg=float(
+                        np.rad2deg(
+                            np.arccos(
+                                np.clip(
+                                    np.dot(
+                                        rotation @ np.asarray(path["normal"]),
+                                        NORMAL,
+                                    ),
+                                    -1,
+                                    1,
+                                )
+                            )
+                        )
+                    ),
+                    belt_edge_margin_mm=getattr(
+                        sim, "workpiece_package", DEFAULT_WORKPIECE_PACKAGE
+                    ).contact_search.edge_margin_mm,
                     coverage=1.0,
                     coverage_ratio=1.0,
                     **clearance,
@@ -697,40 +787,78 @@ def _build_grasp_cycle(sim, paths, mode="removal", publish=None):
     )
 
 
-def build_plan(sim, paths, mode="removal", publish=None):
+def build_plan(sim, paths, mode="removal", publish=None, *, grasp_setups=None):
     """Admit whole paths first, then bounded overlapping local grasp cycles.
 
     Each repaired subsegment has its own verified grasp, approach, trace,
     retreat and return cycle. Subdivision never joins different source paths
     or interpolates across a declared permission gap. Coverage is the union of
     admitted source intervals, not the sum of overlapping subsegment lengths.
+    Passing ``grasp_setups`` requests automatic multi-grasp scheduling: the first
+    return value then contains independent operation dictionaries, not a flat
+    joint command stream. The default retains the single-grasp command API.
     """
+    if grasp_setups is not None:
+        return build_multi_grasp_plan(
+            sim, paths, mode, publish, grasp_setups=grasp_setups
+        )
     publish = publish or (lambda record: None)
     if not paths:
-        return _build_grasp_cycle(sim, paths, mode, publish)
+        commands, admitted, checked = _build_grasp_cycle(
+            sim, paths, mode, publish
+        )
+        return (
+            commands,
+            admitted,
+            {
+                **checked,
+                "admitted_rows": [],
+                "source_coverage_ratio": 0.0,
+                "regrasp_checkpoints": [],
+            },
+        )
     begin = time.monotonic()
     package = getattr(sim, "workpiece_package", None)
     search = (package or DEFAULT_WORKPIECE_PACKAGE).contact_search
     valid, invalid = [], []
     for path in paths:
-        reason = _path_rejection(path, package, sim.tool)
+        reason, length = _path_rejection(path, package, sim.tool)
         if reason is not None:
-            invalid.append({"segment_id": path["segment_id"], "detection_id": path["detection_id"], "status": "blocked", "reason": reason, "coverage": 0.0, "coverage_ratio": 0.0})
+            invalid.append(
+                {
+                    "segment_id": path["segment_id"],
+                    "detection_id": path["detection_id"],
+                    "status": "blocked",
+                    "reason": reason,
+                    "coverage": 0.0,
+                    "coverage_ratio": 0.0,
+                    "source_coverage_ratio": 0.0,
+                    "source_length_mm": length,
+                }
+            )
             continue
-        length = float(_path_arc(path)[-1] * 1000)
-        valid.append({
-            **path,
-            "source_segment_id": path.get("source_segment_id", path.get("split_from", path["segment_id"])),
-            "source_length_mm": path.get("source_length_mm", length),
-            "source_interval_mm": path.get("source_interval_mm", [0.0, length]),
-        })
+        valid.append(
+            {
+                **path,
+                "source_segment_id": path.get(
+                    "source_segment_id",
+                    path.get("split_from", path["segment_id"]),
+                ),
+                "source_length_mm": path.get("source_length_mm", length),
+                "source_interval_mm": path.get(
+                    "source_interval_mm", [0.0, length]
+                ),
+            }
+        )
     commands, accepted, checks = _build_grasp_cycle(sim, valid, mode)
     rows = [*checks["rows"], *invalid]
     cycles = [commands] if commands else []
     next_id = max(path["segment_id"] for path in paths) + 1
     attempted_leaves = sum(row["status"] == "passed" for row in rows)
     for path in valid:
-        row = next(row for row in rows if row["segment_id"] == path["segment_id"])
+        row = next(
+            row for row in rows if row["segment_id"] == path["segment_id"]
+        )
         if row["status"] == "passed":
             continue
         pending = [(path, 0, row)]
@@ -738,22 +866,48 @@ def build_plan(sim, paths, mode="removal", publish=None):
         while pending:
             current, depth, current_row = pending.pop(0)
             length = float(_path_arc(current)[-1] * 1000)
-            failures = [current_row.get("reason", ""), *current_row.get("failure_reasons", [])]
+            failures = [
+                current_row.get("reason", ""),
+                *current_row.get("failure_reasons", []),
+            ]
             if (
                 depth >= search.max_split_depth
                 or current_row.get("reason", "").startswith("抓取/抬升/转场")
                 or length < 2 * search.minimum_segment_length_mm
-                or not any(any(word in failure for word in ("不可达", "干涉", "跳变", "插值")) for failure in failures)
+                or not any(
+                    any(
+                        word in failure
+                        for word in ("不可达", "干涉", "跳变", "插值")
+                    )
+                    for failure in failures
+                )
             ):
                 attempted_leaves += 1
                 continue
             midpoint = length / 2
             half_overlap = search.overlap_mm / 2
-            for low, high in ((0, midpoint + half_overlap), (midpoint - half_overlap, length)):
-                child = slice_path(current, low, high, segment_id=next_id, overlap_mm=search.overlap_mm)
+            for low, high in (
+                (0, midpoint + half_overlap),
+                (midpoint - half_overlap, length),
+            ):
+                child = slice_path(
+                    current,
+                    low,
+                    high,
+                    segment_id=next_id,
+                    overlap_mm=search.overlap_mm,
+                )
                 next_id += 1
-                motion, admitted, child_checks = _build_grasp_cycle(sim, [child], mode)
-                child_row = {**child_checks["rows"][0], "split_from": child["split_from"], "source_interval_mm": child["source_interval_mm"], "coverage_ratio": child["coverage_ratio"], "split_depth": depth + 1}
+                motion, admitted, child_checks = _build_grasp_cycle(
+                    sim, [child], mode
+                )
+                child_row = {
+                    **child_checks["rows"][0],
+                    "split_from": child["split_from"],
+                    "source_interval_mm": child["source_interval_mm"],
+                    "coverage_ratio": child["coverage_ratio"],
+                    "split_depth": depth + 1,
+                }
                 local_rows.append(child_row)
                 if admitted:
                     cycles.append(motion)
@@ -761,7 +915,13 @@ def build_plan(sim, paths, mode="removal", publish=None):
                     attempted_leaves += 1
                 else:
                     pending.append((child, depth + 1, child_row))
-            publish({"rows": rows, "admitted_count": len(accepted), "segment_count": len(paths)})
+            publish(
+                {
+                    "rows": rows,
+                    "admitted_count": len(accepted),
+                    "segment_count": len(paths),
+                }
+            )
         row["subsegments"] = local_rows
     assembled = []
     clock = 0.0
@@ -770,7 +930,10 @@ def build_plan(sim, paths, mode="removal", publish=None):
         clock = assembled[-1]["t"]
     # Only the assembled cycle has an authoritative binding. Intermediate
     # stamps belong to identical local cycles and are removed before rechecking.
-    assembled = [{key: value for key, value in item.items() if key != "motion_binding"} for item in assembled]
+    assembled = [
+        {key: value for key, value in item.items() if key != "motion_binding"}
+        for item in assembled
+    ]
     if assembled:
         assembled = bind_commands(sim, assembled)
         final = preflight(sim, assembled)
@@ -781,9 +944,18 @@ def build_plan(sim, paths, mode="removal", publish=None):
     covered_lengths = []
     complete = 0
     for path in valid:
-        row = next(row for row in rows if row["segment_id"] == path["segment_id"])
-        matching = [item for item in accepted if item["source_segment_id"] == path["source_segment_id"]]
-        covered = interval_coverage([item["source_interval_mm"] for item in matching], path["source_interval_mm"])
+        row = next(
+            row for row in rows if row["segment_id"] == path["segment_id"]
+        )
+        matching = [
+            item
+            for item in accepted
+            if item["source_segment_id"] == path["source_segment_id"]
+        ]
+        covered = interval_coverage(
+            [item["source_interval_mm"] for item in matching],
+            path["source_interval_mm"],
+        )
         length = path["source_interval_mm"][1] - path["source_interval_mm"][0]
         coverage = covered / length if length > 0 else 0.0
         covered_lengths.append((covered, length))
@@ -794,65 +966,141 @@ def build_plan(sim, paths, mode="removal", publish=None):
             source_length_mm=path["source_length_mm"],
             coverage=coverage,
             coverage_ratio=coverage,
+            source_coverage_ratio=covered / path["source_length_mm"],
+            source_interval={
+                "start_mm": path["source_interval_mm"][0],
+                "end_mm": path["source_interval_mm"][1],
+            },
             grasp_setup=getattr(sim, "grasp_setup", "original"),
-            status="passed" if coverage >= 1 - 1e-8 else "partial" if coverage > 0 else "blocked",
+            status="passed"
+            if coverage >= 1 - 1e-8
+            else "partial"
+            if coverage > 0
+            else "blocked",
         )
         if coverage > 0 and row.get("subsegments"):
-            row["reason"] = "已保留通过独立进退刀与连续预检的局部子段；其余区间保持受阻"
+            row["reason"] = (
+                "已保留通过独立进退刀与连续预检的局部子段；其余区间保持受阻"
+            )
         if not final["passed"] and row.get("subsegments"):
             row["reason"] = "完整组合曲线预检失败，局部子段均拒绝执行"
     for item in accepted:
         interval = item["source_interval_mm"]
-        item["coverage_ratio"] = (interval[1] - interval[0]) / item["source_length_mm"]
+        item["coverage_ratio"] = (interval[1] - interval[0]) / item[
+            "source_length_mm"
+        ]
+        item["source_interval"] = {
+            "start_mm": interval[0],
+            "end_mm": interval[1],
+        }
+        item["source_coverage_ratio"] = (
+            interval_coverage(
+                [
+                    part["source_interval_mm"]
+                    for part in accepted
+                    if part["source_segment_id"] == item["source_segment_id"]
+                ],
+                [0, item["source_length_mm"]],
+            )
+            / item["source_length_mm"]
+        )
         item["grasp_setup"] = getattr(sim, "grasp_setup", "original")
-    total_length = sum(length for _, length in covered_lengths)
-    return assembled, accepted, {
-        **checks, **final,
-        "rows": rows,
-        "grasp_setup": getattr(sim, "grasp_setup", "original"),
-        "regrasp_checkpoints": [],
-        "segment_count": len(paths),
-        "admitted_count": len(accepted),
-        "complete_source_segment_count": int(complete),
-        "blocked_count": len(paths) - int(complete),
-        "complete_segment_rate": complete / len(paths),
-        "source_coverage_ratio": sum(covered for covered, _ in covered_lengths) / total_length if total_length else 0.0,
-        "admitted_subsegment_count": sum("split_from" in item for item in accepted),
-        "subsegment_admission_rate": len(accepted) / attempted_leaves if attempted_leaves else 0.0,
-        "admitted_subsegment_coverage_ratio": 1.0 if accepted else 0.0,
-        "all_paths_passed": complete == len(paths) and final["passed"],
-        "sample_count": len(assembled),
-        "duration_s": assembled[-1]["t"] if assembled else 0.0,
-        "motion_binding": assembled[0].get("motion_binding") if assembled else None,
-        "seconds": time.monotonic() - begin,
-        "split_overlap_mm": search.overlap_mm,
-        "split_max_depth": search.max_split_depth,
-        "split_cycle_policy": "independent verified grasp/approach/trace/retract/return cycle per repaired subsegment",
-    }
+    total_length = sum(length for _, length in covered_lengths) + sum(
+        row["source_length_mm"] for row in invalid
+    )
+    return (
+        assembled,
+        accepted,
+        {
+            **checks,
+            **final,
+            "rows": rows,
+            "admitted_rows": _admitted_rows(assembled, accepted),
+            "grasp_setup": getattr(sim, "grasp_setup", "original"),
+            "regrasp_checkpoints": [],
+            "segment_count": len(paths),
+            "admitted_count": len(accepted),
+            "complete_source_segment_count": int(complete),
+            "blocked_count": len(paths) - int(complete),
+            "complete_segment_rate": complete / len(paths),
+            "source_coverage_ratio": sum(
+                covered for covered, _ in covered_lengths
+            )
+            / total_length
+            if total_length
+            else 0.0,
+            "admitted_subsegment_count": sum(
+                "split_from" in item for item in accepted
+            ),
+            "subsegment_admission_rate": len(accepted) / attempted_leaves
+            if attempted_leaves
+            else 0.0,
+            "admitted_subsegment_coverage_ratio": 1.0 if accepted else 0.0,
+            "all_paths_passed": complete == len(paths) and final["passed"],
+            "sample_count": len(assembled),
+            "duration_s": assembled[-1]["t"] if assembled else 0.0,
+            "motion_binding": assembled[0].get("motion_binding")
+            if assembled
+            else None,
+            "seconds": time.monotonic() - begin,
+            "split_overlap_mm": search.overlap_mm,
+            "split_max_depth": search.max_split_depth,
+            "split_cycle_policy": "independent verified grasp/approach/trace/retract/return cycle per repaired subsegment",
+        },
+    )
 
 
 def _path_rejection(path, package, tool):
     points = np.asarray(path["nominal_xyz"], dtype=float)
+    if (
+        points.ndim != 2
+        or points.shape[1] != 3
+        or len(points) < 2
+        or not np.isfinite(points).all()
+    ):
+        return "轨迹须有有限的米制点", 0.0
+    steps = np.linalg.norm(np.diff(points, axis=0), axis=1)
+    length = float(steps.sum() * 1000)
     normal = np.asarray(path["normal"], dtype=float)
-    if points.ndim != 2 or points.shape[1] != 3 or len(points) < 2 or not np.isfinite(points).all() or normal.shape != (3,) or not np.isfinite(normal).all() or not np.isclose(np.linalg.norm(normal), 1, atol=1e-3):
-        return "轨迹须有有限的米制点与单位表面法向"
-    if np.any(np.linalg.norm(np.diff(points, axis=0), axis=1) > 0.005):
-        return "轨迹跨越已有许可支持缺口；不得插值切段或衔接"
+    if (
+        normal.shape != (3,)
+        or not np.isfinite(normal).all()
+        or not np.isclose(np.linalg.norm(normal), 1, atol=1e-3)
+    ):
+        return "轨迹须有单位表面法向", length
+    if length == 0:
+        return "轨迹须有正的名义加工长度", length
+    if np.any(steps > 0.005):
+        return "轨迹跨越已有许可支持缺口；不得插值切段或衔接", length
     if path.get("kind") not in {"burr", "seam"}:
-        return "该区域未获准自动磨削"
+        return "该区域未获准自动磨削", length
     if package is None:
-        return None
-    if path.get("coordinate_frame", package.coordinate_frame) != package.coordinate_frame:
-        return "轨迹 CAD 坐标身份与工件包不一致"
+        return None, length
+    if (
+        path.get("coordinate_frame", package.coordinate_frame)
+        != package.coordinate_frame
+    ):
+        return "轨迹 CAD 坐标身份与工件包不一致", length
     for zone in package.protected_zones:
-        distance = np.linalg.norm(np.maximum(np.maximum(zone.bounds_m[0] - points, points - zone.bounds_m[1]), 0), axis=1)
+        distance = np.linalg.norm(
+            np.maximum(
+                np.maximum(
+                    zone.bounds_m[0] - points, points - zone.bounds_m[1]
+                ),
+                0,
+            ),
+            axis=1,
+        )
         if np.any(distance <= tool.footprint_radius + 0.001):
-            return f"工具足迹进入声明保护区：{zone.name}"
-    return None
+            return f"工具足迹进入声明保护区：{zone.name}", length
+    return None, length
 
 
 def _path_arc(path):
-    return np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(path["nominal_xyz"], axis=0), axis=1))]
+    return np.r_[
+        0.0,
+        np.cumsum(np.linalg.norm(np.diff(path["nominal_xyz"], axis=0), axis=1)),
+    ]
 
 
 def slice_path(path, low_mm, high_mm, *, segment_id, overlap_mm=0.0):
@@ -860,16 +1108,22 @@ def slice_path(path, low_mm, high_mm, *, segment_id, overlap_mm=0.0):
     arc = _path_arc(path) * 1000
     if not 0 <= low_mm < high_mm <= arc[-1] + 1e-8:
         raise ValueError("子段区间须完全落在原许可轨迹内")
-    samples = np.unique(np.r_[low_mm, arc[(arc > low_mm) & (arc < high_mm)], high_mm])
+    samples = np.unique(
+        np.r_[low_mm, arc[(arc > low_mm) & (arc < high_mm)], high_mm]
+    )
     points = np.asarray(path["nominal_xyz"])
-    local = np.column_stack([np.interp(samples, arc, points[:, axis]) for axis in range(3)])
+    local = np.column_stack(
+        [np.interp(samples, arc, points[:, axis]) for axis in range(3)]
+    )
     offset = path.get("source_interval_mm", [0.0, arc[-1]])[0]
     source_length = path.get("source_length_mm", float(arc[-1]))
     row = {
         **path,
         "segment_id": segment_id,
         "split_from": path.get("split_from", path["segment_id"]),
-        "source_segment_id": path.get("source_segment_id", path.get("split_from", path["segment_id"])),
+        "source_segment_id": path.get(
+            "source_segment_id", path.get("split_from", path["segment_id"])
+        ),
         "source_interval_mm": [offset + low_mm, offset + high_mm],
         "source_length_mm": source_length,
         "nominal_xyz": local.tolist(),
@@ -879,7 +1133,9 @@ def slice_path(path, low_mm, high_mm, *, segment_id, overlap_mm=0.0):
     }
     observed = np.asarray(path.get("observed_xyz", []))
     if observed.shape == points.shape:
-        row["observed_xyz"] = np.column_stack([np.interp(samples, arc, observed[:, axis]) for axis in range(3)]).tolist()
+        row["observed_xyz"] = np.column_stack(
+            [np.interp(samples, arc, observed[:, axis]) for axis in range(3)]
+        ).tolist()
     return row
 
 
@@ -891,3 +1147,323 @@ def interval_coverage(intervals, boundary):
         covered += max(0.0, high - max(low, end))
         end = max(end, high)
     return covered
+
+
+def build_multi_grasp_plan(
+    sim, paths, mode="removal", publish=None, *, grasp_setups=None
+):
+    """Schedule independent collision-checked operations for uncovered intervals.
+
+    Alternate models are planning-only. Each emitted fixture checkpoint must
+    be executed and verified before replanning its operation on live integrated
+    state. Commands from different grasp bindings must never be flattened.
+    """
+    publish = publish or (lambda record: None)
+    package = sim.workpiece_package
+    setups = (
+        tuple(grasp_setups)
+        if grasp_setups is not None
+        else (
+            sim.grasp_setup,
+            *[
+                setup.name
+                for setup in package.grasp_setups
+                if setup.name != sim.grasp_setup
+            ],
+        )
+    )
+    if not setups or len(set(setups)) != len(setups):
+        raise ValueError("候选夹持须非空且名称唯一")
+    for setup in setups:
+        package.grasp_frames(setup)
+    begin = time.monotonic()
+    sources, rows = [], []
+    for path in paths:
+        reason, length = _path_rejection(path, package, sim.tool)
+        sources.append(
+            {
+                **path,
+                "source_segment_id": path["segment_id"],
+                "source_length_mm": length,
+                "source_interval_mm": [0.0, length],
+            }
+        )
+        rows.append(
+            {
+                "segment_id": path["segment_id"],
+                "source_segment_id": path["segment_id"],
+                "detection_id": path["detection_id"],
+                "kind": path["kind"],
+                "source_length_mm": length,
+                "status": "blocked",
+                "reason": reason,
+                "source_interval": {"start_mm": 0.0, "end_mm": length},
+                "source_interval_mm": [0.0, length],
+                "grasp_attempts": [],
+            }
+        )
+    pending = [
+        path for path, row in zip(sources, rows) if row["reason"] is None
+    ]
+    accepted, operations, checkpoints, attempts = [], [], [], []
+    previous_setup = sim.grasp_setup
+    next_id = max((path["segment_id"] for path in paths), default=0) + 1
+    for setup in setups:
+        if not pending:
+            break
+        variant = (
+            sim if setup == sim.grasp_setup else sim.planning_variant(setup)
+        )
+        try:
+            commands, admitted, checked = build_plan(variant, pending, mode)
+            attempts.append({"grasp_setup": setup, "preflight": checked})
+            for attempt in checked["rows"]:
+                source_id = attempt.get(
+                    "source_segment_id", attempt["segment_id"]
+                )
+                row = next(
+                    row for row in rows if row["source_segment_id"] == source_id
+                )
+                row["grasp_attempts"].append({"grasp_setup": setup, **attempt})
+            if admitted:
+                operation_id = len(operations) + 1
+                checkpoint = None
+                if setup != previous_setup:
+                    _, before_rotation = package.grasp_frames(previous_setup)
+                    _, after_rotation = package.grasp_frames(setup)
+                    checkpoint = {
+                        "checkpoint_id": len(checkpoints) + 1,
+                        "before_operation_id": operation_id,
+                        "after_operation_id": operations[-1]["operation_id"]
+                        if operations
+                        else None,
+                        "from_grasp_setup": previous_setup,
+                        "to_grasp_setup": setup,
+                        "fixture_id": package.fixture_id,
+                        "fixture_position_world_m": package.loading_position.tolist(),
+                        "target_loading_rotation_world": after_rotation.tolist(),
+                        "fixture_clocking_delta_deg": float(
+                            np.rad2deg(
+                                Rotation.from_matrix(
+                                    after_rotation @ before_rotation.T
+                                ).as_rotvec()[2]
+                            )
+                        ),
+                        "required_state": {
+                            "fixture_attached": True,
+                            "grasp_attached": False,
+                        },
+                        "required_checks": [
+                            "verified fixture support",
+                            "released gripper",
+                            "integrated turntable encoder within 0.1 degree",
+                            "measured CAD pose within existing grasp alignment limits",
+                            "replan and preflight in the new grasp binding",
+                        ],
+                        "simulation_only": True,
+                        "transition_executed": False,
+                        "workpiece_pose_teleported": False,
+                    }
+                    checkpoints.append(checkpoint)
+                operations.append(
+                    {
+                        "operation_id": operation_id,
+                        "grasp_setup": setup,
+                        "workpiece_id": package.workpiece_id,
+                        "planning_output": str(variant.output),
+                        "scene_file": str(variant.scene_file),
+                        "commands": commands,
+                        "paths": admitted,
+                        "preflight": checked,
+                        "motion_binding": checked["motion_binding"],
+                        "required_checkpoint_id": checkpoint["checkpoint_id"]
+                        if checkpoint
+                        else None,
+                    }
+                )
+                accepted.extend(admitted)
+                previous_setup = setup
+                next_id = max(
+                    next_id, max(path["segment_id"] for path in accepted) + 1
+                )
+        finally:
+            if variant is not sim:
+                variant.close()
+        pending = []
+        for source, row in zip(sources, rows):
+            if row["reason"] is not None:
+                continue
+            intervals = [
+                path["source_interval_mm"]
+                for path in accepted
+                if path["source_segment_id"] == source["source_segment_id"]
+            ]
+            for low, high in _uncovered_intervals(
+                intervals, source["source_length_mm"]
+            ):
+                if low == 0 and high == source["source_length_mm"]:
+                    pending.append(source)
+                else:
+                    pending.append(
+                        slice_path(source, low, high, segment_id=next_id)
+                    )
+                    next_id += 1
+        publish(
+            {
+                "rows": rows,
+                "admitted_count": len(accepted),
+                "segment_count": len(paths),
+                "grasp_setup": setup,
+                "regrasp_checkpoints": checkpoints,
+            }
+        )
+    complete, total_covered = 0, 0.0
+    for row in rows:
+        matching = [
+            path
+            for path in accepted
+            if path["source_segment_id"] == row["source_segment_id"]
+        ]
+        covered = interval_coverage(
+            [path["source_interval_mm"] for path in matching],
+            row["source_interval_mm"],
+        )
+        coverage = (
+            covered / row["source_length_mm"]
+            if row["source_length_mm"] > 0
+            else 0.0
+        )
+        total_covered += covered
+        complete += coverage >= 1 - 1e-8
+        row.update(
+            coverage=coverage,
+            coverage_ratio=coverage,
+            source_coverage_ratio=coverage,
+            status="passed"
+            if coverage >= 1 - 1e-8
+            else "partial"
+            if coverage > 0
+            else "blocked",
+            grasp_setup=list(
+                dict.fromkeys(path["grasp_setup"] for path in matching)
+            ),
+        )
+        for path in matching:
+            path["source_coverage_ratio"] = coverage
+    total_length = sum(row["source_length_mm"] for row in rows)
+    return (
+        operations,
+        accepted,
+        {
+            "passed": bool(operations)
+            and all(
+                operation["preflight"]["passed"] for operation in operations
+            ),
+            "rows": rows,
+            "admitted_rows": [
+                {**row, "operation_id": operation["operation_id"]}
+                for operation in operations
+                for row in operation["preflight"]["admitted_rows"]
+            ],
+            "segment_count": len(paths),
+            "admitted_count": len(accepted),
+            "complete_source_segment_count": int(complete),
+            "blocked_count": len(paths) - int(complete),
+            "complete_segment_rate": complete / len(paths) if paths else 0.0,
+            "source_coverage_ratio": total_covered / total_length
+            if total_length
+            else 0.0,
+            "admitted_subsegment_count": sum(
+                "split_from" in path for path in accepted
+            ),
+            "admitted_subsegment_coverage_ratio": 1.0 if accepted else 0.0,
+            "all_paths_passed": bool(paths) and complete == len(paths),
+            "operation_count": len(operations),
+            "sample_count": sum(
+                len(operation["commands"]) for operation in operations
+            ),
+            "contact_count": sum(
+                operation["preflight"]["contact_count"]
+                for operation in operations
+            ),
+            "regrasp_checkpoints": checkpoints,
+            "grasp_attempts": attempts,
+            "seconds": time.monotonic() - begin,
+            "transition_execution_pending": bool(checkpoints),
+            "flat_commands_supported": False,
+            "scope": "per-grasp CAD collision and continuous-curve admission; fixture regrasp transitions require integrated execution and a fresh binding",
+        },
+    )
+
+
+def _admitted_rows(commands, paths):
+    """Bind complete retained segments using the controller's command schema."""
+    if not paths:
+        return []
+    from .offline_controller import Command
+
+    rows = []
+    for path in paths:
+        items = [
+            command
+            for command in commands
+            if command["segment_id"] == path["segment_id"]
+        ]
+        normalized = [
+            Command(
+                index=index,
+                t=float(command["t"]),
+                q=tuple(float(value) for value in command["q"]),
+                pose=tuple(
+                    tuple(float(value) for value in row)
+                    for row in command["pose"]
+                ),
+                phase=command["phase"],
+                attached=command["attached"],
+                point=tuple(float(value) for value in command["point"])
+                if command["point"] is not None
+                else None,
+                detection_id=command["detection_id"],
+                segment_id=command["segment_id"],
+            ).normalized()
+            for index, command in enumerate(items)
+        ]
+        content = (
+            json.dumps(
+                normalized,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+            + b"\n"
+        )
+        rows.append(
+            {
+                "segment_id": path["segment_id"],
+                "source_segment_id": path["source_segment_id"],
+                "split_from": path.get("split_from"),
+                "source_interval_mm": path["source_interval_mm"],
+                "source_interval": path["source_interval"],
+                "source_coverage_ratio": path["source_coverage_ratio"],
+                "grasp_setup": path["grasp_setup"],
+                "detection_id": path["detection_id"],
+                "status": "passed",
+                "coverage": 1.0,
+                "command_count": len(items),
+                "command_sha256": hashlib.sha256(content).hexdigest(),
+            }
+        )
+    return rows
+
+
+def _uncovered_intervals(intervals, length):
+    result, end = [], 0.0
+    for low, high in sorted(intervals):
+        low, high = max(0.0, low), min(length, high)
+        if low > end + 1e-8:
+            result.append((end, low))
+        end = max(end, high)
+    if length > end + 1e-8:
+        result.append((end, length))
+    return result

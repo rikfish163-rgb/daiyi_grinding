@@ -12,7 +12,12 @@ from daiyi_grinding import dataset_pipeline, workpiece_packages
 from daiyi_grinding import workstation_session as session_module
 
 
-def _path(allowance_mm=0.08, detection_id=1, grasp_setup="original"):
+def _path(
+    allowance_mm=0.08,
+    detection_id=1,
+    grasp_setup="original",
+    normal_height_mm=0.8,
+):
     return {
         "detection_id": detection_id,
         "kind": "seam",
@@ -20,7 +25,7 @@ def _path(allowance_mm=0.08, detection_id=1, grasp_setup="original"):
         "nominal_xyz": [[0.0, 0.0, 0.3], [0.01, 0.0, 0.3]],
         "observed_xyz": [[0.0, 0.0, 0.3008], [0.01, 0.0, 0.3008]],
         "normal": [0.0, 0.0, 1.0],
-        "normal_height_mm": 0.8,
+        "normal_height_mm": normal_height_mm,
         "machining_required": True,
         "coordinate_frame": "workpiece_097",
         "material_allowance_mm": allowance_mm,
@@ -79,9 +84,31 @@ def _baseline(height_mm=0.0, include_sides=True):
     return rows
 
 
-def _quality():
+def _quality(region_estimate=0.10):
+    estimates = (
+        list(region_estimate)
+        if isinstance(region_estimate, (list, tuple))
+        else [region_estimate]
+    )
+    regions = [
+        {
+            "id": identity,
+            "kind": "seam",
+            "status": "verified",
+            "status_reason": "signed_interval_within_limits",
+            "positive_excess": value > 0.3,
+            "overgrind": value < -0.3,
+            "negative_limit_risk": False,
+            "anchors": 9,
+            "observed_anchors": 9,
+            "anchor_bounds_mm": [[value - 0.04, value + 0.04]] * 9,
+            "anchor_estimates_mm": [value] * 9,
+            "anchor_observation_counts": [9] * 9,
+        }
+        for identity, value in enumerate(estimates, 1)
+    ]
     return {
-        "verified": 1,
+        "verified": len(regions),
         "needs_rework": 0,
         "uncertain": 0,
         "overgrind": 0,
@@ -94,35 +121,23 @@ def _quality():
         "truth_used_for_decision": False,
         "invalid_observations": [],
         "uncertainty_model": {"sigma_multiplier": 2},
-        "regions": [
-            {
-                "id": 1,
-                "kind": "seam",
-                "status": "verified",
-                "status_reason": "signed_interval_within_limits",
-                "positive_excess": False,
-                "overgrind": False,
-                "negative_limit_risk": False,
-                "anchors": 9,
-                "observed_anchors": 9,
-                "anchor_bounds_mm": [[0.08, 0.12]] * 9,
-                "anchor_estimates_mm": [0.10] * 9,
-                "anchor_observation_counts": [9] * 9,
-            }
-        ],
+        "regions": regions,
     }
 
 
 class StubBackend:
     """Pure-Python ``SessionBackend``; never constructs or steps MuJoCo."""
 
-    def __init__(self, directory, config, checkpoint, scenario="pass"):
+    def __init__(
+        self, directory, config, checkpoint, scenario="pass", shared=None
+    ):
         self.directory = Path(directory)
         self.config = dict(config)
         self.checkpoint = checkpoint
         self.scenario = scenario
         self.scans = 0
         self.executions = 0
+        self.shared = shared if shared is not None else {"rescan_index": 0}
 
     def scan(self, output, **options):
         output = Path(output)
@@ -133,9 +148,33 @@ class StubBackend:
         self.scans += 1
         if options.get("targets"):
             return self._rescan()
+        path = _path(
+            normal_height_mm=0.003 if self.scenario == "zero_excess" else 0.8
+        )
+        if self.scenario == "two_region_pairing":
+            return {
+                "detections": [_detection(1), _detection(2)],
+                "paths": [
+                    _path(detection_id=1),
+                    _path(detection_id=2),
+                ],
+                "perception": {"prediction_revision": 1},
+                "registered_regions": [
+                    {
+                        "id": identity,
+                        "kind": "seam",
+                        "points": [[0.0, 0.0, 0.3], [0.01, 0.0, 0.3]],
+                        "normals": [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
+                    }
+                    for identity in (1, 2)
+                ],
+                "protected_points": [],
+                "views": [],
+                "observations": ["view_00_observation.npz"],
+            }
         return {
             "detections": [_detection()],
-            "paths": [_path()],
+            "paths": [path],
             "perception": {"prediction_revision": 1},
             "registered_regions": [
                 {
@@ -151,19 +190,72 @@ class StubBackend:
         }
 
     def _rescan(self):
+        if self.scenario == "two_region_pairing":
+            self.shared["rescan_index"] += 1
+            estimates = {
+                1: (1.0, 1.0),
+                2: (0.73, 0.46),
+            }.get(self.shared["rescan_index"], (0.46, 0.0))
+            quality = _quality(list(estimates))
+            quality["observational_release"] = False
+            return {
+                "detections": [],
+                "paths": [
+                    _path(detection_id=1),
+                    _path(detection_id=2),
+                ],
+                "perception": {
+                    "prediction_revision": 2 + self.shared["rescan_index"],
+                    "region_reinspection": quality,
+                },
+                "registered_regions": [],
+                "protected_points": [],
+                "views": [],
+                "observations": ["view_00_observation.npz"],
+                "local_baseline": {
+                    "machined": _anchors(sum(estimates) / len(estimates)),
+                    "baseline": _baseline(0.0),
+                    "protected": _anchors(0.0, count=8, sigma_mm=0.015),
+                },
+            }
+        if self.scenario == "followup_rounds":
+            self.shared["rescan_index"] += 1
+            estimate = max(0.1, 0.7 - 0.1 * self.shared["rescan_index"])
+            quality = _quality(estimate)
+            quality["observational_release"] = False
+            return {
+                "detections": [],
+                "paths": [_path()],
+                "perception": {
+                    "prediction_revision": 2 + self.shared["rescan_index"],
+                    "region_reinspection": quality,
+                },
+                "registered_regions": [],
+                "protected_points": [],
+                "views": [],
+                "observations": ["view_00_observation.npz"],
+                "local_baseline": {
+                    "machined": _anchors(estimate),
+                    "baseline": _baseline(0.0),
+                    "protected": _anchors(0.0, count=8, sigma_mm=0.015),
+                },
+            }
+        region_estimate = (
+            0.18 if self.scenario == "production_hidden_bias" else 0.10
+        )
         result = {
             "detections": [],
             "paths": [],
             "perception": {
                 "prediction_revision": 2,
-                "region_reinspection": _quality(),
+                "region_reinspection": _quality(region_estimate),
             },
             "registered_regions": [],
             "protected_points": [],
             "views": [],
             "observations": ["view_00_observation.npz"],
         }
-        if self.scenario == "pass":
+        if self.scenario in {"pass", "zero_excess"}:
             result["local_baseline"] = {
                 "machined": _anchors(0.10),
                 "baseline": _baseline(0.0),
@@ -180,6 +272,16 @@ class StubBackend:
                 "machined": _anchors(0.10),
                 "baseline": _baseline(0.0, include_sides=False),
                 "protected": _anchors(0.0, count=8, sigma_mm=0.015),
+            }
+        elif self.scenario == "production_regions":
+            result["local_baseline"] = {
+                "baseline": _baseline(0.0),
+                "protected": _anchors(0.0, count=8, sigma_mm=0.015),
+            }
+        elif self.scenario == "production_hidden_bias":
+            result["local_baseline"] = {
+                "baseline": _baseline(-0.18),
+                "protected": _anchors(-0.18, count=8, sigma_mm=0.015),
             }
         elif self.scenario == "baseline_unavailable":
             pass
@@ -199,13 +301,20 @@ class StubBackend:
 
     def execute(self, commands, **options):
         self.executions += 1
+        if self.scenario == "two_region_pairing":
+            self.shared["execute_index"] = (
+                self.shared.get("execute_index", 0) + 1
+            )
+            duration = 1.0 if self.shared["execute_index"] % 2 == 1 else 2.0
+        else:
+            duration = 1.0
         return {
             "unexpected_contact_count": 0,
             "tracking_trace_p95_mm": 0.05,
             "surface_tracking_p95_mm": 0.05,
             "simulated_seconds": 1.0,
             "simulation_steps": 10,
-            "engaged_duration_s": 1.0,
+            "engaged_duration_s": duration,
             "commanded_force_n": 60.0,
             "truth_used_for_control": False,
         }
@@ -245,13 +354,21 @@ class StubBackend:
 
 
 def _factory(scenario):
+    shared = {"rescan_index": 0}
+
     def build(directory, config, checkpoint):
-        return StubBackend(directory, config, checkpoint, scenario)
+        return StubBackend(directory, config, checkpoint, scenario, shared)
 
     return build
 
 
-def _create(directory, scenario, adapters=True):
+def _create(
+    directory,
+    scenario,
+    adapters=True,
+    max_passes=2,
+    backend_factory=None,
+):
     controller = process.AdaptiveProcessController()
     reinspector = process.LocalBaselineReinspector()
     session = session_module.create_session(
@@ -263,20 +380,29 @@ def _create(directory, scenario, adapters=True):
         views="multi",
         tool="belt",
         detector="geometric",
-        max_passes=2,
+        max_passes=max_passes,
         process_adapter=controller.as_session_adapter() if adapters else None,
         reinspection_calibrator=reinspector.as_session_calibrator()
         if adapters
         else None,
-        backend_factory=_factory(scenario),
+        backend_factory=backend_factory or _factory(scenario),
     )
     return session, controller
 
 
-def _advance_to_planned(session):
+def _run_closed_loop(directory, scenario):
+    session, controller = _create(directory, scenario)
+    _advance_to_planned(session)
+    session.step_next()  # execute the only segment
+    session.step_next()  # no pending -> rescan
+    session.step_next()  # RESCANNED -> DONE
+    return session, controller
+
+
+def _advance_to_planned(session, region_ids=(1,)):
     session.step_next()  # IDLE -> SCANNED
     session.step_next()  # SCANNED -> DETECTED
-    session.approve_regions([1])
+    session.approve_regions(list(region_ids))
     session.step_next()  # DETECTED -> PLANNED
 
 
@@ -373,6 +499,142 @@ class SessionClosedLoopTests(unittest.TestCase):
                 self.assertFalse(state["observational_release"])
                 self.assertEqual(state["stop_reason"], expected)
                 self.assertEqual(state["stage"], "DONE")
+
+    def test_zero_excess_segment_is_skipped_with_evidence(self):
+        session, _ = _create(self.root / "session_zero", "zero_excess")
+        _advance_to_planned(session)
+        session.step_next()
+        state = session.status()
+        self.assertEqual(state["stage"], "EXECUTING")
+        segment = state["segments"][0]
+        self.assertEqual(segment["status"], "skipped")
+        self.assertEqual(
+            state["process_state"]["last_decision"]["stop_reason"],
+            "already_within_target",
+        )
+        self.assertEqual(state["process_state"]["last_decision"]["passes"], 0)
+        self.assertIn(
+            "process_skip",
+            [entry["action"] for entry in session.interventions()],
+        )
+        self.assertIs(state["truth_used_for_control"], False)
+
+    def test_two_region_different_durations_pair_through_p0a_context(self):
+        session, _ = _create(
+            self.root / "session_two_region",
+            "two_region_pairing",
+            max_passes=6,
+        )
+        _advance_to_planned(session, region_ids=(1, 2))
+        session.step_next()  # round 1, segment 1
+        session.step_next()  # round 1, segment 2
+        session.step_next()  # rescan 1
+        session.step_next()  # followup
+        session.step_next()  # round 2, segment 3
+        session.step_next()  # round 2, segment 4
+        session.step_next()  # rescan 2
+        session.step_next()  # followup
+        session.step_next()  # round 3, segment 5: pair exec 3/4
+        state = session.status()
+        process_state = state["process_state"]
+        estimate = process_state["estimate"]
+        self.assertEqual(estimate["updates"], 2)
+        self.assertLess(abs(estimate["relative_rate"] - 1.0), 0.02)
+        self.assertGreaterEqual(estimate["upper_95"], 1.0)
+        self.assertEqual(process_state["consumed_executions"], 4)
+        events = process_state["identification_events"]
+        self.assertEqual({event["region_id"] for event in events}, {1, 2})
+        self.assertEqual({event["execution_count"] for event in events}, {1})
+        self.assertFalse(estimate["truth_used_for_control"])
+        self.assertFalse(state["truth_used_for_control"])
+
+    def test_cross_process_rounds_restore_and_advance_identification(self):
+        factory = _factory("followup_rounds")
+        session, _ = _create(
+            self.root / "session_rounds",
+            "followup_rounds",
+            max_passes=6,
+            backend_factory=factory,
+        )
+        _advance_to_planned(session)
+        for _ in range(3):
+            session.step_next()  # execute one segment
+            session.step_next()  # rescan
+            session.step_next()  # followup planning
+        persisted = session.status()["process_state"]
+        self.assertEqual(persisted["estimate"]["updates"], 1)
+        self.assertEqual(persisted["consumed_executions"], 2)
+        self.assertIn("1", persisted["previous_estimates"])
+        rate = persisted["estimate"]["relative_rate"]
+        sigma = persisted["estimate"]["relative_sigma"]
+        reloaded = session_module.load_session(
+            session.directory,
+            process_adapter=(
+                process.AdaptiveProcessController().as_session_adapter()
+            ),
+            reinspection_calibrator=(
+                process.LocalBaselineReinspector().as_session_calibrator()
+            ),
+            backend_factory=factory,
+        )
+        restored = reloaded.status()["process_state"]
+        self.assertEqual(restored["estimate"]["updates"], 1)
+        self.assertEqual(restored["estimate"]["relative_rate"], rate)
+        self.assertEqual(restored["estimate"]["relative_sigma"], sigma)
+        self.assertFalse(rate == 1.0 and sigma == 0.45)
+        self.assertEqual(restored["consumed_executions"], 2)
+        reloaded.step_next()  # execute round 4 with the fresh adapter
+        advanced = reloaded.status()["process_state"]
+        self.assertEqual(advanced["estimate"]["updates"], 2)
+        self.assertEqual(advanced["consumed_executions"], 3)
+        self.assertFalse(
+            advanced["estimate"]["relative_rate"] == 1.0
+            and advanced["estimate"]["relative_sigma"] == 0.45
+        )
+        self.assertIn("1", advanced["previous_estimates"])
+
+    def test_production_region_report_calibrates_and_blocks_excess(self):
+        session, _ = _run_closed_loop(
+            self.root / "session_production_pass", "production_regions"
+        )
+        state = session.status()
+        self.assertEqual(state["calibration"]["status"], "pass")
+        self.assertTrue(state["observational_release"])
+        session, _ = _run_closed_loop(
+            self.root / "session_production_hidden",
+            "production_hidden_bias",
+        )
+        state = session.status()
+        self.assertEqual(state["calibration"]["status"], "positive_excess")
+        self.assertTrue(state["calibration"]["bias_veto"])
+        self.assertFalse(state["observational_release"])
+        self.assertEqual(
+            state["stop_reason"], "reinspection_calibration_bias_veto"
+        )
+
+    def test_zero_pass_adapter_matches_p0a_schema(self):
+        adapter = process.SessionProcessAdapter(
+            process.AdaptiveProcessController()
+        )
+        overrides = adapter(
+            {
+                "segment_id": 3,
+                "path": {
+                    "normal_height_mm": 0.003,
+                    "material_allowance_mm": 0.08,
+                    "recipe": {"feed_mm_s": 30.0},
+                },
+            },
+            {"stage": "PLANNED", "execution_history": []},
+        )
+        self.assertEqual(overrides["passes"], 0)
+        self.assertIs(overrides["truth_used_for_control"], False)
+        evidence = adapter.last_evidence()
+        self.assertEqual(
+            evidence["last_decision"]["stop_reason"],
+            "already_within_target",
+        )
+        self.assertIs(evidence["truth_used_for_control"], False)
 
     def test_poisoned_truth_fields_do_not_change_plugin_decisions(self):
         session, _ = _create(self.root / "session_poison", "pass")

@@ -75,7 +75,9 @@ def sensor_features(rgb, depth, reference_depth, intrinsics):
     """Eleven measured/CAD channels, with no labels or entity coordinates."""
     if rgb.shape[:2] != depth.shape or reference_depth.shape != depth.shape:
         raise ValueError("RGB-D and nominal reference must have the same shape")
-    reference, _ = _fill_for_geometry(reference_depth)
+    # Registered CAD depth may legitimately cover only the workpiece silhouette
+    # with NaN background, unlike whole-scene depth frames.
+    reference, _ = _fill_for_geometry(reference_depth, min_valid_fraction=0.005)
     valid = np.isfinite(depth) & (depth > 0.05) & (depth < 10)
     observed = np.where(valid, depth, reference).astype(np.float32)
     residual = (reference - observed) * 1000

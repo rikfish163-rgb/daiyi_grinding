@@ -227,9 +227,12 @@ class ChangeoverTests(unittest.TestCase):
         cls.configuration = offline_scenarios.load_config()
         cls.parts = offline_scenarios.validate_parts(cls.configuration)
 
-    def test_station_is_explicitly_097_only(self):
+    def test_station_boundary_tracks_simulation_packages_without_physical_claim(
+        self,
+    ):
         boundary = offline_scenarios.inspect_station_boundary()
-        self.assertEqual(boundary["supported_part_cad"], ["097", "097"])
+        self.assertEqual(boundary["supported_part_cad"], ["021", "097"])
+        self.assertEqual(boundary["physical_changeover_certified"], [])
         self.assertTrue(all(boundary["checks"].values()))
 
     def test_021_and_cao_train_are_rejected_without_renaming(self):

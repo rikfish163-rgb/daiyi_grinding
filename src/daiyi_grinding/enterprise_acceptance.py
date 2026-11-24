@@ -1330,6 +1330,8 @@ def _reliability_rows(data, requirements):
 
 
 def _source_audit(hashes, base, inputs):
+    from .workpiece_packages import WORKPIECE_DIRECTORY, load_workpiece_package
+
     verified, unresolved = [], []
     fixed = {
         "scene.xml": ROOT / "assets/ier220_workstation/scene.xml",
@@ -1337,6 +1339,16 @@ def _source_audit(hashes, base, inputs):
         / "assets/ier220_workstation/meshes/workpiece/wp_097_c0.stl",
         "learned_detector.json": ROOT / "config/learned_detector.json",
     }
+    if WORKPIECE_DIRECTORY.is_dir():
+        for package_file in sorted(WORKPIECE_DIRECTORY.glob("wp_*.json")):
+            workpiece_id = package_file.stem.removeprefix("wp_")
+            if len(workpiece_id) == 3 and workpiece_id.isdigit():
+                package = load_workpiece_package(workpiece_id)
+                fixed.setdefault(package.path.name, package.path)
+                fixed.setdefault(
+                    package.source_scene.name, package.source_scene
+                )
+                fixed.setdefault(package.mesh_path.name, package.mesh_path)
     for name, digest in hashes.items():
         path = base / "source_snapshot" / name
         if not path.is_file() and name in fixed:

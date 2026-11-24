@@ -420,14 +420,12 @@ class EndToEndBundleTests(unittest.TestCase):
         cls.temporary = tempfile.TemporaryDirectory(prefix="daiyi-p1-data-")
         cls.output = Path(cls.temporary.name) / "dataset"
         cls.packages = [
-            pipeline.load_workpiece_package(
-                workpiece_packages.load_workpiece_package(workpiece_id)
-            )
-            for workpiece_id in ("097", "021")
+            pipeline.load_workpiece_package(str(path))
+            for path in (PACKAGE_097, PACKAGE_021)
         ]
         cls.manifest = pipeline.run(
             cls.output,
-            packages=cls.packages,
+            packages=[str(PACKAGE_097), str(PACKAGE_021)],
             seeds=(31,),
             image_size=(64, 48),
             cloud_spacing_m=0.001,
@@ -635,6 +633,48 @@ class EndToEndBundleTests(unittest.TestCase):
                 np.zeros_like(first),
             )
         )
+
+    def test_point_counts_and_package_protection_are_recorded(self):
+        manifest = self.manifest
+        for sample in manifest["samples"]:
+            folder = self.output / sample["directory"]
+            metadata = json.loads((folder / "meta.json").read_text())
+            points = np.load(folder / "points.npz")
+            with self.subTest(sample=sample["sample_id"]):
+                self.assertEqual(
+                    int(metadata["point_count"]),
+                    len(points["points_m"]),
+                )
+                self.assertEqual(
+                    int(metadata["point_count"]),
+                    int(points["count"]),
+                )
+                self.assertEqual(
+                    int(metadata["point_count"]),
+                    int(sample["point_count"]),
+                )
+                provenance = metadata["provenance"]
+                self.assertTrue(provenance["protection_regions"])
+                self.assertIn(
+                    "loading_datum",
+                    [zone["name"] for zone in provenance["protection_regions"]],
+                )
+                self.assertIn("protection_regions_scope", provenance)
+                self.assertTrue(
+                    provenance["package_metadata"].get("package_path")
+                )
+
+    def test_default_package_sources_load_p0b_json(self):
+        sources = pipeline.default_package_sources(["097", "021"])
+        self.assertEqual(len(sources), 2)
+        for source, expected in zip(sources, ("wp_097.json", "wp_021.json")):
+            self.assertIsInstance(source, str)
+            self.assertTrue(source.endswith(expected))
+            package = pipeline.load_workpiece_package(source)
+            self.assertTrue(package.protection_regions)
+            self.assertEqual(
+                package.protection_regions[0]["name"], "loading_datum"
+            )
 
     def test_instance_ids_and_intermediate_protection_are_consistent(self):
         manifest = self.manifest

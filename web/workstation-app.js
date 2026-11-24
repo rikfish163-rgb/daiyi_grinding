@@ -1,5 +1,5 @@
 import { WorkstationView } from "/workstation-view.js";
-import { evidencePanels } from "/workstation-panels.js";
+import { evidencePanels, sessionEditor, sessionPanels } from "/workstation-panels.js";
 
 const $ = (id) => document.getElementById(id);
 const kinds = { seam: "批缝", burr: "毛刺", preserve: "保留结构", review: "待复核" };
@@ -465,3 +465,145 @@ const loadProfiles = fetchJSON("/api/workpiece-profiles").then((profiles) => {
   }
 }).catch(() => {});
 Promise.all([loadProfiles, fetchJSON(requestedRun ? `/api/status?id=${encodeURIComponent(requestedRun)}` : "/api/initial")]).then(([, data]) => { render(data, true); if (data.id && !["complete", "failed", "empty"].includes(data.status.stage)) pollTimer = setTimeout(() => poll(data.id), 350); }).catch((error) => { busy = false; controls(); notice(`无法连接本地仿真：${error.message}`, "error"); });
+
+let activeSession = null, sessionPending = false, sessionHistory = [], sessionHistoryKey = "", sessionTimer = null;
+let selectedSessionId = new URL(location.href).searchParams.get("session") || "";
+
+function sessionNotice(message, tone = "") {
+  $("session-notice").textContent = message;
+  $("session-notice").className = tone;
+}
+
+function drawSession() {
+  sessionPanels(activeSession, sessionHistory, sessionPending);
+}
+
+async function showSession(data) {
+  const previousStage = activeSession?.state.stage;
+  activeSession = data;
+  const historyKey = `${data.session_id}:${data.state.intervention_count}`;
+  if (historyKey !== sessionHistoryKey) {
+    const history = await fetchJSON(`/api/sessions/${encodeURIComponent(data.session_id)}/interventions`);
+    if (selectedSessionId !== data.session_id) return;
+    sessionHistory = history.interventions;
+    sessionHistoryKey = historyKey;
+  }
+  if (previousStage !== data.state.stage && ["DETECTED", "PAUSED", "STOPPED_SAFETY"].includes(data.state.stage)) $("session-workspace").open = true;
+  drawSession();
+  const state = data.state;
+  const motion = state.motion_gate_passed === true ? "仿真运动通过" : state.motion_gate_passed === false ? "仿真运动未通过" : "尚未完成运动验收";
+  const release = state.observational_release ? "磨后观测放行" : "磨后观测未放行";
+  const pendingStop = state.pause_requested || state.abort_requested;
+  const message = data.action?.status === "failed" ? data.action.error : pendingStop ? "已请求暂停/中止；执行器将在安全边界退出并保存真实回执。" : data.action?.status === "running" ? `后台${state.operation || data.action.name}进行中；状态查询与暂停保持可用。` : `${motion}；${release}。${state.stop_reason ? `停因：${state.stop_reason}` : "下一步按阶段或当前段一道次推进。"}`;
+  sessionNotice(message, data.action?.status === "failed" || state.stop_kind === "motion" || state.stop_kind === "retract" ? "error" : state.stage === "STOPPED_SAFETY" ? "warn" : "");
+}
+
+async function pollSession(identity) {
+  clearTimeout(sessionTimer);
+  if (!identity || selectedSessionId !== identity) return;
+  try {
+    const data = await fetchJSON(`/api/sessions/${encodeURIComponent(identity)}`);
+    if (selectedSessionId !== identity) return;
+    await showSession(data);
+    if (data.action?.status === "running" || data.state.pause_requested || data.state.abort_requested) sessionTimer = setTimeout(() => pollSession(identity), 750);
+  } catch (error) {
+    if (selectedSessionId === identity) { sessionNotice(`会话连接中断：${error.message}`, "error"); sessionTimer = setTimeout(() => pollSession(identity), 2500); }
+  }
+}
+
+async function refreshSessionList() {
+  const data = await fetchJSON("/api/sessions");
+  const select = $("session-select");
+  select.replaceChildren(new Option("选择已有会话", ""));
+  for (const item of data.sessions) select.add(new Option(`${item.session_id}  ${item.stage}${item.action?.status === "running" ? "（后台运行）" : ""}`, item.session_id));
+  select.value = selectedSessionId;
+}
+
+async function chooseSession(identity) {
+  clearTimeout(sessionTimer);
+  selectedSessionId = identity;
+  activeSession = null; sessionHistory = []; sessionHistoryKey = "";
+  sessionPending = true; drawSession();
+  try {
+    if (!identity) { sessionNotice("选择已有会话，或用当前工况新建会话。"); return; }
+    sessionNotice("正在载入持久化会话与介入记录。");
+    const data = await fetchJSON(`/api/sessions/${encodeURIComponent(identity)}`);
+    if (selectedSessionId !== identity) return;
+    await showSession(data);
+    const url = new URL(location.href); url.searchParams.set("session", identity); history.replaceState(null, "", url);
+    if (data.action?.status === "running") sessionTimer = setTimeout(() => pollSession(identity), 750);
+  } catch (error) { sessionNotice(error.message, "error"); }
+  finally { sessionPending = false; drawSession(); }
+}
+
+async function sessionCommand(route, body = {}) {
+  if (!activeSession || sessionPending) return;
+  const identity = selectedSessionId;
+  sessionPending = true; drawSession();
+  try {
+    const data = await fetchJSON(`/api/sessions/${encodeURIComponent(identity)}/${route}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (selectedSessionId !== identity) return;
+    await showSession(data);
+    if (data.action?.status === "running" || data.state.pause_requested || data.state.abort_requested) sessionTimer = setTimeout(() => pollSession(identity), 400);
+  } catch (error) { sessionNotice(error.message, "error"); }
+  finally { sessionPending = false; drawSession(); }
+}
+
+$("session-select").addEventListener("change", () => chooseSession($("session-select").value));
+$("session-refresh").addEventListener("click", () => { refreshSessionList().then(() => selectedSessionId && pollSession(selectedSessionId)).catch((error) => sessionNotice(error.message, "error")); });
+$("session-create").addEventListener("click", async () => {
+  const seed = Number($("seed").value);
+  if (!Number.isInteger(seed) || seed < 0 || seed > 1000000) { sessionNotice("种子须为 0–1000000 的整数。", "error"); return; }
+  if (draft.length) { sessionNotice("请先完成或清除工况 ROI 草稿。", "error"); return; }
+  sessionPending = true; drawSession();
+  try {
+    const data = await fetchJSON("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ seed, case: $("case").value, mode: $("mode").value, views: $("views").value, tool: $("tool").value, casting_profile: $("casting-profile").value, detector: $("detector").value, workpiece_profile: $("workpiece-profile").value || null, grasp_setup: $("grasp-setup").value, targeted_rescan: $("targeted-rescan").value === "on", roi }) });
+    selectedSessionId = data.session_id;
+    await refreshSessionList();
+    await showSession(data);
+    const url = new URL(location.href); url.searchParams.set("session", data.session_id); history.replaceState(null, "", url);
+  } catch (error) { sessionNotice(error.message, "error"); }
+  finally { sessionPending = false; drawSession(); }
+});
+for (const [id, route] of [["session-step", "step"], ["session-advance", "advance"], ["session-pause", "pause"], ["session-resume", "resume"], ["session-replan", "replan"]]) $(id).addEventListener("click", () => sessionCommand(route));
+$("session-abort").addEventListener("click", () => { if (window.confirm("中止后此会话不能继续执行。是否安全退刀并中止？")) sessionCommand("abort"); });
+$("session-approve").addEventListener("click", () => {
+  const region_ids = [...$("session-regions").querySelectorAll("input:checked:not(:disabled)")].map((input) => Number(input.value));
+  if (!region_ids.length) { sessionNotice("请选择可加工观测区域。", "error"); return; }
+  sessionCommand("regions/approve", { region_ids });
+});
+$("session-regions").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-session-mask]");
+  if (button && !button.disabled) sessionCommand(`regions/${button.dataset.sessionMask}/mask`, { reason: $("session-reason").value.trim() });
+});
+$("session-segment-select").addEventListener("change", () => sessionEditor(activeSession, sessionPending || activeSession?.action?.status === "running"));
+$("session-segment-rows").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-session-segment]");
+  if (button) { $("session-segment-select").value = button.dataset.sessionSegment; sessionEditor(activeSession, sessionPending || activeSession?.action?.status === "running"); }
+});
+const currentSessionSegment = () => $("session-segment-select").value;
+$("session-save-params").addEventListener("click", () => {
+  const body = { feed_scale: Number($("session-feed").value), normal_offset_mm: Number($("session-offset").value), passes: Number($("session-passes").value), dwell_scale: Number($("session-dwell").value) };
+  if (Object.values(body).some((value) => !Number.isFinite(value)) || !Number.isInteger(body.passes)) { sessionNotice("段参数须为有限数，目标道次须为整数。", "error"); return; }
+  sessionCommand(`segments/${currentSessionSegment()}/params`, body);
+});
+$("session-skip").addEventListener("click", () => sessionCommand(`segments/${currentSessionSegment()}/skip`, { reason: $("session-reason").value.trim() }));
+$("session-switch-grasp").addEventListener("click", () => sessionCommand(`segments/${currentSessionSegment()}/grasp`, { grasp_setup: $("session-grasp").value }));
+$("session-split").addEventListener("click", () => {
+  const ratio = Number($("session-split-ratio").value);
+  if (!Number.isFinite(ratio) || ratio <= 0 || ratio >= 1) { sessionNotice("切段比例须在 0 与 1 之间。", "error"); return; }
+  sessionCommand(`segments/${currentSessionSegment()}/split`, { ratio });
+});
+$("session-rescan").addEventListener("click", () => {
+  const text = $("session-angles").value.trim();
+  const angles_deg = text ? text.split(/[,，\s]+/).filter(Boolean).map(Number) : null;
+  const extra_frames = Number($("session-extra-frames").value);
+  if ((angles_deg && angles_deg.some((angle) => !Number.isFinite(angle) || angle < 0 || angle > 360)) || !Number.isInteger(extra_frames) || extra_frames < 0 || extra_frames > 8) { sessionNotice("补扫角度须为 0–360°，额外帧须为 0–8 的整数。", "error"); return; }
+  sessionCommand("rescan", { angles_deg, extra_frames });
+});
+$("session-add-roi").addEventListener("click", () => {
+  try { const polygon = JSON.parse($("session-manual-roi").value); sessionCommand("regions/manual", { roi_spec: { polygon, view_index: 0, reason: $("session-reason").value.trim() } }); }
+  catch { sessionNotice("ROI 须为 JSON 像素顶点数组，例如 [[300,250],[600,250],[600,400]]。", "error"); }
+});
+drawSession();
+refreshSessionList().then(() => selectedSessionId && chooseSession(selectedSessionId)).catch((error) => sessionNotice(`会话接口暂不可用：${error.message}`, "error"));

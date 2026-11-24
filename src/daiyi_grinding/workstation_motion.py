@@ -300,9 +300,14 @@ def motion_binding(sim):
             "workstation_transfers.py",
             "workstation_model.py",
             "workstation_tooling.py",
+            "workpiece_packages.py",
         )
     ]
     paths.append(source.parents[1] / "config" / "workstation.json")
+    package = getattr(sim, "workpiece_package", None)
+    package_path = getattr(package, "path", None)
+    if package_path is not None and Path(package_path).is_file():
+        paths.append(Path(package_path))
     scene = getattr(sim, "scene_file", None)
     geometry = hashlib.sha256()
     for key in (
@@ -330,6 +335,11 @@ def motion_binding(sim):
             geometry.update(memoryview(array))
     payload = {
         "schema_version": 1,
+        **(
+            {"workpiece_id": package.workpiece_id}
+            if package is not None and getattr(package, "workpiece_id", None)
+            else {}
+        ),
         "grasp_setup": getattr(sim, "grasp_setup", None),
         "frames": {
             key: np.asarray(getattr(sim, key)).tolist()
@@ -748,7 +758,14 @@ class GeometricRemoval:
 
 
 def execute(
-    sim, commands, mode, publish, realtime_factor=2.0, removal=None, prefix=""
+    sim,
+    commands,
+    mode,
+    publish,
+    realtime_factor=2.0,
+    removal=None,
+    prefix="",
+    stop_requested=None,
 ):
     """Continuously integrate the servo and free workpiece with grasp constraints."""
     invalid_binding = binding_failure(sim, commands)
@@ -774,6 +791,8 @@ def execute(
     next_publish = start_sim
     next_log = start_sim
     step = 0
+    interrupted = False
+    last_phase = None
     end = times[-1] + 0.4
     while sim.data.time < end:
         t = min(float(sim.data.time), times[-1])
@@ -908,7 +927,14 @@ def execute(
                 ]
             )
             next_log += 0.01
-        if sim.data.time >= next_publish:
+        last_phase = command["phase"]
+        due_publish = sim.data.time >= next_publish
+        if due_publish:
+            next_publish += 0.10
+        stopped = (
+            not due_publish and stop_requested is not None and stop_requested()
+        )
+        if due_publish or stopped:
             state = sim.state(
                 command["phase"],
                 progress=min(
@@ -923,13 +949,17 @@ def execute(
             )
             publish(state)
             replay.append(state)
-            next_publish += 0.10
-            if realtime_factor > 0:
-                delay = (float(sim.data.time) - start_sim) / realtime_factor - (
-                    time.monotonic() - start_wall
-                )
-                if delay > 0:
-                    time.sleep(min(delay, 0.05))
+            if due_publish and stop_requested is not None and stop_requested():
+                stopped = True
+        if stopped:
+            interrupted = True
+            break
+        if due_publish and realtime_factor > 0:
+            delay = (float(sim.data.time) - start_sim) / realtime_factor - (
+                time.monotonic() - start_wall
+            )
+            if delay > 0:
+                time.sleep(min(delay, 0.05))
     with (sim.output / f"{prefix}execution.csv").open("w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(
@@ -981,7 +1011,10 @@ def execute(
         "unexpected_contact_count": len(unexpected),
         "unexpected_contacts": unexpected[:20],
         "tool_contact_steps": contact_steps,
+        "contact_duration_s": float(contact_steps * sim.model.opt.timestep),
         "max_contact_force_n": max_force,
+        "interrupted": interrupted,
+        "last_phase": last_phase,
         "rigid_grasp_constraint": True,
         "joint_positions_teleported_during_execution": False,
         "material_removal_simulated": mode == "removal",

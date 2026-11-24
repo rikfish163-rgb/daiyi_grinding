@@ -173,9 +173,15 @@ def load_workpiece_package(workpiece_id="097", *, package_path=None):
     """
     if isinstance(workpiece_id, WorkpiecePackage):
         return workpiece_id
-    if not isinstance(workpiece_id, str) or not re.fullmatch(r"[0-9]{3}", workpiece_id):
+    if not isinstance(workpiece_id, str) or not re.fullmatch(
+        r"[0-9]{3}", workpiece_id
+    ):
         raise ValueError("未登记的工件包")
-    path = Path(package_path) if package_path is not None else WORKPIECE_DIRECTORY / f"wp_{workpiece_id}.json"
+    path = (
+        Path(package_path)
+        if package_path is not None
+        else WORKPIECE_DIRECTORY / f"wp_{workpiece_id}.json"
+    )
     if not path.is_file():
         raise ValueError("未登记的工件包")
     path = path.resolve()
@@ -198,11 +204,16 @@ def load_workpiece_package(workpiece_id="097", *, package_path=None):
         visual = body.find("geom[@name='wp_0']")
         asset = source.find(f"./asset/mesh[@name='{visual.get('mesh')}']")
         meshdir = source.find("compiler").get("meshdir", "")
-        if asset is None or (scene.parent / meshdir / asset.get("file")).resolve() != mesh:
+        if (
+            asset is None
+            or (scene.parent / meshdir / asset.get("file")).resolve() != mesh
+        ):
             raise ValueError("工件包 CAD 与场景可视网格不一致")
         if visual.get("material") != row["material_name"]:
             raise ValueError("工件包材质与场景不一致")
-        loading = _array(row["loading_position_world_m"], (3,), "loading_position_world_m")
+        loading = _array(
+            row["loading_position_world_m"], (3,), "loading_position_world_m"
+        )
         bounds = _bounds(row["bounds_m"], "bounds_m")
         grasps = tuple(
             GraspSetup(
@@ -221,7 +232,11 @@ def load_workpiece_package(workpiece_id="097", *, package_path=None):
             for zone in row["protected_zones"]
         )
         collision = row["collision"]
-        levels = _array(collision["slice_boundaries_m"], (len(collision["slice_boundaries_m"]),), "collision.slice_boundaries_m")
+        levels = _array(
+            collision["slice_boundaries_m"],
+            (len(collision["slice_boundaries_m"]),),
+            "collision.slice_boundaries_m",
+        )
         if (
             len(levels) < 2
             or np.any(np.diff(levels) <= 0)
@@ -238,18 +253,25 @@ def load_workpiece_package(workpiece_id="097", *, package_path=None):
             not tilts
             or not refinements
             or not np.isfinite([*tilts, *refinements]).all()
-            or max(abs(value) for value in tilts) > settings["max_process_tilt_deg"]
+            or max(abs(value) for value in tilts)
+            > settings["max_process_tilt_deg"]
             or not 0 <= settings["max_process_tilt_deg"] <= 5
             or not 0 < settings["edge_margin_mm"] < np.inf
             or not 2 <= settings["overlap_mm"] <= 4
-            or not settings["overlap_mm"] < settings["minimum_segment_length_mm"] < np.inf
+            or not settings["overlap_mm"]
+            < settings["minimum_segment_length_mm"]
+            < np.inf
             or type(settings["max_split_depth"]) is not int
             or not 0 <= settings["max_split_depth"] <= 6
             or not 0 < settings["max_joint_jump_rad"] <= np.pi
         ):
             raise ValueError("接触冗余或受控切段参数无效")
-        cell = load_cell_package(_file(row["cell_config_path"], "cell configuration"))
-        if 2 * settings["edge_margin_mm"] >= min(cell.config["belt"]["abrasive_face_mm"]):
+        cell = load_cell_package(
+            _file(row["cell_config_path"], "cell configuration")
+        )
+        if 2 * settings["edge_margin_mm"] >= min(
+            cell.config["belt"]["abrasive_face_mm"]
+        ):
             raise ValueError("砂带留边耗尽有效磨削面")
         return WorkpiecePackage(
             path=path,
@@ -268,7 +290,9 @@ def load_workpiece_package(workpiece_id="097", *, package_path=None):
             protected_zones=zones,
             collision_slice_boundaries_m=tuple(levels),
             collision_angular_slices=collision["angular_slices"],
-            collision_cache=(project.ROOT / collision["cache_path"]).resolve() if collision["cache_path"] is not None else None,
+            collision_cache=(project.ROOT / collision["cache_path"]).resolve()
+            if collision["cache_path"] is not None
+            else None,
             contact_search=ContactSearch(
                 settings["edge_margin_mm"],
                 tilts,
@@ -287,7 +311,11 @@ def load_workpiece_package(workpiece_id="097", *, package_path=None):
 
 def _file(value, name):
     path = Path(value)
-    path = (project.ROOT / path).resolve() if not path.is_absolute() else path.resolve()
+    path = (
+        (project.ROOT / path).resolve()
+        if not path.is_absolute()
+        else path.resolve()
+    )
     if not path.is_file():
         raise ValueError(f"工件包缺少 {name}：{path}")
     return path
@@ -302,7 +330,9 @@ def _array(value, shape, name):
 
 def _rotation(value, name):
     rotation = _array(value, (3, 3), name)
-    if not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-8) or not np.isclose(np.linalg.det(rotation), 1, atol=1e-8):
+    if not np.allclose(
+        rotation.T @ rotation, np.eye(3), atol=1e-8
+    ) or not np.isclose(np.linalg.det(rotation), 1, atol=1e-8):
         raise ValueError(f"{name} 须为刚体旋转")
     return rotation
 

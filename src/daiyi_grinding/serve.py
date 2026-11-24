@@ -6,15 +6,31 @@ import argparse
 import html
 import json
 import mimetypes
+import os
 import re
 import subprocess
 import sys
 import threading
+import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
 import imageio_ffmpeg
+
+from .workstation_session import (
+    SESSION_ROOT,
+    SessionSafetyError,
+    SessionStateError,
+    create_session,
+    load_session,
+    validate_session_action,
+    validate_session_config,
+)
+
+# Select the headless context before the legacy model imports MuJoCo.
+# isort: split
 
 from . import project
 from .cad_defects import CASES as LEGACY_CASES
@@ -337,10 +353,23 @@ def start_job(request):
             command += (
                 ["--video"] if request["execute"] else ["--perception-only"]
             )
+        mujoco_lock = project.RUNS / "enterprise_offline_20261123/mujoco.lock"
+        mujoco_lock.parent.mkdir(parents=True, exist_ok=True)
+        command = ["flock", str(mujoco_lock), *command]
         log_path = logs / (run_id + ".log")
         with log_path.open("wb") as log:
             process = subprocess.Popen(
-                command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT
+                command,
+                cwd=ROOT,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                env={
+                    **os.environ,
+                    "MUJOCO_GL": "egl",
+                    "OMP_NUM_THREADS": "1",
+                    "MKL_NUM_THREADS": "1",
+                    "OPENBLAS_NUM_THREADS": "1",
+                },
             )
         JOBS[run_id] = {
             "process": process,
@@ -443,6 +472,255 @@ def compatible_video(run_id):
     return {"stage": "encoding"}
 
 
+class SessionStore:
+    """Process-local session owners; MuJoCo work never holds the registry lock."""
+
+    def __init__(self, root=SESSION_ROOT, *, backend_factory=None):
+        self.root = Path(root).resolve()
+        self.backend_factory = backend_factory
+        self.sessions = {}
+        self.actions = {}
+        self._lock = threading.RLock()
+
+    def _id(self, identity):
+        if not isinstance(identity, str) or not re.fullmatch(
+            r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", identity
+        ):
+            raise ValueError("无效的会话编号")
+        return identity
+
+    def create(self, body):
+        if not isinstance(body, dict):
+            raise ValueError("请求必须是 JSON 对象")
+        identity = self._id(body.get("session_id", uuid.uuid4().hex))
+        if identity == "load":
+            raise ValueError("load 为保留的会话路由名称")
+        configuration = validate_session_config(
+            {key: value for key, value in body.items() if key != "session_id"}
+        )
+        with self._lock:
+            if identity not in self.sessions:
+                self.sessions[identity] = create_session(
+                    self.root / identity,
+                    session_id=identity,
+                    backend_factory=self.backend_factory,
+                    **configuration,
+                )
+        return self.payload(identity)
+
+    def load(self, directory):
+        if not isinstance(directory, str) or not Path(directory).is_absolute():
+            raise ValueError("session_dir 须为实验目录内的绝对路径")
+        path = Path(directory).resolve()
+        if not path.is_relative_to(self.root.parent):
+            raise ValueError("会话须位于当前离线实验目录内")
+        with self._lock:
+            existing = next(
+                (
+                    session
+                    for session in self.sessions.values()
+                    if session.directory.resolve() == path
+                ),
+                None,
+            )
+            if existing is not None:
+                return self.payload(existing.session_id)
+            metadata = json.loads(
+                (path / "session_state.json").read_text(encoding="utf-8")
+            )
+            if (
+                not isinstance(metadata, dict)
+                or metadata.get("schema_version") != 1
+            ):
+                raise ValueError("会话检查点格式无效")
+            identity = self._id(metadata.get("session_id"))
+            existing = self.sessions.get(identity)
+            if existing is not None:
+                if existing.directory.resolve() != path:
+                    raise ValueError("相同 session_id 已绑定另一目录")
+                return self.payload(identity)
+            session = load_session(path, backend_factory=self.backend_factory)
+            self.sessions[identity] = session
+        return self.payload(identity)
+
+    def get(self, identity):
+        identity = self._id(identity)
+        with self._lock:
+            session = self.sessions.get(identity)
+            if session is not None:
+                return session
+            directory = self.root / identity
+            if (
+                not (directory / "session_state.json").is_file()
+                and self.root == SESSION_ROOT.resolve()
+            ):
+                directory = self.root.parent / identity
+            if not (directory / "session_state.json").is_file():
+                raise FileNotFoundError("找不到该会话检查点")
+            session = load_session(
+                directory, backend_factory=self.backend_factory
+            )
+            if session.session_id != identity:
+                raise ValueError("目录与会话身份不一致")
+            self.sessions[identity] = session
+            return session
+
+    def payload(self, identity):
+        session = self.get(identity)
+        state = session.status()
+        with self._lock:
+            action = (
+                dict(self.actions[identity])
+                if identity in self.actions
+                else None
+            )
+        return {
+            "session_id": identity,
+            "state": state,
+            "action": action,
+            "session_dir": str(session.directory),
+            "artifact_base": "/artifacts/"
+            + str(session.directory.relative_to(ROOT))
+            + "/"
+            if session.directory.is_relative_to(ROOT)
+            else None,
+        }
+
+    def listing(self):
+        candidates = list(self.root.glob("*/session_state.json"))
+        if self.root == SESSION_ROOT.resolve():
+            candidates.extend(
+                self.root.parent.glob("p0a_session_*/session_state.json")
+            )
+        saved = {}
+        for path in candidates:
+            state = read_json(path, {})
+            identity = state.get("session_id")
+            if state.get("schema_version") == 1 and identity:
+                saved[identity] = state
+        with self._lock:
+            sessions = list(self.sessions.items())
+            actions = {
+                identity: dict(action)
+                for identity, action in self.actions.items()
+            }
+        saved.update(
+            {identity: session.status() for identity, session in sessions}
+        )
+        return {
+            "sessions": [
+                {
+                    "session_id": identity,
+                    "stage": state["stage"],
+                    "workpiece_id": state.get("workpiece_id", "097"),
+                    "updated_at": state.get("updated_at"),
+                    "action": actions.get(identity),
+                }
+                for identity, state in sorted(
+                    saved.items(),
+                    key=lambda item: item[1].get("updated_at", ""),
+                    reverse=True,
+                )
+            ]
+        }
+
+    def dispatch(self, identity, method, parameters, *, background=False):
+        parameters = validate_session_action(method, parameters)
+        session = self.get(identity)
+        control = method in {"pause", "safe_retract", "abort"}
+        with self._lock:
+            current = self.actions.get(identity)
+            if not control and current and current["status"] == "running":
+                raise SessionStateError(
+                    "同一会话已有推进所有者；可查询、暂停或中止"
+                )
+            if not control:
+                self.actions[identity] = {
+                    "id": uuid.uuid4().hex,
+                    "name": method,
+                    "status": "running",
+                    "started_at": time.time(),
+                    "error": None,
+                }
+        if control:
+            getattr(session, method)(**parameters)
+            return self.payload(identity)
+
+        def run_action():
+            try:
+                getattr(session, method)(**parameters)
+            except Exception as error:
+                with self._lock:
+                    self.actions[identity].update(
+                        status="failed",
+                        error=str(error),
+                        error_type=type(error).__name__,
+                        finished_at=time.time(),
+                    )
+                if not background:
+                    raise
+            else:
+                with self._lock:
+                    self.actions[identity].update(
+                        status="complete", finished_at=time.time()
+                    )
+
+        if background:
+            threading.Thread(
+                target=run_action, daemon=True, name="session-" + identity
+            ).start()
+        else:
+            run_action()
+        return self.payload(identity)
+
+
+SESSION_STORE = SessionStore()
+
+
+def session_action(parts, body):
+    """Map the closed HTTP intervention surface to SDK primitives."""
+    if not isinstance(body, dict):
+        raise ValueError("请求必须是 JSON 对象")
+    simple = {
+        "step": "step_next",
+        "advance": "run_until_pause",
+        "pause": "pause",
+        "safe-retract": "safe_retract",
+        "resume": "resume",
+        "abort": "abort",
+        "rescan": "rescan_views",
+        "replan": "replan_remaining",
+        "grasp": "switch_grasp",
+    }
+    if len(parts) == 1 and parts[0] in simple:
+        method = simple[parts[0]]
+        return method, validate_session_action(method, body)
+    if parts == ["regions", "approve"]:
+        return "approve_regions", validate_session_action(
+            "approve_regions", body
+        )
+    if parts == ["regions", "manual"]:
+        return "add_manual_region", validate_session_action(
+            "add_manual_region", body
+        )
+    if len(parts) != 3 or not re.fullmatch(r"[1-9][0-9]{0,6}", parts[1]):
+        raise FileNotFoundError("会话操作接口不存在")
+    kind, identity, action = parts
+    routes = {
+        ("regions", "mask"): ("mask_false_positive", "region_id"),
+        ("segments", "params"): ("set_segment_params", "segment_id"),
+        ("segments", "skip"): ("skip_segment", "segment_id"),
+        ("segments", "split"): ("split_segment", "segment_id"),
+        ("segments", "grasp"): ("switch_grasp", "segment_id"),
+    }
+    if (kind, action) not in routes:
+        raise FileNotFoundError("会话操作接口不存在")
+    method, key = routes[kind, action]
+    if key in body and body[key] != int(identity):
+        raise ValueError("路径编号与请求编号冲突")
+    return method, validate_session_action(method, {**body, key: int(identity)})
+
+
 class Handler(BaseHTTPRequestHandler):
     def json_response(self, value, code=200):
         data = json.dumps(value, ensure_ascii=False).encode()
@@ -453,7 +731,100 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _session_store(self):
+        return getattr(self.server, "session_store", SESSION_STORE)
+
+    def _sessions_post(self, parsed):
+        identity = None
+        try:
+            if not self.headers.get("Content-Type", "").startswith(
+                "application/json"
+            ):
+                raise ValueError("仅接受 application/json 请求")
+            origin = self.headers.get("Origin")
+            if origin and origin not in {
+                f"http://127.0.0.1:{self.server.server_port}",
+                f"http://localhost:{self.server.server_port}",
+            }:
+                self.json_response({"error": "仅接受本地页面提交"}, 403)
+                return
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 32768:
+                raise ValueError("无效的请求长度")
+            body = json.loads(self.rfile.read(length))
+            store = self._session_store()
+            parts = (
+                unquote(parsed.path)
+                .removeprefix("/api/sessions")
+                .strip("/")
+                .split("/")
+            )
+            if parts == [""]:
+                self.json_response(store.create(body), 201)
+                return
+            if parts == ["load"]:
+                if not isinstance(body, dict) or set(body) != {"session_dir"}:
+                    raise ValueError("载入会话须提供 session_dir")
+                self.json_response(store.load(body["session_dir"]))
+                return
+            identity = parts[0]
+            method, parameters = session_action(parts[1:], body)
+            background = method in {
+                "step_next",
+                "run_until_pause",
+                "replan_remaining",
+                "rescan_views",
+                "add_manual_region",
+                "resume",
+            }
+            self.json_response(
+                store.dispatch(
+                    identity, method, parameters, background=background
+                ),
+                202 if background else 200,
+            )
+        except FileNotFoundError as error:
+            self.json_response({"error": str(error)}, 404)
+        except (SessionSafetyError, SessionStateError) as error:
+            value = {"error": str(error)}
+            if identity:
+                value["session"] = self._session_store().payload(identity)
+            self.json_response(value, 409)
+        except (ValueError, TypeError) as error:
+            self.json_response({"error": str(error)}, 400)
+
+    def _sessions_get(self, parsed):
+        store = self._session_store()
+        parts = (
+            unquote(parsed.path)
+            .removeprefix("/api/sessions")
+            .strip("/")
+            .split("/")
+        )
+        if parts == [""]:
+            self.json_response(store.listing())
+            return
+        identity = parts[0]
+        if len(parts) == 1 or parts[1:] == ["state"]:
+            self.json_response(store.payload(identity))
+            return
+        session = store.get(identity)
+        if parts[1:] == ["checkpoint"]:
+            self.json_response(session.checkpoint())
+        elif parts[1:] == ["segments"]:
+            self.json_response({"segments": session.segments()})
+        elif parts[1:] == ["interventions"]:
+            self.json_response({"interventions": session.interventions()})
+        else:
+            raise FileNotFoundError("会话查询接口不存在")
+
     def do_POST(self):
+        parsed = urlparse(self.path)
+        if parsed.path == "/api/sessions" or parsed.path.startswith(
+            "/api/sessions/"
+        ):
+            self._sessions_post(parsed)
+            return
         try:
             if self.path != "/api/run":
                 self.json_response({"error": "接口不存在"}, 404)
@@ -484,6 +855,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         try:
+            if parsed.path == "/api/sessions" or parsed.path.startswith(
+                "/api/sessions/"
+            ):
+                self._sessions_get(parsed)
+                return
             if parsed.path == "/api/status":
                 self.json_response(
                     payload(parse_qs(parsed.query).get("id", [""])[0])

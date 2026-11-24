@@ -71,6 +71,24 @@ class SensorFeatureTests(unittest.TestCase):
         self.assertEqual(features[3, 10, 12], 0)
         self.assertEqual(features[-1, 11, 12], 1)
 
+    def test_foreground_only_cad_reference_with_nan_background_succeeds(self):
+        reference = np.full((32, 40), np.nan, np.float32)
+        reference[8:24, 10:30] = 0.85
+        depth = reference.copy()
+        depth[12:16, 15:20] = 0.849
+        rgb = np.full((32, 40, 3), 120, np.uint8)
+        intrinsics = np.array([[100, 0, 20], [0, 100, 16], [0, 0, 1]])
+        features = sensor_features(rgb, depth, reference, intrinsics)
+        self.assertEqual(features.shape, (11, 32, 40))
+        self.assertTrue(np.isfinite(features).all())
+        self.assertEqual(features[-1, 0, 0], 0)
+        self.assertEqual(features[3, 0, 0], 0)
+        self.assertAlmostEqual(float(features[3, 14, 17]), 1.0 / 6.0, places=4)
+        with self.assertRaisesRegex(ValueError, "Too few valid depth"):
+            sensor_features(
+                rgb, depth, np.full_like(reference, np.nan), intrinsics
+            )
+
     def test_tiling_covers_image_boundaries_without_resizing(self):
         for length in (80, 256, 768, 1024):
             covered = np.zeros(length, bool)

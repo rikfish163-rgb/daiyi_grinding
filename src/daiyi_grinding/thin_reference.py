@@ -44,9 +44,9 @@ def configuration():
     return asdict(THIN_REFERENCE_CONFIG)
 
 
-def _fill_for_geometry(depth):
+def _fill_for_geometry(depth, *, min_valid_fraction=0.7):
     valid = np.isfinite(depth) & (depth > 0.05) & (depth < 10.0)
-    if valid.mean() < 0.7:
+    if not valid.any() or valid.mean() < min_valid_fraction:
         raise ValueError("Too few valid depth measurements; reacquire")
     filled = np.asarray(depth, dtype=np.float32).copy()
     if not valid.all():

@@ -9,9 +9,47 @@ from scipy.spatial.transform import Rotation
 from .perception import project
 
 MAX_ANCHORS = 96
+MAX_BASELINE_PER_SIDE = 24
+MAX_PROTECTED_ANCHORS = 24
 REFERENCE_MATCH_M = 0.0015
 MIN_VIEW_COSINE = 0.25
 MIN_NORMAL_LENGTH = 0.9
+
+
+def _target_binormal(points, normals):
+    """Return a unit cross-band axis orthogonal to the mean normal and tangent."""
+    mean_normal = normals.mean(axis=0)
+    normal_norm = np.linalg.norm(mean_normal)
+    if normal_norm <= 1e-9:
+        return np.array([1.0, 0.0, 0.0])
+    mean_normal = mean_normal / normal_norm
+    centered = points - points.mean(axis=0)
+    if len(points) >= 2 and np.linalg.norm(centered) > 1e-9:
+        _, _, vt = np.linalg.svd(centered, full_matrices=False)
+        tangent = vt[0]
+        tangent = tangent - np.dot(tangent, mean_normal) * mean_normal
+        tangent_norm = np.linalg.norm(tangent)
+        if tangent_norm > 1e-9:
+            tangent = tangent / tangent_norm
+            binormal = np.cross(mean_normal, tangent)
+            binormal_norm = np.linalg.norm(binormal)
+            if binormal_norm > 1e-9:
+                return binormal / binormal_norm
+    fallback = np.array([1.0, 0.0, 0.0])
+    if abs(np.dot(fallback, mean_normal)) > 0.9:
+        fallback = np.array([0.0, 1.0, 0.0])
+    axis = np.cross(mean_normal, fallback)
+    return axis / np.linalg.norm(axis)
+
+
+def _append_spaced_anchor(bucket, anchor, *, limit, min_spacing_m):
+    if len(bucket) >= limit:
+        return
+    point = np.asarray(anchor["point_m"], dtype=float)
+    for existing in bucket:
+        if np.linalg.norm(point - existing["point_m"]) < min_spacing_m:
+            return
+    bucket.append(anchor)
 
 
 def _validated_targets(targets):
@@ -173,8 +211,20 @@ class Reinspection:
     anchors always hold rather than being inferred from neighbours.
     """
 
-    def __init__(self, targets):
+    def __init__(
+        self,
+        targets,
+        *,
+        protected_zones=(),
+        coordinate_frame="workpiece_097",
+        exclusion_radius_m=0.015,
+        baseline_outer_radius_m=0.060,
+    ):
         self.targets = _validated_targets(targets)
+        self.protected_zones = tuple(protected_zones)
+        self.coordinate_frame = str(coordinate_frame)
+        self.exclusion_radius_m = float(exclusion_radius_m)
+        self.baseline_outer_radius_m = float(baseline_outer_radius_m)
         self.lower = [
             np.full(len(row["points"]), np.inf) for row in self.targets
         ]
@@ -193,10 +243,158 @@ class Reinspection:
         self.positive_views = [
             [None] * len(row["points"]) for row in self.targets
         ]
+        self._target_points = (
+            np.vstack([row["points"] for row in self.targets])
+            if self.targets
+            else np.empty((0, 3), dtype=float)
+        )
+        self._target_binormals = (
+            np.vstack(
+                [
+                    np.repeat(
+                        _target_binormal(row["points"], row["normals"])[
+                            None, :
+                        ],
+                        len(row["points"]),
+                        axis=0,
+                    )
+                    for row in self.targets
+                ]
+            )
+            if self.targets
+            else np.empty((0, 3), dtype=float)
+        )
+        self._baseline_by_side = {-1: [], 1: []}
+        self._protected_anchors = []
         self.last_camera = None
         self.invalid_observations = []
 
-    def observe(self, observation, view_index):
+    def _observe_local_baseline(self, observation, excluded_mask):
+        """Collect untouched outside-band bilateral nominal anchors from depth."""
+        raw_normals = observation.get("normals")
+        if raw_normals is None or not len(self._target_points):
+            return
+        normals_map = np.asarray(raw_normals, dtype=float)
+        surface = observation["surface"]
+        if normals_map.shape != (*surface.shape, 3):
+            return
+        valid = (
+            surface
+            & observation["selection"]
+            & (observation["depth_sample_counts"] > 0)
+            & np.isfinite(observation["reference_xyz"]).all(axis=2)
+            & np.isfinite(observation["xyz"]).all(axis=2)
+            & np.isfinite(normals_map).all(axis=2)
+        )
+        if excluded_mask is not None:
+            excluded = np.asarray(excluded_mask, dtype=bool)
+            if excluded.shape == surface.shape:
+                valid = valid & ~excluded
+        rows, cols = np.nonzero(valid)
+        if not len(rows):
+            return
+        if len(rows) > 2400:
+            keep = np.linspace(0, len(rows) - 1, 2400, dtype=int)
+            rows, cols = rows[keep], cols[keep]
+        ref = observation["reference_xyz"][rows, cols]
+        meas = observation["xyz"][rows, cols]
+        normals = normals_map[rows, cols]
+        normal_len = np.linalg.norm(normals, axis=1)
+        good_n = normal_len > MIN_NORMAL_LENGTH
+        if not good_n.any():
+            return
+        rows, cols = rows[good_n], cols[good_n]
+        ref, meas = ref[good_n], meas[good_n]
+        normals = normals[good_n] / normal_len[good_n][:, None]
+        camera, intrinsics = observation["T"], observation["K"]
+        facing = camera[:3, 3] - ref
+        facing_len = np.maximum(
+            np.linalg.norm(facing, axis=1, keepdims=True), 1e-12
+        )
+        cosine = np.einsum("ij,ij->i", normals, facing / facing_len)
+        good_v = cosine >= MIN_VIEW_COSINE
+        if not good_v.any():
+            return
+        rows, cols = rows[good_v], cols[good_v]
+        ref, meas, normals = ref[good_v], meas[good_v], normals[good_v]
+        tree = cKDTree(self._target_points)
+        dist, nearest = tree.query(ref)
+        rays = (
+            np.column_stack(
+                (
+                    (cols - intrinsics[0, 2]) / intrinsics[0, 0],
+                    (rows - intrinsics[1, 2]) / intrinsics[1, 1],
+                    np.ones(len(cols)),
+                )
+            )
+            @ camera[:3, :3].T
+        )
+        residual_mm = np.einsum("ij,ij->i", meas - ref, normals) * 1000.0
+        sigma_mm = np.maximum(
+            observation["noise_sigma_mm"]
+            * np.abs(np.einsum("ij,ij->i", rays, normals)),
+            1e-4,
+        )
+        band = (
+            (dist >= self.exclusion_radius_m)
+            & (dist <= self.baseline_outer_radius_m)
+            & np.isfinite(residual_mm)
+            & np.isfinite(sigma_mm)
+        )
+        for idx in np.flatnonzero(band):
+            if (
+                len(self._baseline_by_side[-1]) >= MAX_BASELINE_PER_SIDE
+                and len(self._baseline_by_side[1]) >= MAX_BASELINE_PER_SIDE
+            ):
+                break
+            delta = ref[idx] - self._target_points[nearest[idx]]
+            lateral = float(np.dot(delta, self._target_binormals[nearest[idx]]))
+            if abs(lateral) < 0.004:
+                continue
+            side = 1 if lateral > 0 else -1
+            _append_spaced_anchor(
+                self._baseline_by_side[side],
+                {
+                    "height_mm": float(residual_mm[idx]),
+                    "sigma_mm": float(sigma_mm[idx]),
+                    "side": side,
+                    "point_m": ref[idx].tolist(),
+                },
+                limit=MAX_BASELINE_PER_SIDE,
+                min_spacing_m=0.006,
+            )
+        if (
+            self.protected_zones
+            and len(self._protected_anchors) < MAX_PROTECTED_ANCHORS
+        ):
+            outside = (
+                (dist >= self.exclusion_radius_m)
+                & np.isfinite(residual_mm)
+                & np.isfinite(sigma_mm)
+            )
+            for idx in np.flatnonzero(outside):
+                if len(self._protected_anchors) >= MAX_PROTECTED_ANCHORS:
+                    break
+                point = ref[idx]
+                in_protected = any(
+                    np.all(point >= zone.bounds_m[0])
+                    and np.all(point <= zone.bounds_m[1])
+                    for zone in self.protected_zones
+                )
+                if not in_protected:
+                    continue
+                _append_spaced_anchor(
+                    self._protected_anchors,
+                    {
+                        "height_mm": float(residual_mm[idx]),
+                        "sigma_mm": float(sigma_mm[idx]),
+                        "point_m": point.tolist(),
+                    },
+                    limit=MAX_PROTECTED_ANCHORS,
+                    min_spacing_m=0.010,
+                )
+
+    def observe(self, observation, view_index, *, excluded_mask=None):
         """Absorb one sensor array view and return measured anchor count."""
         try:
             observation = _observation_shape_or_raise(observation)
@@ -305,6 +503,7 @@ class Reinspection:
                 for anchor_index in positive_indices:
                     self.positive_views[index][anchor_index] = view_index
                 measured_count += len(indices)
+        self._observe_local_baseline(observation, excluded_mask)
         return measured_count
 
     def supplementary_angle(self, current_angle, choices):
@@ -460,12 +659,27 @@ class Reinspection:
                         positive_counts.tolist()
                     ),
                     "anchor_positive_view_indices": positive_views,
+                    "points_m": target["points"].tolist(),
                 }
             )
         pending = [r["status"] for r in rows if r["status"] != "verified"]
         uncertain = pending.count("uncertain_measurement")
         overgrind = sum(row["overgrind"] for row in rows)
         negative_limit_risk = sum(row["negative_limit_risk"] for row in rows)
+        baseline_anchors = [
+            *self._baseline_by_side[-1],
+            *self._baseline_by_side[1],
+        ]
+        local_baseline = (
+            {
+                "baseline": baseline_anchors,
+                "protected": list(self._protected_anchors),
+                "source": "untouched outside-band bilateral nominal anchors from observed depth frames",
+                "frame": self.coordinate_frame,
+            }
+            if baseline_anchors or self._protected_anchors
+            else None
+        )
         return {
             "regions": rows,
             "verified": len(rows) - len(pending),
@@ -494,6 +708,11 @@ class Reinspection:
             },
             "invalid_observations": self.invalid_observations,
             "truth_used_for_decision": False,
+            **(
+                {"local_baseline": local_baseline}
+                if local_baseline is not None
+                else {}
+            ),
             "observational_release": bool(rows)
             and not pending
             and not self.invalid_observations

@@ -353,36 +353,51 @@ def build_full_matrix(configuration, output):
 
 
 def inspect_station_boundary():
+    from .workpiece_packages import WORKPIECE_DIRECTORY, load_workpiece_package
+
     model_file = project.SOURCE / "workstation_model.py"
     inspection_file = project.SOURCE / "workstation_inspection.py"
+    packages_file = project.SOURCE / "workpiece_packages.py"
     mesh = (
         project.ROOT
         / "assets/ier220_workstation/meshes/workpiece/wp_097_c0.stl"
     )
+    registered = []
+    physical_certified = []
+    if WORKPIECE_DIRECTORY.is_dir():
+        for package_file in sorted(WORKPIECE_DIRECTORY.glob("wp_*.json")):
+            workpiece_id = package_file.stem.removeprefix("wp_")
+            if len(workpiece_id) == 3 and workpiece_id.isdigit():
+                package = load_workpiece_package(workpiece_id)
+                registered.append(package.workpiece_id)
+                if package.declaration.get("physical_changeover_validated"):
+                    physical_certified.append(package.workpiece_id)
     model = model_file.read_text()
     inspection = inspection_file.read_text()
     checks = {
-        "fixed_097_mesh": 'WORKPIECE_MESH = ASSETS / "meshes/workpiece/wp_097_c0.stl"'
-        in model,
-        "fixed_097_body": 'self.model.body("workpiece_097")' in model,
-        "fixed_097_coordinate_frame": '"coordinate_frame": "workpiece_097"'
-        in inspection,
+        "registered_workpiece_packages": "097" in registered,
+        "dynamic_package_model_loader": "load_workpiece_package" in model,
+        "dynamic_coordinate_frame": "self.coordinate_frame" in inspection,
+        "physical_changeover_unverified": not physical_certified,
     }
     if not all(checks.values()):
         raise ValueError(
             "Workstation CAD boundary changed; re-audit changeover"
         )
     return {
-        "supported_part_cad": ["097", "097"],
+        "supported_part_cad": registered,
+        "simulation_packages": registered,
+        "physical_changeover_certified": physical_certified,
         "checks": checks,
         "source_sha256": {
             model_file.name: sha256(model_file),
             inspection_file.name: sha256(inspection_file),
+            packages_file.name: sha256(packages_file),
         },
         "cad_097_sha256": sha256(mesh),
         "limitation": (
-            "The current main station supports only 097. No alternate CAD, "
-            "gripper, fixture, collision proxy or trajectory binding is inferred."
+            "Registered workpiece packages are simulation-only. Real physical "
+            "changeover, grasp calibration and fixture validation remain uncertified."
         ),
     }
 

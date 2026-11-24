@@ -1,5 +1,29 @@
 # 当前 ESTUN 工位与本机工程交接
 
+## 2026-11-24 阶段集成交付（数据集 / 规划与换夹 / 自适应工艺 / 可介入会话）
+
+当前离线与仿真主链已完成四路能力集成并通过全仓规定验证（**Ruff 两项通过、JS 语法检查通过、464 项单测通过、mixed 14 条路径、normal 0 条路径**）：
+
+1. **程序化可介入执行引擎与控制面（`workstation_session.py`、`serve.py`、`web/`）**
+   - 阶段状态机支持 `CREATED → DETECTED → PLANNED → EXECUTING → REINSPECTED → DONE / PAUSED / STOPPED_SAFETY / ABORTED`，支持在执行 trace 中途安全暂停/中止、退刀、审批/屏蔽区域、手动 ROI、调参（`feed_scale` / `normal_offset_mm` / `passes` / `dwell_scale`，且人工参数优先于自适应提案）、切段、切换夹持方案、补扫与跨进程断点重载。
+   - 全部变更仍过完整 PCHIP/碰撞连续安全预检，拒绝放宽任何验收门限；097 实测验证见 [verification_summary.json](runs/enterprise_offline_20261123/p0a_session_01/verification_summary.json)（4 段完整执行、5 份真实运动回执含 1 次 trace 中途暂停、已完成段重载不重磨、0 非预期接触、磨后观测放行，`truth_used_for_control=false`、`enterprise_measured=false`）。
+2. **多工件包解耦、021 接入与冗余/切段/多夹持规划（`workpiece_packages.py`、`workstation_model.py`、`workstation_planning.py`、`offline_controller.py`）**
+   - 工件几何、独立碰撞代理、夹持方案与保护区解耦至 `config/workpieces/wp_097.json` 与 `config/workpieces/wp_021.json`；`021` 已接入真实 `wp_021_c0.stl`、1,007 个独立碰撞代理、渲染与连续预检。
+   - `workstation_planning.py` 支持工具绕法向自由度优化、可达性自动切段与多夹持切换，`offline_controller.py` 按 `admitted_rows` 严格验签完整段与子段并保留部分覆盖父段的 `partial` 状态。
+   - 断续 9501 同源前后实测见 [report.md](runs/enterprise_offline_20261123/p0b_planning_03/validation_01/report.md) 与 [evidence.json](runs/enterprise_offline_20261123/p0b_planning_03/validation_01/evidence.json)：历史/旧离散复放 0/3，优化规划获准 2 条（源段长度覆盖 57.62%），实际 MuJoCo 转台换夹（`clock_270_simulation`）重规划并积分执行完成完整源段 3（49,898 步、0 非预期接触、表面跟踪 P95 0.110231 mm、实际执行源段覆盖 36.20%）。
+3. **双母件多样化缺陷数据管线与自适应工艺/复检闭环（`dataset_pipeline.py`、`adaptive_process.py`、`workstation_quality.py`、`workstation_inspection.py`）**
+   - 双 CAD（`097` / `021`）× 六类贴根几何缺陷（`thin_seam`、`thick_seam`、`burr`、`riser_stub`、`step_ridge`、`mixed`）+ 域随机化 + 保护区零侵入约束与 `unseen_cad` 零泄漏划分，30 套 / 90 个 NPZ 产物位于 `runs/enterprise_offline_20261123/p1_data_process_01/dataset_097_021_06/`。
+   - `AdaptiveProcessController` 与 `ResidualBiasCalibrator` 仅消费白名单观测与加工带外双侧真实未加工名义锚点（`local_baseline`），支持材料去除率在线辨识、低 SNR/零接触/负去除冻结与系统偏置拦截（绝不放宽原硬门），压测报告见 [process_stress_10/report.md](runs/enterprise_offline_20261123/p1_data_process_01/process_stress_10/report.md)。
+
+### 仍待现场与后续推进的边界
+- **真实实物数据与企业验收**：当前所有结果均为离线/仿真验证（`enterprise_measured=false`、`physical_changeover_certified=[]`），真实工件扫描、实机手眼/TCP/夹具标定与实际材料去除率辨识待现场数据到位后标定。
+- **9501 剩余两段与夹具/工作站约束**：当前单夹持/转台换夹下已实际攻克源段 3，其余两段受物理夹爪与砂带结构干涉限制，后续需结合真实夹爪选型或多工位换夹方案扩展。
+- **感知模型再训练**：数据管线已具备双母件多缺陷样本生成能力，待采集真实样件数据或扩充样本规模后开展跨母件检测模型训练与 `unseen_cad` 泛化评估。
+
+---
+
+## 既有薄批缝回磨基线记录
+
 当前薄批缝主链已完成有限去除率下的实际局部回磨和整件观测放行：
 [回磨加工示例](runs/enterprise_offline_20261123/functional_resume/examples_success_thin_120483_finite_03/index.html)
 及其[原始运行结果](runs/enterprise_offline_20261123/functional_resume/thin_120483_finite_03/result.json)

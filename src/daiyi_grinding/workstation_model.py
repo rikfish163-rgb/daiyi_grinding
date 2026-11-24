@@ -30,9 +30,9 @@ from .casting_profiles import (
     sensor_for_profile,
 )
 from .learned_defects import registered_model_hashes
+from .workpiece_packages import load_cell_package, load_workpiece_package
 from .workstation_jobs import JOB_FILE
 from .workstation_replay import ReplayRecorder
-from .workpiece_packages import load_cell_package, load_workpiece_package
 
 ASSETS = project.ROOT / "assets/ier220_workstation"
 SOURCE_SCENE = ASSETS / "scene.xml"
@@ -74,7 +74,9 @@ SOURCE_FILES = (
 )
 
 # Public default-frame constants remain the 097 package's CAD datum frames.
-GRIPPER_FROM_WORKPIECE, LOADING_ROTATION = DEFAULT_WORKPIECE_PACKAGE.grasp_frames()
+GRIPPER_FROM_WORKPIECE, LOADING_ROTATION = (
+    DEFAULT_WORKPIECE_PACKAGE.grasp_frames()
+)
 WORKPIECE_FROM_GRIPPER = np.linalg.inv(GRIPPER_FROM_WORKPIECE)
 LOADING_POSITION = DEFAULT_WORKPIECE_PACKAGE.loading_position.copy()
 WHEEL_CENTER = np.array([-1.651, -1.125, 1.156])
@@ -82,7 +84,9 @@ WHEEL_RADIUS = 0.0225
 WHEEL_HALF_WIDTH = 0.009
 
 
-GRASP_SETUPS = tuple(setup.name for setup in DEFAULT_WORKPIECE_PACKAGE.grasp_setups)
+GRASP_SETUPS = tuple(
+    setup.name for setup in DEFAULT_WORKPIECE_PACKAGE.grasp_setups
+)
 CAMERA_SETUPS = ("original", "low_side_simulation")
 
 
@@ -230,9 +234,15 @@ def source_hashes(workpiece_id="097"):
             for name in SOURCE_FILES
             if (project.SOURCE / name).exists()
         },
-        package.source_scene.name: hashlib.sha256(package.source_scene.read_bytes()).hexdigest(),
-        package.mesh_path.name: hashlib.sha256(package.mesh_path.read_bytes()).hexdigest(),
-        package.path.name: hashlib.sha256(package.path.read_bytes()).hexdigest(),
+        package.source_scene.name: hashlib.sha256(
+            package.source_scene.read_bytes()
+        ).hexdigest(),
+        package.mesh_path.name: hashlib.sha256(
+            package.mesh_path.read_bytes()
+        ).hexdigest(),
+        package.path.name: hashlib.sha256(
+            package.path.read_bytes()
+        ).hexdigest(),
         "workstation.json": hashlib.sha256(
             CELL_CONFIG_FILE.read_bytes()
         ).hexdigest(),
@@ -510,7 +520,9 @@ def prepare_workpiece_collision_assets(workpiece_package=None, output=None):
     levels = sorted({*package.collision_slice_boundaries_m, *major_planes})
     center = np.r_[mesh.bounds[:, :2].mean(axis=0), 0]
     files = []
-    for angle in np.linspace(0, 2 * np.pi, package.collision_angular_slices + 1)[:-1]:
+    for angle in np.linspace(
+        0, 2 * np.pi, package.collision_angular_slices + 1
+    )[:-1]:
         end = angle + 2 * np.pi / package.collision_angular_slices
         wedge = _clip_triangles(
             mesh.triangles, [-np.sin(angle), np.cos(angle), 0], center
@@ -570,7 +582,11 @@ def prepare_workpiece_collision_assets(workpiece_package=None, output=None):
                     target = cache / f"workpiece_{len(files)}.stl"
                     points = clipped.triangles[faces].reshape(-1, 3)
                     if _convex_proxy(points, target):
-                        files.append(str(target.relative_to(ASSETS)) if target.is_relative_to(ASSETS) else str(target.resolve()))
+                        files.append(
+                            str(target.relative_to(ASSETS))
+                            if target.is_relative_to(ASSETS)
+                            else str(target.resolve())
+                        )
     record = {
         "schema_version": 3,
         "source": str(package.mesh_path.relative_to(ASSETS)),
@@ -802,7 +818,9 @@ def build_scene(
             body.set("gravcomp", "0")
 
     proxies = prepare_collision_assets()
-    proxies["workpiece"] = prepare_workpiece_collision_assets(package, out)["pieces"]
+    proxies["workpiece"] = prepare_workpiece_collision_assets(package, out)[
+        "pieces"
+    ]
     for owner, names in (
         (gripper, ("grip_board_col", "grip_frame_col")),
         (world, ("stiff_spindle_stand_col", "stiff_spindle_head_col")),
@@ -971,18 +989,26 @@ class Workstation:
         workpiece_package=None,
         cell_package=None,
     ):
-        self.workpiece_package = load_workpiece_package(workpiece_package or workpiece_id)
+        self.workpiece_package = load_workpiece_package(
+            workpiece_package or workpiece_id
+        )
         self.workpiece_id = self.workpiece_package.workpiece_id
         self.cell_package = cell_package or self.workpiece_package.cell
         self.cell_config = self.cell_package.config
         self.loading_position = self.workpiece_package.loading_position.copy()
         self.seed = seed
         self.camera_setup = camera_setup
-        self.camera_config = inspection_camera_config(camera_setup)
+        self.camera_config = inspection_camera_config(
+            camera_setup, cell_package=self.cell_package
+        )
         self.grasp_setup = grasp_setup
-        self.gripper_from_workpiece, self.loading_rotation = self.workpiece_package.grasp_frames(grasp_setup)
+        self.gripper_from_workpiece, self.loading_rotation = (
+            self.workpiece_package.grasp_frames(grasp_setup)
+        )
         if self.workpiece_id != "097" and case in CASTING_CASES:
-            raise ValueError("该工件尚未登记 casting 工况先验，不能借用 097 身份")
+            raise ValueError(
+                "该工件尚未登记 casting 工况先验，不能借用 097 身份"
+            )
         self.workpiece_from_gripper = np.linalg.inv(self.gripper_from_workpiece)
         self.output = Path(output).resolve()
         self.output.mkdir(parents=True, exist_ok=True)
@@ -1054,6 +1080,85 @@ class Workstation:
         self.data.qpos[self.q_index] = self.home
         self.data.ctrl[self.arm_actuators] = self.home
         mujoco.mj_forward(self.model, self.data)
+
+    def activate_grasp_setup(self, grasp_setup):
+        """Activate a declared grasp only after integrated fixture clocking.
+
+        The gripper must be released and the casting held by the fixture. This
+        changes only the inactive grasp weld and the planning frames; neither
+        joint coordinates nor workpiece coordinates are assigned. The next
+        operation needs a new plan and motion binding on this integrated state.
+        """
+        grip, loading = self.workpiece_package.grasp_frames(grasp_setup)
+        if (
+            self.data.eq_active[self.gripper_weld]
+            or not self.data.eq_active[self.fixture_weld]
+        ):
+            raise ValueError("换夹检查点要求夹爪释放且工件已由工装固定")
+        pose = self.body_transform(self.workpiece)
+        position_error = float(
+            np.linalg.norm(pose[:3, 3] - self.loading_position)
+        )
+        angle_error = float(
+            np.linalg.norm(
+                Rotation.from_matrix(loading @ pose[:3, :3].T).as_rotvec()
+            )
+        )
+        if position_error > 0.001 or angle_error > np.deg2rad(0.6):
+            raise ValueError("换夹检查点尚未通过实际转台定位与 CAD 位姿检查")
+        inverse = np.linalg.inv(grip)
+        home_wp = np.eye(4)
+        home_wp[:3, :3] = loading
+        home_wp[:3, 3] = self.loading_position + [0, 0, 0.35]
+        home = self.ik(home_wp @ inverse, self.home)[0]
+        previous = self.grasp_setup
+        self.model.eq_data[self.gripper_weld, 3:10] = np.r_[
+            grip[:3, 3], _quaternion(grip[:3, :3])
+        ]
+        self.gripper_from_workpiece = grip
+        self.workpiece_from_gripper = inverse
+        self.loading_rotation = loading
+        self.grasp_setup = grasp_setup
+        self.home = home
+        return {
+            "checkpoint_verified": True,
+            "from_grasp_setup": previous,
+            "to_grasp_setup": grasp_setup,
+            "position_error_mm": position_error * 1000,
+            "orientation_error_deg": float(np.rad2deg(angle_error)),
+            "turntable_encoder_deg": float(
+                np.rad2deg(self.data.qpos[self.table_qadr])
+            ),
+            "fixture_attached": True,
+            "grasp_attached": False,
+            "joint_positions_teleported": False,
+            "workpiece_pose_teleported": False,
+            "physical_grasp_validated": False,
+        }
+
+    def planning_variant(self, grasp_setup):
+        """Build an independent planning model without modifying integrated state.
+
+        The caller must already hold the shared MuJoCo lock. A variant tests
+        another declared rigid grasp; it does not execute a regrasp transition.
+        """
+        import tempfile
+
+        self.workpiece_package.grasp_frames(grasp_setup)
+        directory = self.output / "grasp_plans"
+        directory.mkdir(exist_ok=True)
+        output = tempfile.mkdtemp(prefix=f"{grasp_setup}_", dir=directory)
+        return Workstation(
+            output,
+            seed=self.seed,
+            case=self.case,
+            tool=self.tool.key,
+            casting_profile=self.casting_profile or BASE_PROFILE,
+            grasp_setup=grasp_setup,
+            camera_setup=self.camera_setup,
+            workpiece_package=self.workpiece_package,
+            cell_package=self.cell_package,
+        )
 
     def ik(self, transform, seed):
         """Solve all six axes for the gripper frame; preserve published limits."""

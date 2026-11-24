@@ -42,6 +42,7 @@ WORKPIECE_MESHES = {
     "097": MESH_DIR / "wp_097_c0.stl",
     "021": MESH_DIR / "wp_021_c0.stl",
 }
+PACKAGE_DIRECTORY = project.ROOT / "config/workpieces"
 SEMANTIC_LABELS = {
     "background": 0,
     "flash": 1,
@@ -2142,21 +2143,35 @@ def synthesize_defect(
     )
 
 
-def generate_defects(mesh, feature_set, seed, kinds=tuple(DEFECT_SEMANTICS)):
+def generate_defects(
+    mesh,
+    feature_set,
+    seed,
+    kinds=tuple(DEFECT_SEMANTICS),
+    *,
+    neighbourhood=None,
+    surface_index=None,
+):
     """Generate one instance of each requested defect kind."""
     occupied = []
     instances = []
-    neighbourhood = MeshNeighbourhood.build(mesh)
-    surface_index = DraftSurfaceIndex.build(
-        mesh, feature_set.config.draft_direction
-    )
+    if neighbourhood is None:
+        neighbourhood = MeshNeighbourhood.build(mesh)
+    if surface_index is None:
+        surface_index = DraftSurfaceIndex.build(
+            mesh, feature_set.config.draft_direction
+        )
+    seen = {}
     for kind in kinds:
+        occurrence = seen.get(kind, 0)
+        seen[kind] = occurrence + 1
+        kind_seed = seed if occurrence == 0 else seed + occurrence * 1009
         instances.append(
             synthesize_defect(
                 kind,
                 feature_set,
                 mesh,
-                seed,
+                kind_seed,
                 occupied,
                 neighbourhood=neighbourhood,
                 surface_index=surface_index,
@@ -2237,6 +2252,10 @@ class SensorDegradationProfile:
     normal_bias_pattern_mm: float = 0.02
     frames_averaged: int = 1
     calibrated_from_real_scans: bool = False
+    cad_misalignment_translation_mm: float = 0.0
+    cad_misalignment_rotation_mrad: float = 0.0
+    warpage_amplitude_mm: float = 0.0
+    rgb_domain_randomization: bool = False
 
     def __post_init__(self):
         for name in (
@@ -2256,6 +2275,9 @@ class SensorDegradationProfile:
             "registration_rotation_mrad",
             "normal_bias_mm",
             "normal_bias_pattern_mm",
+            "cad_misalignment_translation_mm",
+            "cad_misalignment_rotation_mrad",
+            "warpage_amplitude_mm",
         ):
             value = getattr(self, name)
             if not math.isfinite(value) or value < 0:
@@ -2331,6 +2353,26 @@ class SensorDegradationProfile:
             normal_bias_mm=float(self.normal_bias_mm),
             normal_bias_pattern_mm=float(self.normal_bias_pattern_mm),
             frames_averaged=int(self.frames_averaged),
+            cad_misalignment_translation_mm=tuple(
+                float(value)
+                for value in rng.uniform(
+                    -self.cad_misalignment_translation_mm,
+                    self.cad_misalignment_translation_mm,
+                    3,
+                )
+            ),
+            cad_misalignment_rotation_mrad=tuple(
+                float(value)
+                for value in rng.uniform(
+                    -self.cad_misalignment_rotation_mrad,
+                    self.cad_misalignment_rotation_mrad,
+                    3,
+                )
+            ),
+            warpage_amplitude_mm=float(
+                self.warpage_amplitude_mm * rng.uniform(0.5, 1.2)
+            ),
+            rgb_domain_randomization=bool(self.rgb_domain_randomization),
         )
 
     @classmethod
@@ -2484,6 +2526,10 @@ class SensorDegradationSample:
     normal_bias_mm: float
     normal_bias_pattern_mm: float
     frames_averaged: int
+    cad_misalignment_translation_mm: tuple = (0.0, 0.0, 0.0)
+    cad_misalignment_rotation_mrad: tuple = (0.0, 0.0, 0.0)
+    warpage_amplitude_mm: float = 0.0
+    rgb_domain_randomization: bool = False
 
     def record(self):
         return {name: getattr(self, name) for name in self.__dataclass_fields__}
@@ -2893,36 +2939,176 @@ def render_observation(scene, camera, profile_sample, rng):
     return degraded
 
 
-def _synthetic_rgb(observation, semantic=None):
+def _synthetic_rgb(
+    observation, semantic=None, *, rng=None, domain_randomization=False
+):
     """Return geometry-only shaded RGB; labels never affect appearance.
 
     ``semantic`` is accepted for call-site compatibility and deliberately
-    ignored. The image uses one cast-metal base colour, Lambertian shading from
-    the observed normals, the broad specular lobe, and the measured specular /
-    oxide / dropout masks. Changing supervision labels therefore cannot change
-    a single RGB pixel.
+    ignored. Changing supervision labels therefore cannot change a single RGB
+    pixel. When ``domain_randomization=True``, multi-light illumination, cast
+    metal albedo, sand-cast micro-roughness, optional grinding-brush streaks,
+    and camera exposure/sensor noise are randomized using ``rng``.
     """
+    del semantic
     normals = observation["normals"]
     surface = observation["surface"]
-    light = unit(np.array([-0.4, -0.7, -0.55]))
-    diffuse = np.clip(np.einsum("ijk,k->ij", normals, light), 0.0, 1.0)
-    image = np.empty(normals.shape[:2] + (3,), dtype=float)
-    image[:] = np.array([126.0, 128.0, 130.0])
-    image *= (0.32 + 0.68 * diffuse)[..., None]
-    highlight = np.clip(diffuse, 0.0, 1.0) ** 24
-    image += 55.0 * highlight[..., None]
+    if not domain_randomization:
+        light = unit(np.array([-0.4, -0.7, -0.55]))
+        diffuse = np.clip(np.einsum("ijk,k->ij", normals, light), 0.0, 1.0)
+        image = np.empty(normals.shape[:2] + (3,), dtype=float)
+        image[:] = np.array([126.0, 128.0, 130.0])
+        image *= (0.32 + 0.68 * diffuse)[..., None]
+        highlight = np.clip(diffuse, 0.0, 1.0) ** 24
+        image += 55.0 * highlight[..., None]
+        specular = observation.get("specular")
+        if specular is not None:
+            image[specular] = np.minimum(image[specular] + 70.0, 255.0)
+        oxide = observation.get("oxide")
+        if oxide is not None:
+            image[oxide] *= 0.55
+            image[oxide] += np.array([18.0, 10.0, 4.0])
+        dropout = observation.get("dropout")
+        if dropout is not None:
+            image[dropout] *= 0.6
+        image[~surface] = 20.0
+        return np.clip(image, 0, 255).astype(np.uint8)
+
+    if rng is None:
+        rng = np.random.default_rng(0)
+    h, w = normals.shape[:2]
+    # Randomize cast-metal material family (sand-cast iron, gray iron, aluminum, oxidized patina).
+    palettes = (
+        np.array([86.0, 88.0, 92.0]),
+        np.array([124.0, 126.0, 130.0]),
+        np.array([164.0, 168.0, 174.0]),
+        np.array([118.0, 112.0, 104.0]),
+        np.array([142.0, 146.0, 148.0]),
+    )
+    base_color = palettes[int(rng.integers(0, len(palettes)))] * rng.uniform(
+        0.78, 1.22, size=3
+    )
+    ambient = float(rng.uniform(0.18, 0.44))
+    n_lights = int(rng.integers(1, 4))
+    shading = np.full((h, w, 3), ambient, dtype=np.float32)
+    spec_accum = np.zeros((h, w, 3), dtype=np.float32)
+    shininess = float(rng.uniform(10.0, 44.0))
+    for _ in range(n_lights):
+        l_dir = unit(
+            np.array(
+                [
+                    rng.uniform(-1.0, 1.0),
+                    rng.uniform(-1.0, 1.0),
+                    rng.uniform(-1.0, -0.15),
+                ]
+            )
+        )
+        weight = float(rng.uniform(0.35, 0.85)) / math.sqrt(n_lights)
+        tint = rng.uniform(0.88, 1.12, size=3).astype(np.float32)
+        ndotl = np.clip(
+            np.einsum("ijk,k->ij", normals, l_dir), 0.0, 1.0
+        ).astype(np.float32)
+        shading += (weight * ndotl)[..., None] * tint[None, None, :]
+        spec_strength = float(rng.uniform(15.0, 78.0)) / n_lights
+        spec_accum += (spec_strength * (ndotl**shininess))[..., None] * tint[
+            None, None, :
+        ]
+    # Procedural sand-cast grain + low-frequency patina mottling + optional grinding brush lines.
+    grain = rng.normal(0.0, 1.0, (h, w)).astype(np.float32)
+    coarse = gaussian_filter(grain, sigma=float(rng.uniform(6.0, 16.0)))
+    coarse /= max(float(np.abs(coarse).max()), 1e-6)
+    fine = gaussian_filter(
+        rng.normal(0.0, 1.0, (h, w)).astype(np.float32),
+        sigma=float(rng.uniform(0.6, 1.6)),
+    )
+    fine /= max(float(np.abs(fine).max()), 1e-6)
+    texture = (
+        1.0
+        + float(rng.uniform(0.05, 0.16)) * coarse
+        + float(rng.uniform(0.03, 0.10)) * fine
+    )
+    if rng.random() < 0.45:
+        streak_axis = 0 if rng.random() < 0.5 else 1
+        streaks = gaussian_filter1d(
+            rng.normal(0.0, 1.0, (h, w)).astype(np.float32),
+            sigma=float(rng.uniform(10.0, 26.0)),
+            axis=streak_axis,
+        )
+        streaks /= max(float(np.abs(streaks).max()), 1e-6)
+        texture += float(rng.uniform(0.04, 0.12)) * streaks
+    image = (
+        base_color[None, None, :] * texture[..., None] * shading + spec_accum
+    )
     specular = observation.get("specular")
     if specular is not None:
-        image[specular] = np.minimum(image[specular] + 70.0, 255.0)
+        image[specular] = np.minimum(
+            image[specular] + float(rng.uniform(45.0, 110.0)), 255.0
+        )
     oxide = observation.get("oxide")
     if oxide is not None:
-        image[oxide] *= 0.55
-        image[oxide] += np.array([18.0, 10.0, 4.0])
+        image[oxide] *= float(rng.uniform(0.38, 0.68))
+        image[oxide] += rng.uniform(4.0, 26.0, size=3)
     dropout = observation.get("dropout")
     if dropout is not None:
-        image[dropout] *= 0.6
-    image[~surface] = 20.0
+        image[dropout] *= float(rng.uniform(0.35, 0.75))
+    bg_color = rng.uniform(8.0, 62.0, size=3)
+    image[~surface] = bg_color
+    # Camera exposure, gamma, and read noise.
+    image = np.clip(image, 0.0, 255.0) / 255.0
+    image = np.power(image, float(rng.uniform(0.80, 1.25))) * 255.0
+    image += rng.normal(0.0, float(rng.uniform(1.5, 6.5)), image.shape)
     return np.clip(image, 0, 255).astype(np.uint8)
+
+
+def _degraded_nominal_depth(nominal_mesh, camera, profile_sample, rng):
+    """Render nominal CAD depth with optional rigid registration misalignment and smooth warpage."""
+    if nominal_mesh is None:
+        return np.full((camera.height, camera.width), np.nan, dtype=float)
+    t_mm = np.asarray(
+        getattr(
+            profile_sample, "cad_misalignment_translation_mm", (0.0, 0.0, 0.0)
+        ),
+        dtype=float,
+    )
+    r_mrad = np.asarray(
+        getattr(
+            profile_sample, "cad_misalignment_rotation_mrad", (0.0, 0.0, 0.0)
+        ),
+        dtype=float,
+    )
+    if np.linalg.norm(t_mm) > 1e-9 or np.linalg.norm(r_mrad) > 1e-9:
+        rot = Rotation.from_rotvec(r_mrad * 1e-3).as_matrix()
+        cad_camera = CameraModel(
+            width=camera.width,
+            height=camera.height,
+            fx=camera.fx,
+            fy=camera.fy,
+            cx=camera.cx,
+            cy=camera.cy,
+            position_m=camera.position_m + t_mm / 1000.0,
+            rotation=rot @ camera.rotation,
+            fov_deg=camera.fov_deg,
+        )
+    else:
+        cad_camera = camera
+    nominal = rasterize_mesh(nominal_mesh, cad_camera)["depth_m"]
+    warpage_mm = float(getattr(profile_sample, "warpage_amplitude_mm", 0.0))
+    if warpage_mm > 1e-6:
+        valid = np.isfinite(nominal) & (nominal > 0.0)
+        if valid.any():
+            sigma_px = float(rng.uniform(26.0, 46.0))
+            field = gaussian_filter(
+                rng.normal(0.0, 1.0, nominal.shape), sigma=sigma_px
+            )
+            field = field - float(field[valid].mean())
+            peak = float(np.abs(field[valid]).max())
+            if peak > 1e-9:
+                nominal = np.where(
+                    valid,
+                    nominal + (field / peak) * (warpage_mm / 1000.0),
+                    nominal,
+                )
+    return nominal
 
 
 @dataclass(frozen=True)
@@ -3149,10 +3335,36 @@ def _sample_cameras(defect, draft, encoder_angle_deg, rng, image_size):
         np.asarray(draft) / np.linalg.norm(draft) * yaw_mrad / 1000
     ).apply(local_position - center)
     local = look_at(local_position, target, width, height, 30.0)
+    oblique_azimuth = float(rng.uniform(0.0, 360.0))
+    oblique_lateral = unit(_orbit(lateral, oblique_azimuth, draft))
+    oblique_offset = unit(
+        float(rng.uniform(0.38, 0.68)) * normal
+        + float(rng.uniform(0.65, 0.92)) * oblique_lateral
+        + float(rng.uniform(-0.35, 0.35)) * tangent
+    )
+    oblique_distance = float(
+        np.clip(
+            rng.uniform(0.75, 1.35) * extent / math.tan(math.radians(16.0)),
+            0.09,
+            0.42,
+        )
+    )
+    oblique = look_at(
+        target + oblique_distance * oblique_offset,
+        target,
+        width,
+        height,
+        float(rng.uniform(28.0, 40.0)),
+    )
     return {
         "overview": (overview, 0.0, {"alignment_mm": 0.0, "yaw_mrad": 0.0}),
         "local_fov": (
             local,
+            alignment_mm,
+            {"alignment_mm": alignment_mm, "yaw_mrad": yaw_mrad},
+        ),
+        "oblique_fov": (
+            oblique,
             alignment_mm,
             {"alignment_mm": alignment_mm, "yaw_mrad": yaw_mrad},
         ),
@@ -3189,13 +3401,12 @@ def _render_sample(
     defect_records,
     cloud_spacing_m,
     nominal_mesh=None,
+    include_point_cloud=True,
 ):
     """Render one scene sample and return its arrays and metadata."""
     degraded = render_observation(scene.mesh, camera, profile_sample, rng)
-    nominal_depth = (
-        rasterize_mesh(nominal_mesh, camera)["depth_m"]
-        if nominal_mesh is not None
-        else np.full_like(degraded["depth_ideal_m"], np.nan)
+    nominal_depth = _degraded_nominal_depth(
+        nominal_mesh, camera, profile_sample, rng
     )
     face_index = np.clip(degraded["face_index"], 0, None)
     semantic = np.where(
@@ -3219,15 +3430,24 @@ def _render_sample(
         int(round(0.004 / max(float(camera.pixel_scale_m(mean_depth)), 1e-6))),
     )
     protection = _protection_mask(semantic, degraded["surface"], radius_px)
-    rgb = _synthetic_rgb(degraded, semantic)
-    cloud = sample_dense_cloud(
-        scene,
-        camera,
-        defect_center_m,
-        0.045,
-        cloud_spacing_m,
-        profile_sample,
-        rng,
+    rgb = _synthetic_rgb(
+        degraded,
+        semantic,
+        rng=rng,
+        domain_randomization=profile_sample.rgb_domain_randomization,
+    )
+    cloud = (
+        sample_dense_cloud(
+            scene,
+            camera,
+            defect_center_m,
+            0.045,
+            cloud_spacing_m,
+            profile_sample,
+            rng,
+        )
+        if include_point_cloud
+        else None
     )
     arrays = {
         "depth_m": degraded["depth_m"].astype(np.float32),
@@ -3255,7 +3475,7 @@ def _render_sample(
         "sensor_profile": profile.record(),
         "defect": defect_records[defect_identity - 1],
         "supervision": supervision,
-        "point_count": cloud["count"],
+        "point_count": int(cloud["count"]) if cloud is not None else 0,
         "mean_sigma_mm": float(
             np.nanmean(degraded["sigma_mm"][degraded["surface"]])
         ),
@@ -3275,7 +3495,11 @@ def _render_sample(
         "visible_instances": sorted(
             int(value) for value in np.unique(instance) if value
         ),
-        "rgb_source": "geometry-only Lambertian cast-metal shading",
+        "rgb_source": (
+            "geometry-only domain-randomized cast-metal shading"
+            if profile_sample.rgb_domain_randomization
+            else "geometry-only Lambertian cast-metal shading"
+        ),
     }
     return arrays, rgb, cloud, metadata
 
@@ -3287,8 +3511,10 @@ def _write_sample(folder, arrays, rgb, cloud, roots, metadata):
     Image.fromarray(rgb).save(folder / "rgb.png")
     Image.fromarray(arrays["semantic"]).save(folder / "semantic.png")
     Image.fromarray(arrays["protection"]).save(folder / "protection.png")
-    np.savez_compressed(folder / "points.npz", **cloud)
-    np.savez_compressed(folder / "roots.npz", **roots)
+    if cloud is not None:
+        np.savez_compressed(folder / "points.npz", **cloud)
+    if roots is not None:
+        np.savez_compressed(folder / "roots.npz", **roots)
     write_json(folder / "meta.json", {**metadata, "schema": BUNDLE_SCHEMA})
     return folder
 
@@ -3366,7 +3592,7 @@ def _intermediate_bundle(
     camera = look_at(position, center, image_size[0], image_size[1], 24.0)
     raster = rasterize_mesh(surface_mesh, camera)
     degraded = degrade_depth(raster["depth_m"], camera, profile_sample, rng)
-    nominal = rasterize_mesh(nominal_mesh, camera)["depth_m"]
+    nominal = _degraded_nominal_depth(nominal_mesh, camera, profile_sample, rng)
     # surface_mesh.faces index the flattened vertex array, not the (U, V) grid.
     face_heights = heights.reshape(-1)[surface_mesh.faces].mean(axis=1)
     face_index = np.where(degraded["surface"], raster["face_index"], -1)
@@ -3396,7 +3622,12 @@ def _intermediate_bundle(
         protection_radius,
         defect_labels=(SEMANTIC_LABELS["intermediate_residual"],),
     )
-    rgb = _synthetic_rgb(degraded, semantic)
+    rgb = _synthetic_rgb(
+        degraded,
+        semantic,
+        rng=rng,
+        domain_randomization=profile_sample.rgb_domain_randomization,
+    )
     arrays = {
         "depth_m": degraded["depth_m"].astype(np.float32),
         "depth_ideal_m": raster["depth_m"].astype(np.float32),
@@ -3491,9 +3722,194 @@ def _intermediate_bundle(
             "local chart observation; not a re-meshed solid and not a "
             "calibrated material-removal result"
         ),
-        "rgb_source": "deterministic Lambertian shading from synthetic normals",
+        "rgb_source": (
+            "geometry-only domain-randomized cast-metal shading"
+            if profile_sample.rgb_domain_randomization
+            else "deterministic Lambertian shading from synthetic normals"
+        ),
     }
     return arrays, rgb, cloud, metadata
+
+
+SCALED_REGIME_PROFILES = {
+    "nominal_clean": SensorDegradationProfile(
+        base_depth_sigma_mm=0.04,
+        range_sigma_mm_per_m=0.25,
+        incidence_sigma_gain_mm=0.6,
+        specular_patches_per_m2=40.0,
+        oxide_patches_per_m2=20.0,
+        edge_flying_fraction=0.15,
+        registration_translation_mm=0.05,
+        registration_rotation_mrad=0.2,
+        cad_misalignment_translation_mm=0.18,
+        cad_misalignment_rotation_mrad=0.45,
+        warpage_amplitude_mm=0.06,
+        rgb_domain_randomization=True,
+    ),
+    "standard_shop": SensorDegradationProfile(
+        base_depth_sigma_mm=0.06,
+        range_sigma_mm_per_m=0.38,
+        incidence_sigma_gain_mm=0.95,
+        specular_patches_per_m2=120.0,
+        oxide_patches_per_m2=60.0,
+        edge_flying_fraction=0.28,
+        registration_translation_mm=0.08,
+        registration_rotation_mrad=0.3,
+        cad_misalignment_translation_mm=0.40,
+        cad_misalignment_rotation_mrad=1.0,
+        warpage_amplitude_mm=0.18,
+        rgb_domain_randomization=True,
+    ),
+    "high_drift_warped": SensorDegradationProfile(
+        base_depth_sigma_mm=0.07,
+        range_sigma_mm_per_m=0.42,
+        incidence_sigma_gain_mm=1.05,
+        specular_patches_per_m2=110.0,
+        oxide_patches_per_m2=75.0,
+        edge_flying_fraction=0.32,
+        registration_translation_mm=0.08,
+        registration_rotation_mrad=0.35,
+        cad_misalignment_translation_mm=1.05,
+        cad_misalignment_rotation_mrad=2.2,
+        warpage_amplitude_mm=0.48,
+        rgb_domain_randomization=True,
+    ),
+    "harsh_specular_oxide": SensorDegradationProfile(
+        base_depth_sigma_mm=0.08,
+        range_sigma_mm_per_m=0.45,
+        incidence_sigma_gain_mm=1.20,
+        specular_patches_per_m2=260.0,
+        specular_dropout=0.90,
+        oxide_patches_per_m2=150.0,
+        oxide_dropout=0.65,
+        oxide_bias_mm=0.16,
+        edge_flying_fraction=0.45,
+        registration_translation_mm=0.08,
+        registration_rotation_mrad=0.35,
+        cad_misalignment_translation_mm=0.45,
+        cad_misalignment_rotation_mrad=1.1,
+        warpage_amplitude_mm=0.22,
+        rgb_domain_randomization=True,
+    ),
+    "grazing_noisy": SensorDegradationProfile(
+        base_depth_sigma_mm=0.11,
+        range_sigma_mm_per_m=0.55,
+        incidence_sigma_gain_mm=1.55,
+        base_dropout=0.015,
+        incidence_dropout_gain=0.34,
+        edge_flying_fraction=0.38,
+        specular_patches_per_m2=140.0,
+        oxide_patches_per_m2=80.0,
+        registration_translation_mm=0.08,
+        registration_rotation_mrad=0.35,
+        cad_misalignment_translation_mm=0.55,
+        cad_misalignment_rotation_mrad=1.3,
+        warpage_amplitude_mm=0.28,
+        rgb_domain_randomization=True,
+    ),
+}
+
+
+def render_normal_sample(
+    mesh,
+    feature_set,
+    profile,
+    profile_sample,
+    rng,
+    *,
+    regime_name,
+    image_size,
+    draft_direction=(0.0, 0.0, 1.0),
+):
+    """Render one pure-normal (zero-defect) hard-negative RGB-D observation."""
+    width, height = image_size
+    lines = [
+        line
+        for line in feature_set.lines
+        if line.kind in {"parting_candidate", "sharp_edge", "hole_rim"}
+        and len(line.points_m) >= 3
+    ]
+    if lines:
+        chosen = lines[int(rng.integers(0, len(lines)))]
+        idx = int(rng.integers(0, len(chosen.points_m)))
+        target = np.asarray(chosen.points_m[idx], dtype=float)
+        normal = unit(np.asarray(chosen.normals_m[idx], dtype=float))
+    else:
+        target = np.asarray(mesh.bounds.mean(axis=0), dtype=float)
+        normal = unit(np.asarray(draft_direction, dtype=float))
+    azimuth = float(rng.uniform(0.0, 360.0))
+    draft = unit(np.asarray(draft_direction, dtype=float))
+    perp = np.cross(normal, np.array([1.0, 0.0, 0.0]))
+    if np.linalg.norm(perp) < 1e-6:
+        perp = np.cross(normal, np.array([0.0, 1.0, 0.0]))
+    lateral = unit(_orbit(unit(perp), azimuth, draft))
+    offset = unit(
+        float(rng.uniform(0.45, 0.88)) * normal
+        + float(rng.uniform(0.30, 0.80)) * lateral
+    )
+    distance = float(rng.uniform(0.18, 0.56))
+    fov = float(rng.uniform(28.0, 42.0))
+    camera = look_at(target + distance * offset, target, width, height, fov)
+    degraded = render_observation(mesh, camera, profile_sample, rng)
+    nominal_depth = _degraded_nominal_depth(mesh, camera, profile_sample, rng)
+    surface = degraded["surface"]
+    semantic = np.where(
+        surface, SEMANTIC_LABELS["nominal_cad"], SEMANTIC_LABELS["background"]
+    ).astype(np.uint8)
+    instance = np.zeros(surface.shape, dtype=np.uint16)
+    residual = np.where(surface, 0.0, np.nan).astype(np.float32)
+    protection = np.zeros(surface.shape, dtype=bool)
+    rgb = _synthetic_rgb(
+        degraded,
+        semantic,
+        rng=rng,
+        domain_randomization=profile_sample.rgb_domain_randomization,
+    )
+    arrays = {
+        "depth_m": degraded["depth_m"].astype(np.float32),
+        "depth_ideal_m": degraded["depth_ideal_m"].astype(np.float32),
+        "depth_nominal_m": nominal_depth.astype(np.float32),
+        "depth_sigma_mm": degraded["sigma_mm"].astype(np.float32),
+        "incidence_deg": degraded["incidence_deg"].astype(np.float32),
+        "semantic": semantic,
+        "instance": instance,
+        "residual_mm": residual,
+        "protection": protection,
+        "surface": surface,
+        "dropout": degraded["dropout"],
+        "specular": degraded["specular"],
+        "oxide": degraded["oxide"],
+        "flying": degraded["flying"],
+    }
+    metadata = {
+        "sample_kind": "normal_hard_negative",
+        "regime": regime_name,
+        "instance": 0,
+        "camera": camera.record(),
+        "sensor_sample": profile_sample.record(),
+        "sensor_profile": profile.record(),
+        "defect": None,
+        "point_count": 0,
+        "mean_sigma_mm": float(np.nanmean(degraded["sigma_mm"][surface])),
+        "depth_valid_fraction": float(surface.mean()),
+        "incidence_p95_deg": float(
+            np.nanpercentile(degraded["incidence_deg"], 95)
+        ),
+        "dropout_fraction": float(
+            degraded["dropout"].sum() / max(surface.sum(), 1)
+        ),
+        "specular_pixels": int(degraded["specular"].sum()),
+        "oxide_pixels": int(degraded["oxide"].sum()),
+        "flying_pixels": int(degraded["flying"].sum()),
+        "peak_residual_mm": 0.0,
+        "visible_instances": [],
+        "rgb_source": (
+            "geometry-only domain-randomized cast-metal shading"
+            if profile_sample.rgb_domain_randomization
+            else "geometry-only Lambertian cast-metal shading"
+        ),
+    }
+    return arrays, rgb, metadata
 
 
 @dataclass(frozen=True)
@@ -3650,6 +4066,11 @@ def load_workpiece_package(source, *, base_directory=None):
             "fixture_id": value.get("fixture_id"),
             "bounds_m": _json_record(value.get("bounds_m")),
             "declared_status": value.get("protected_zone_status"),
+            **(
+                {"package_path": str(path)}
+                if isinstance(source, (str, Path))
+                else {}
+            ),
         },
     )
 
@@ -3798,6 +4219,7 @@ def build_workpiece_samples(
                 "split": split,
                 "seed": seed,
                 "cad_sha256": features.cad_sha256,
+                "point_count": cloud["count"],
                 "provenance": _provenance(package, features, seed, sample_kind),
             }
             _write_sample(folder, arrays, rgb, cloud, roots, metadata)
@@ -3920,6 +4342,10 @@ def _provenance(package, features, seed, sample_kind):
         "cad_sha256": features.cad_sha256,
         "package_id": package.package_id,
         "protection_regions": list(package.protection_regions),
+        "protection_regions_scope": (
+            "P0-B declared no-grind zones in the workpiece frame; separate "
+            "from the per-sample local protection mask next to the machined band"
+        ),
         "package_metadata": package.metadata,
         "mujoco_used": False,
         "real_scans_used": False,
@@ -4279,6 +4705,26 @@ def _output_path(value):
     return requested
 
 
+def default_package_sources(workpiece_ids):
+    """Return P0-B package JSON paths, falling back to bare CAD meshes."""
+    sources = []
+    for workpiece_id in workpiece_ids:
+        path = PACKAGE_DIRECTORY / f"wp_{workpiece_id}.json"
+        if path.is_file():
+            sources.append(str(path))
+            continue
+        if workpiece_id not in WORKPIECE_MESHES:
+            raise ValueError(f"No mesh or package for workpiece {workpiece_id}")
+        sources.append(
+            {
+                "workpiece_id": workpiece_id,
+                "mesh_path": str(WORKPIECE_MESHES[workpiece_id]),
+                "units": "m",
+            }
+        )
+    return sources
+
+
 def main(argv=None):
     """Run the multi-master sample demonstration."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -4294,6 +4740,15 @@ def main(argv=None):
         default=list(WORKPIECE_MESHES),
         choices=sorted(WORKPIECE_MESHES),
     )
+    parser.add_argument(
+        "--packages",
+        nargs="+",
+        default=None,
+        help=(
+            "optional P0-B package JSON paths; default "
+            "config/workpieces/wp_<workpiece>.json"
+        ),
+    )
     parser.add_argument("--seeds", nargs="+", type=int, default=[20261124])
     parser.add_argument("--split-seed", type=int, default=0)
     parser.add_argument("--cloud-spacing-mm", type=float, default=0.35)
@@ -4301,9 +4756,14 @@ def main(argv=None):
     parser.add_argument("--image-height", type=int, default=240)
     args = parser.parse_args(argv)
     output = _output_path(args.output)
+    sources = (
+        args.packages
+        if args.packages is not None
+        else default_package_sources(args.workpieces)
+    )
     manifest = run(
         output,
-        workpiece_paths=[WORKPIECE_MESHES[name] for name in args.workpieces],
+        packages=sources,
         seeds=tuple(args.seeds),
         split_seed=args.split_seed,
         cloud_spacing_m=args.cloud_spacing_mm / 1000,

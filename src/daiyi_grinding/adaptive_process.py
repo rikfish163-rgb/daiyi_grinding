@@ -18,6 +18,7 @@ record reads generative truth; ``truth_used_for_control`` and
 from __future__ import annotations
 
 import argparse
+import copy
 import csv
 import hashlib
 import json
@@ -33,6 +34,9 @@ from . import project
 SCHEMA = "daiyi-adaptive-process-v1"
 OUTPUT_ROOT = project.RUNS / "enterprise_offline_20261123/p1_data_process_01"
 TOLERANCE_MM = 0.3
+MAX_NORMAL_OFFSET_MM = 0.20
+MAX_ALLOWANCE_MM = 0.30
+FEED_SCALE_LIMITS = (0.1, 3.0)
 STAGES = ("roughing", "finishing")
 MACHINED = "machined"
 BASELINE_LEFT = "baseline_left"
@@ -143,6 +147,19 @@ class ProcessLimits:
             raise ValueError(
                 "Finish target must be below the roughing allowance"
             )
+        if not 0.0 <= self.max_normal_offset_mm <= MAX_NORMAL_OFFSET_MM:
+            raise ValueError(
+                "max_normal_offset_mm must lie in [0, "
+                f"{MAX_NORMAL_OFFSET_MM}] mm"
+            )
+        if not 0.0 <= self.max_allowance_mm <= MAX_ALLOWANCE_MM:
+            raise ValueError(
+                f"max_allowance_mm must lie in [0, {MAX_ALLOWANCE_MM}] mm"
+            )
+        if self.max_normal_offset_mm > self.max_allowance_mm:
+            raise ValueError(
+                "max_normal_offset_mm may not exceed max_allowance_mm"
+            )
         if not (
             self.min_force_n
             <= self.finishing_force_n
@@ -151,9 +168,15 @@ class ProcessLimits:
         ):
             raise ValueError("Stage forces must lie inside the force envelope")
         if len(self.feed_scale_bounds) != 2 or not (
-            0.0 < self.feed_scale_bounds[0] < self.feed_scale_bounds[1]
+            FEED_SCALE_LIMITS[0]
+            <= self.feed_scale_bounds[0]
+            < self.feed_scale_bounds[1]
+            <= FEED_SCALE_LIMITS[1]
         ):
-            raise ValueError("feed_scale_bounds must be an increasing pair")
+            raise ValueError(
+                "feed_scale_bounds must be increasing within "
+                f"[{FEED_SCALE_LIMITS[0]}, {FEED_SCALE_LIMITS[1]}]"
+            )
         if len(self.relative_rate_bounds) != 2 or not (
             0.0 < self.relative_rate_bounds[0] < self.relative_rate_bounds[1]
         ):
@@ -909,20 +932,21 @@ class AdaptiveProcessController:
             sizing_desired = min(desired, self.limits.max_allowance_mm)
         if desired <= 0.005:
             return EngagementPlan(
-                stage,
-                force,
-                nominal_feed,
-                0.0,
-                1.0,
-                0.0,
-                0,
-                desired,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                "already_within_target",
-                estimate,
+                stage=stage,
+                force_n=force,
+                feed_mm_s=nominal_feed,
+                duration_s=0.0,
+                feed_scale=1.0,
+                normal_offset_mm=0.0,
+                passes=0,
+                desired_cut_mm=desired,
+                predicted_removal_mm=0.0,
+                predicted_lower_mm=0.0,
+                predicted_upper_mm=0.0,
+                remaining_mm=0.0,
+                offset_limited_mm=0.0,
+                stop_reason="already_within_target",
+                rate=estimate,
             )
         removal_per_second_upper = (
             self.limits.nominal_removal_mm_per_n_s
@@ -1070,6 +1094,77 @@ class AdaptiveProcessController:
             current_allowance_mm=current_allowance_mm,
         )
 
+    def restore_state(self, process_state):
+        """Restore the observation-identified posterior and last decision.
+
+        The payload is exactly ``SessionProcessAdapter.last_evidence()``. Any
+        truth marker must be ``False``; malformed or out-of-range values are
+        rejected instead of silently resetting the estimate to its prior.
+        """
+        if not isinstance(process_state, dict):
+            raise ValueError("process_state must be a mapping")
+        _assert_truth_free(process_state)
+        if not process_state:
+            return self.estimate
+        estimate = process_state.get("estimate")
+        if not isinstance(estimate, dict):
+            raise ValueError("process_state.estimate must be a mapping")
+
+        def number(key, minimum=None, maximum=None):
+            value = estimate.get(key)
+            if (
+                type(value) not in (int, float)
+                or not math.isfinite(value)
+                or (minimum is not None and value < minimum)
+                or (maximum is not None and value > maximum)
+            ):
+                raise ValueError(f"Invalid process_state.estimate.{key}")
+            return float(value)
+
+        def counter(key):
+            value = estimate.get(key, 0)
+            if type(value) is not int or value < 0:
+                raise ValueError(f"Invalid process_state.estimate.{key}")
+            return value
+
+        lower, upper = self.limits.relative_rate_bounds
+        rate = number("relative_rate", lower, upper)
+        sigma = number("relative_sigma", 1e-4, 10.0)
+        updates = counter("updates")
+        last_snr = estimate.get("last_snr")
+        if last_snr is not None:
+            if type(last_snr) not in (int, float) or not math.isfinite(
+                last_snr
+            ):
+                raise ValueError("Invalid process_state.estimate.last_snr")
+            last_snr = float(last_snr)
+        bounded = estimate.get("bounded", False)
+        if type(bounded) is not bool:
+            raise ValueError("Invalid process_state.estimate.bounded")
+        decision = process_state.get("last_decision")
+        if decision is not None and not isinstance(decision, dict):
+            raise ValueError("process_state.last_decision must be a mapping")
+        self._relative_rate = rate
+        self._variance = sigma**2
+        self._updates = updates
+        self._last_snr = last_snr
+        self._bounded = bounded
+        self._low_snr_freezes = counter("low_snr_freezes")
+        self._duplicate_updates_ignored = counter("duplicate_updates_ignored")
+        self._invalid_updates_ignored = counter("invalid_updates_ignored")
+        self._nonpositive_removal_freezes = counter(
+            "nonpositive_removal_freezes"
+        )
+        self.last_decision = (
+            None if decision is None else copy.deepcopy(decision)
+        )
+        return self.estimate
+
+    def note_invalid_observation(self):
+        """Count an observation pair that carries no usable contact evidence."""
+        self._invalid_updates_ignored += 1
+        return self.estimate
+
     def as_session_adapter(self):
         """Return a callable matching P0-A's ``ProcessAdapter`` protocol."""
         return SessionProcessAdapter(self)
@@ -1080,15 +1175,25 @@ class AdaptiveProcessController:
     def decision_record(self):
         """Return the last controller decision with its truth-free markers."""
         if self.last_decision is None:
-            return {
-                "decision": None,
-                "truth_used_for_control": False,
-            }
+            return {"decision": None, "truth_used_for_control": False}
         return {
             "decision": self.last_decision,
             "estimate": self.estimate.record(),
             "truth_used_for_control": False,
         }
+
+
+def _assert_truth_free(value):
+    """Reject a restored payload that claims to carry control/decision truth."""
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key in {"truth_used_for_control", "truth_used_for_decision"}:
+                if item is not False:
+                    raise ValueError(f"{key} must be False")
+            _assert_truth_free(item)
+    elif isinstance(value, list):
+        for item in value:
+            _assert_truth_free(item)
 
 
 class SessionProcessAdapter:
@@ -1098,7 +1203,11 @@ class SessionProcessAdapter:
         "engaged_duration_s",
         "contact_duration_s",
         "removal_contact_s",
-        "duration_s",
+    )
+    FORCE_KEYS = (
+        "commanded_force_n",
+        "force_n",
+        "max_contact_force_n",
     )
 
     def __init__(self, controller):
@@ -1106,48 +1215,212 @@ class SessionProcessAdapter:
             raise ValueError("SessionProcessAdapter requires a controller")
         self.controller = controller
         self._previous_estimates = {}
+        self._consumed_executions = 0
+        self._hydrated = False
         self.identification_events = []
 
-    def absorb_session_state(self, session_state):
-        """Use the session's signed evidence to update the rate estimate.
+    def _restore_from_process_state(self, process_state):
+        if not isinstance(process_state, dict):
+            raise ValueError("process_state must be a mapping")
+        if not process_state:
+            return
+        _assert_truth_free(process_state)
+        self.controller.restore_state(process_state)
+        events = process_state.get("identification_events")
+        if isinstance(events, list):
+            self.identification_events = copy.deepcopy(events)
+        previous = process_state.get("previous_estimates")
+        if isinstance(previous, dict):
+            restored = {}
+            for key, values in previous.items():
+                if not isinstance(values, list):
+                    raise ValueError("previous_estimates values must be lists")
+                array = np.array(
+                    [np.nan if item is None else float(item) for item in values]
+                )
+                restored[int(key)] = array
+            self._previous_estimates = restored
+        consumed = process_state.get("consumed_executions", 0)
+        if type(consumed) is not int or not 0 <= consumed <= 10**6:
+            raise ValueError(
+                "consumed_executions must be a nonnegative integer"
+            )
+        self._consumed_executions = consumed
 
-        A checkpoint only supplies observations: region anchor estimates and
-        an execution duration. The measurement bias cancels in the
-        before/after difference, so this update remains truth-free.
+    def _contact_evidence(self, execution):
+        """Return contact duration/force, or a reason to freeze the update."""
+        steps = execution.get("tool_contact_steps")
+        has_steps = type(steps) in (int, float) and math.isfinite(steps)
+        if has_steps and steps <= 0:
+            return None, "no_tool_contact"
+        duration = None
+        for key in self.DURATION_KEYS:
+            value = execution.get(key)
+            if (
+                type(value) in (int, float)
+                and math.isfinite(value)
+                and value > 0
+            ):
+                duration = float(value)
+                break
+        if duration is None and has_steps and steps > 0:
+            simulation_steps = execution.get("simulation_steps")
+            simulated_seconds = execution.get("simulated_seconds")
+            if (
+                type(simulation_steps) in (int, float)
+                and math.isfinite(simulation_steps)
+                and simulation_steps > 0
+                and type(simulated_seconds) in (int, float)
+                and math.isfinite(simulated_seconds)
+                and simulated_seconds > 0
+            ):
+                duration = (
+                    float(simulated_seconds)
+                    * float(steps)
+                    / float(simulation_steps)
+                )
+        if duration is None or duration <= 0.0:
+            return None, "no_contact_duration"
+        force = None
+        for key in self.FORCE_KEYS:
+            value = execution.get(key)
+            if (
+                type(value) in (int, float)
+                and math.isfinite(value)
+                and value > 0
+            ):
+                force = float(value)
+                break
+        if force is None:
+            force = self.controller.limits.finishing_force_n
+        return {
+            "engaged_seconds": duration,
+            "force_n": force,
+            "count": 1,
+        }, None
+
+    def _session_segment_regions(self, session_state):
+        mapping = {}
+        segments = session_state.get("segments", [])
+        if isinstance(segments, list):
+            for segment in segments:
+                if not isinstance(segment, dict):
+                    continue
+                segment_id = segment.get("segment_id")
+                region_id = segment.get("region_id")
+                if type(segment_id) is int and type(region_id) is int:
+                    mapping[segment_id] = region_id
+        return mapping
+
+    @staticmethod
+    def _execution_region(execution, segment_regions):
+        region_id = execution.get("region_id")
+        if type(region_id) is int and region_id > 0:
+            return region_id
+        segment_id = execution.get("segment_id")
+        if type(segment_id) is int and segment_id in segment_regions:
+            return segment_regions[segment_id]
+        return None
+
+    def _region_changed(self, identity, values):
+        previous = self._previous_estimates.get(identity)
+        if previous is None or len(previous) != len(values):
+            return False
+        finite = np.isfinite(previous) & np.isfinite(values)
+        return bool(
+            finite.any()
+            and float(np.max(np.abs(previous[finite] - values[finite]))) > 1e-6
+        )
+
+    def _region_observation(self, identity, values, region_rows):
+        previous = self._previous_estimates.get(identity)
+        if previous is None or len(previous) != len(values):
+            return None
+        finite = np.isfinite(previous) & np.isfinite(values)
+        if finite.sum() < 2:
+            return None
+        sigma = np.full(
+            int(finite.sum()),
+            self._region_sigma(
+                region_rows.get(identity, {}), int(finite.sum())
+            ),
+        )
+        return previous[finite], values[finite], sigma
+
+    def _aggregate_contact(self, executions):
+        valid = []
+        invalid = 0
+        for execution in executions:
+            evidence, error = self._contact_evidence(execution)
+            if error is None:
+                valid.append(evidence)
+            else:
+                invalid += 1
+        if not valid:
+            return None, invalid
+        total = sum(item["engaged_seconds"] for item in valid)
+        force = (
+            sum(item["force_n"] * item["engaged_seconds"] for item in valid)
+            / total
+        )
+        return {
+            "engaged_seconds": float(total),
+            "force_n": float(force),
+            "count": len(valid),
+        }, invalid
+
+    def _update_region(self, identity, observation, evidence):
+        before, after, sigma = observation
+        self.controller.update_from_observation(
+            AnchorObservation(
+                heights_mm=before,
+                sigma_mm=sigma,
+                roles=np.array([MACHINED] * len(before)),
+            ),
+            AnchorObservation(
+                heights_mm=after,
+                sigma_mm=sigma,
+                roles=np.array([MACHINED] * len(after)),
+            ),
+            engaged_seconds=evidence["engaged_seconds"],
+            force_n=evidence["force_n"],
+        )
+        self.identification_events.append(
+            {
+                "region_id": int(identity),
+                "execution_count": int(evidence["count"]),
+                "matched_anchors": int(len(before)),
+                "engaged_seconds": evidence["engaged_seconds"],
+                "force_n": evidence["force_n"],
+                "estimate": self.controller.estimate.record(),
+            }
+        )
+
+    def absorb_session_state(self, session_state):
+        """Use per-region signed evidence to update the rate estimate.
+
+        Executions are paired with the region that actually changed, using the
+        execution's ``region_id`` or the ``segment_id -> region_id`` mapping
+        from the observed session. Several passes in the same region are merged
+        by a Preston-linear integral: total duration is summed and the
+        effective force is duration-weighted. Ambiguous unmapped batches are
+        frozen rather than paired with the last execution.
         """
         if not isinstance(session_state, dict):
             return None
+        if (
+            not self._hydrated
+            and self.controller.estimate.updates == 0
+            and not self._previous_estimates
+        ):
+            process_state = session_state.get("process_state")
+            if process_state:
+                self._restore_from_process_state(process_state)
+            self._hydrated = True
         report = session_state.get("reinspection", {})
         regions = report.get("regions", []) if isinstance(report, dict) else []
-        executions = session_state.get("execution_history", [])
-        duration = None
-        force = None
-        if isinstance(executions, list):
-            for execution in reversed(executions):
-                if not isinstance(execution, dict):
-                    continue
-                for key in self.DURATION_KEYS:
-                    value = execution.get(key)
-                    if (
-                        type(value) in (int, float)
-                        and math.isfinite(value)
-                        and value > 0
-                    ):
-                        duration = float(value)
-                        break
-                if duration is not None:
-                    for key in ("commanded_force_n", "force_n"):
-                        value = execution.get(key)
-                        if type(value) in (int, float) and value > 0:
-                            force = float(value)
-                            break
-                    break
-        force = (
-            force
-            if force is not None
-            else self.controller.limits.finishing_force_n
-        )
-        updated = 0
+        current = {}
+        region_rows = {}
         for region in regions:
             if not isinstance(region, dict):
                 continue
@@ -1155,46 +1428,100 @@ class SessionProcessAdapter:
             estimates = region.get("anchor_estimates_mm")
             if identity is None or not isinstance(estimates, list):
                 continue
-            current = np.array(
+            current[identity] = np.array(
                 [np.nan if item is None else float(item) for item in estimates]
             )
-            previous = self._previous_estimates.get(identity)
+            region_rows[identity] = region
+        executions = session_state.get("execution_history", [])
+        if not isinstance(executions, list) or not current:
+            for identity, values in current.items():
+                self._previous_estimates[identity] = values
+            return None
+        start = min(self._consumed_executions, len(executions))
+        new_executions = [
+            record for record in executions[start:] if isinstance(record, dict)
+        ]
+        if not new_executions:
+            for identity, values in current.items():
+                self._previous_estimates[identity] = values
+            return None
+        if not self._previous_estimates:
+            # No before snapshot exists for any region; consume without
+            # inventing a removal observation.
+            self._consumed_executions = len(executions)
+            for identity, values in current.items():
+                self._previous_estimates[identity] = values
+            return None
+        segment_regions = self._session_segment_regions(session_state)
+        groups = {}
+        unmapped = []
+        for execution in new_executions:
+            region_id = self._execution_region(execution, segment_regions)
+            if region_id is None:
+                unmapped.append(execution)
+            else:
+                groups.setdefault(region_id, []).append(execution)
+        changed = {
+            identity
+            for identity, values in current.items()
+            if self._region_changed(identity, values)
+        }
+        pending = False
+        for region_id, items in groups.items():
+            evidence, _ = self._aggregate_contact(items)
             if (
-                duration is not None
-                and previous is not None
-                and len(previous) == len(current)
+                evidence is not None
+                and region_id in self._previous_estimates
+                and region_id not in changed
             ):
-                matched = np.isfinite(previous) & np.isfinite(current)
-                if matched.sum() >= 2:
-                    sigma = self._region_sigma(region, int(matched.sum()))
-                    before = AnchorObservation(
-                        heights_mm=previous[matched],
-                        sigma_mm=np.full(int(matched.sum()), sigma),
-                        roles=np.array([MACHINED] * int(matched.sum())),
-                    )
-                    after = AnchorObservation(
-                        heights_mm=current[matched],
-                        sigma_mm=np.full(int(matched.sum()), sigma),
-                        roles=np.array([MACHINED] * int(matched.sum())),
-                    )
-                    self.controller.update_from_observation(
-                        before,
-                        after,
-                        engaged_seconds=duration,
-                        force_n=force,
-                    )
-                    updated += 1
-                    self.identification_events.append(
-                        {
-                            "region_id": identity,
-                            "matched_anchors": int(matched.sum()),
-                            "engaged_seconds": duration,
-                            "force_n": force,
-                            "estimate": self.controller.estimate.record(),
-                        }
-                    )
-            self._previous_estimates[identity] = current
-        return None if not updated else self.controller.estimate.record()
+                pending = True
+        if pending:
+            # The post-pass observation for at least one matched region has not
+            # arrived; keep the whole batch for the unified rescan.
+            for identity, values in current.items():
+                self._previous_estimates[identity] = values
+            return None
+        updated = False
+        if unmapped:
+            if len(new_executions) == 1 and len(changed) == 1 and not groups:
+                region_id = next(iter(changed))
+                evidence, error = self._contact_evidence(unmapped[0])
+                observation = self._region_observation(
+                    region_id, current[region_id], region_rows
+                )
+                if error is None and observation is not None:
+                    self._update_region(region_id, observation, evidence)
+                    updated = True
+                else:
+                    self.controller.note_invalid_observation()
+            else:
+                self.controller.note_invalid_observation()
+            self._consumed_executions = len(executions)
+        for region_id in sorted(groups):
+            items = groups[region_id]
+            evidence, invalid = self._aggregate_contact(items)
+            if (
+                evidence is None
+                or region_id not in current
+                or region_id not in changed
+            ):
+                self.controller.note_invalid_observation()
+                continue
+            observation = self._region_observation(
+                region_id, current[region_id], region_rows
+            )
+            if observation is None:
+                self.controller.note_invalid_observation()
+                continue
+            if invalid:
+                self.controller.note_invalid_observation()
+            self._update_region(region_id, observation, evidence)
+            updated = True
+        if groups:
+            self._consumed_executions = len(executions)
+        for identity, values in current.items():
+            self._previous_estimates[identity] = values
+        return self.controller.estimate.record() if updated else None
 
     def _region_sigma(self, region, count):
         bounds = region.get("anchor_bounds_mm")
@@ -1277,6 +1604,14 @@ class SessionProcessAdapter:
             "estimate": self.controller.estimate.record(),
             "last_decision": self.controller.last_decision,
             "identification_events": list(self.identification_events),
+            "previous_estimates": {
+                str(identity): [
+                    None if not np.isfinite(value) else float(value)
+                    for value in values
+                ]
+                for identity, values in self._previous_estimates.items()
+            },
+            "consumed_executions": int(self._consumed_executions),
             "truth_used_for_control": False,
         }
 

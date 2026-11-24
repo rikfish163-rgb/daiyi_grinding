@@ -670,7 +670,14 @@ def _parse_preflight(value, commands, support_segments, command_file_hash):
         raise PlanRejected(
             "preflight_command_mismatch", "空命令计划却声明了已检查命令"
         )
+    has_admitted_rows = "admitted_rows" in value
+    admitted_rows = value.get("admitted_rows") if has_admitted_rows else None
+    if has_admitted_rows and not isinstance(admitted_rows, list):
+        raise PlanRejected(
+            "invalid_preflight", "preflight.admitted_rows 须为数组"
+        )
     passed = set()
+    partial = set()
     blocked = set()
     row_summary = []
     for index, row in enumerate(rows):
@@ -681,13 +688,25 @@ def _parse_preflight(value, commands, support_segments, command_file_hash):
             f"preflight.rows[{index}].segment_id",
             minimum=1,
         )
-        if segment in passed or segment in blocked:
+        if segment in passed or segment in partial or segment in blocked:
             raise PlanRejected(
                 "duplicate_preflight_segment", f"预检段 {segment} 重复"
             )
         status = _text(row.get("status"), f"preflight.rows[{index}].status")
         if status == "passed":
             passed.add(segment)
+        elif status == "partial" and has_admitted_rows:
+            coverage = _finite(
+                row.get("coverage"),
+                f"preflight.rows[{index}].coverage",
+                minimum=0.0,
+            )
+            if coverage <= 0.0 or coverage >= 1.0:
+                raise PlanRejected(
+                    "partial_preflight",
+                    f"部分覆盖父段 {segment} 覆盖率须严格位于 (0, 1)",
+                )
+            partial.add(segment)
         elif status in {"blocked", "failed", "skipped"}:
             blocked.add(segment)
         else:
@@ -701,10 +720,68 @@ def _parse_preflight(value, commands, support_segments, command_file_hash):
                 "reason": row.get("reason"),
                 "detection_id": row.get("detection_id"),
                 "coverage": row.get("coverage"),
+                "source_coverage_ratio": row.get("source_coverage_ratio"),
                 "command_count": row.get("command_count"),
                 "command_sha256": row.get("command_sha256"),
             }
         )
+    if has_admitted_rows:
+        source_passed = set(passed)
+        passed = set()
+        admitted_by_source = {}
+        for index, row in enumerate(admitted_rows):
+            if not isinstance(row, dict):
+                raise PlanRejected(
+                    "invalid_preflight", f"已准入行 {index} 须为对象"
+                )
+            segment = _integer(
+                row.get("segment_id"),
+                f"preflight.admitted_rows[{index}].segment_id",
+                minimum=1,
+            )
+            if segment in passed:
+                raise PlanRejected(
+                    "duplicate_preflight_segment", f"已准入段 {segment} 重复"
+                )
+            status = _text(
+                row.get("status"), f"preflight.admitted_rows[{index}].status"
+            )
+            if status != "passed":
+                raise PlanRejected(
+                    "unapproved_segment",
+                    f"已准入行 {segment} 状态须为 passed，当前为 {status}",
+                )
+            source_segment = (
+                _integer(
+                    row.get("source_segment_id"),
+                    f"preflight.admitted_rows[{index}].source_segment_id",
+                    minimum=1,
+                )
+                if "source_segment_id" in row
+                and row.get("source_segment_id") is not None
+                else segment
+            )
+            if segment in blocked or source_segment in blocked:
+                raise PlanRejected(
+                    "blocked_segment_execution", "被拦截段不得出现在已准入行中"
+                )
+            passed.add(segment)
+            admitted_by_source.setdefault(source_segment, set()).add(segment)
+        missing_source_passed = source_passed - set(admitted_by_source)
+        if missing_source_passed:
+            raise PlanRejected(
+                "preflight_passed_segment_missing_commands",
+                f"预检通过父段缺少已准入明细：{sorted(missing_source_passed)}",
+            )
+        missing_source_partial = partial - set(admitted_by_source)
+        if missing_source_partial:
+            raise PlanRejected(
+                "partial_preflight",
+                f"部分覆盖父段缺少已准入子段：{sorted(missing_source_partial)}",
+            )
+        verified_rows = admitted_rows
+    else:
+        verified_rows = [row for row in rows if row["status"] == "passed"]
     machining = {
         command.segment_id
         for command in commands
@@ -738,7 +815,7 @@ def _parse_preflight(value, commands, support_segments, command_file_hash):
         raise PlanRejected(
             "preflight_binding_mismatch", "预检绑定的命令文件哈希不一致"
         )
-    for row in rows:
+    for row in verified_rows:
         if row["status"] != "passed":
             continue
         items = [

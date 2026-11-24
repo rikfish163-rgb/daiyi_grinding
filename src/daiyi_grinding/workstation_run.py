@@ -260,10 +260,17 @@ def run(args):
 
     try:
         status("capturing")
+        workpiece_id = (
+            profile["cad_id"]
+            if profile and profile.get("cad_id")
+            else getattr(args, "workpiece_id", "097")
+        )
         snapshot = out / "source_snapshot"
         snapshot.mkdir()
         for name in SOURCE_FILES:
-            shutil.copyfile(project.SOURCE / name, snapshot / name)
+            source_path = project.SOURCE / name
+            if source_path.is_file():
+                shutil.copyfile(source_path, snapshot / name)
         shutil.copyfile(
             project.ROOT / "config/workstation.json",
             snapshot / "workstation.json",
@@ -278,8 +285,6 @@ def run(args):
                 and profile_file.name != "casting_synthesis.json"
             ):
                 shutil.copyfile(profile_file, snapshot / profile_file.name)
-        write_json(out / "source_hashes.json", source_hashes())
-        write_json(out / "source_reuse.json", provenance())
         sim = Workstation(
             out,
             args.seed,
@@ -288,7 +293,15 @@ def run(args):
             casting_profile=getattr(args, "casting_profile", BASE_PROFILE),
             grasp_setup=getattr(args, "grasp_setup", "original"),
             camera_setup=getattr(args, "camera_setup", "original"),
+            workpiece_id=workpiece_id,
         )
+        shutil.copyfile(
+            sim.workpiece_package.path,
+            snapshot / sim.workpiece_package.path.name,
+        )
+        write_json(out / "source_hashes.json", source_hashes(sim.workpiece_id))
+        write_json(out / "source_reuse.json", provenance())
+        coordinate_frame = sim.workpiece_package.coordinate_frame
         write_json(
             out / "config.json",
             {
@@ -382,12 +395,23 @@ def run(args):
                             path["segment_id"],
                             path["detection_id"],
                             path["view_index"],
-                            "workpiece_097",
+                            coordinate_frame,
                             *[value * 1000 for value in point],
                             *path["normal"],
                             sim.tool.key,
                         ]
                     )
+        loading_yaw = (
+            round(
+                math.degrees(
+                    math.atan2(
+                        float(sim.loading_rotation[1, 0]),
+                        float(sim.loading_rotation[0, 0]),
+                    )
+                )
+            )
+            % 360
+        )
         result = {
             "schema_version": 3,
             "scene": "workstation",
@@ -409,16 +433,15 @@ def run(args):
             "views": args.views,
             "width": 1024,
             "height": 768,
-            "cad_workpiece": "097",
+            "cad_workpiece": sim.workpiece_id,
+            "workpiece_package": sim.workpiece_package.summary(),
             "workpiece_profile": profile,
             "components_separate": True,
             "tool": sim.tool.summary(),
             "operation": "robot grasps and carries workpiece to fixed tool",
             "gripper_is_grinding_tool": False,
             "grasp_setup": sim.grasp_setup,
-            "fixture_loading_yaw_deg": 180
-            if sim.grasp_setup == "original"
-            else 0,
+            "fixture_loading_yaw_deg": loading_yaw,
             "grasp_real_validated": False,
             "perception": {
                 **perception,
@@ -432,7 +455,7 @@ def run(args):
             "path_count": len(paths),
             "admitted_path_count": len(admitted),
             "path_length_mm": path_length(paths) * 1000,
-            "coordinate_frame": "workpiece_097",
+            "coordinate_frame": coordinate_frame,
             "clearance_mm": 3
             if args.mode == "clearance"
             else CELL_CONFIG["planning"]["material_allowance_mm"],
@@ -693,6 +716,7 @@ def parser():
     argument_parser = argparse.ArgumentParser(description=__doc__)
     argument_parser.add_argument("--seed", type=int, default=7007)
     argument_parser.add_argument("--workpiece-profile", choices=job_profiles())
+    argument_parser.add_argument("--workpiece-id", default="097")
     argument_parser.add_argument(
         "--grasp-setup", choices=GRASP_SETUPS, default="original"
     )

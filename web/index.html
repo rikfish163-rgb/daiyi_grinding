@@ -146,6 +146,64 @@
       </div>
     </section>
 
+    <section class="panel session-panel" aria-labelledby="session-title">
+      <div class="panelhead session-head">
+        <div class="panel-title-group"><h2 id="session-title">可介入会话控制</h2><span id="session-stage" class="meta-badge">未选择会话</span></div>
+        <span id="session-summary" class="muted">逐段推进，检查点可重载</span>
+      </div>
+      <div class="session-toolbar">
+        <label class="field" for="session-select"><span>持久化会话</span><select id="session-select"><option value="">选择已有会话</option></select></label>
+        <button id="session-refresh" type="button">刷新列表</button>
+        <button id="session-create" type="button" class="btn-secondary">用当前工况新建会话</button>
+        <div class="session-actions" role="group" aria-label="会话运行控制">
+          <button id="session-step" type="button" class="btn-primary" disabled>下一步 / 一道次</button>
+          <button id="session-advance" type="button" disabled>连续推进到审阅点</button>
+          <button id="session-pause" type="button" disabled>暂停并安全退刀</button>
+          <button id="session-resume" type="button" disabled>恢复</button>
+          <button id="session-abort" type="button" disabled>中止会话</button>
+        </div>
+      </div>
+      <ol id="session-phases" class="session-phases" aria-label="会话阶段"></ol>
+      <div class="session-feedback"><p id="session-notice" role="status" aria-live="polite">新建后先扫描并审阅区域；只有通过连续曲线预检的段可以执行。</p><a id="session-checkpoint" aria-disabled="true">查看检查点</a><a id="session-audit-download" aria-disabled="true">介入日志 JSONL</a></div>
+      <details id="session-workspace" class="session-workspace">
+        <summary>区域审批、单段参数与介入日志</summary>
+        <div class="session-edit-grid">
+          <section class="session-region-panel" aria-labelledby="session-regions-title">
+            <h3 id="session-regions-title">观测区域审批</h3>
+            <div id="session-regions" class="session-regions"><p class="empty">等待会话扫描</p></div>
+            <button id="session-approve" type="button" disabled>批准所选可加工区域</button>
+            <label class="field" for="session-reason"><span>介入原因</span><input id="session-reason" type="text" maxlength="2000" placeholder="误检、暂缓加工或工艺调整的原因"></label>
+          </section>
+          <section class="session-segment-editor" aria-labelledby="session-editor-title">
+            <h3 id="session-editor-title">单段工艺介入</h3>
+            <label class="field" for="session-segment-select"><span>路径段</span><select id="session-segment-select"><option value="">等待路径</option></select></label>
+            <div class="session-param-grid">
+              <label class="field" for="session-feed"><span>进给倍率</span><input id="session-feed" type="number" min="0.1" max="3" step="0.05" value="1"></label>
+              <label class="field" for="session-offset"><span>法向偏置 mm</span><input id="session-offset" type="number" min="-0.3" max="0.3" step="0.01" value="0"></label>
+              <label class="field" for="session-passes"><span>目标道次</span><input id="session-passes" type="number" min="1" max="10" step="1" value="1"></label>
+              <label class="field" for="session-dwell"><span>接触段驻留倍率</span><input id="session-dwell" type="number" min="0.25" max="4" step="0.05" value="1"></label>
+            </div>
+            <p id="session-preflight" class="muted">修改后必须重新预检，不能复用旧绑定。</p>
+            <div class="session-editor-actions"><button id="session-save-params" type="button" disabled>保存参数（续跑前重检）</button><button id="session-skip" type="button" disabled>跳过此段</button></div>
+            <div class="session-grasp-row"><label class="field" for="session-grasp"><span>此段夹持</span><select id="session-grasp"><option value="original">原 CAD 夹持</option><option value="opposite_simulation">对侧夹持（仿真）</option></select></label><button id="session-switch-grasp" type="button" disabled>切换夹持</button></div>
+            <div class="session-split-row"><label class="field" for="session-split-ratio"><span>切段位置（弧长比例）</span><input id="session-split-ratio" type="number" min="0.001" max="0.999" step="0.05" value="0.5"></label><button id="session-split" type="button" disabled>拆为两段</button></div>
+            <button id="session-replan" type="button" disabled>重规划未执行段</button>
+          </section>
+          <section class="session-scan-editor" aria-labelledby="session-observation-title">
+            <h3 id="session-observation-title">当前会话观测与补扫</h3>
+            <img id="session-observation" alt="当前会话首帧观测，手工 ROI 使用该图像的像素坐标" hidden>
+            <div class="session-rescan-row"><label class="field" for="session-angles"><span>补扫角度 °（逗号分隔）</span><input id="session-angles" type="text" placeholder="留空使用会话默认视角"></label><label class="field" for="session-extra-frames"><span>每角额外帧</span><input id="session-extra-frames" type="number" min="0" max="8" step="1" value="0"></label></div>
+            <button id="session-rescan" type="button" disabled>安全位补扫</button>
+            <label class="field" for="session-manual-roi"><span>首帧手工 ROI 像素顶点（JSON）</span><textarea id="session-manual-roi" rows="2" placeholder="[[300,250],[600,250],[600,400],[300,400]]"></textarea></label>
+            <button id="session-add-roi" type="button" disabled>登记可测量手工区域</button>
+          </section>
+        </div>
+        <div class="table-scroll session-segment-table"><table aria-label="会话全部路径段"><thead><tr><th>段 / 区域</th><th>状态</th><th>道次 / 夹持</th><th>覆盖与安全预检</th></tr></thead><tbody id="session-segment-rows"><tr><td colspan="4">等待会话检测</td></tr></tbody></table></div>
+        <div class="session-audit-panel"><h3>介入操作日志</h3><ol id="session-interventions" class="session-interventions"><li class="muted">尚无介入</li></ol></div>
+        <p class="session-limits">仅运行离线与 MuJoCo 仿真；企业实测未开展。DONE 表示有界流程结束，磨后观测放行单独显示。参数、切段或夹持修改后强制重跑碰撞、限位、保护区和 PCHIP 绑定预检。</p>
+      </details>
+    </section>
+
     <section class="panel station-panel" aria-labelledby="station-title">
       <div class="panelhead station-head">
         <div class="panel-title-group">

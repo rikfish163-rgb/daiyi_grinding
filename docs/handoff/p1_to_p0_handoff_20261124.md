@@ -64,13 +64,15 @@ P0-A 当前的真实接线（`workstation_session.py`）：
 | `IDLE` / `SCANNED` | 无 | 仅注入插件 | `plugins.process_adapter` / `plugins.reinspection_calibrator` |
 | `DETECTED` | `snapshot.detections`、`registered_regions` | 不调用；段尚未建立 | — |
 | `PLANNED` → `EXECUTING` | `segment.path.normal_height_mm`、`material_allowance_mm`、`recipe`、`nominal_xyz` | `_execute_next` 在 `completed_passes == 0` 时先调 `_apply_process_adapter(segment)`，再调 `_prepare_segment` | `segments[i].params`、`process_state` |
-| `EXECUTING` | 执行记录 | 执行后写 `execution_history`，含 `engaged_duration_s`、`commanded_force_n` | `execution_history[]` |
+| `EXECUTING` | 执行记录 | 执行后写 `execution_history`，含真实接触时长字段或 `tool_contact_steps`/`simulation_steps`/`simulated_seconds` 与力通道 | `execution_history[]` |
 | `RESCANNED` | `reinspection` 报告；`local_baseline` | `_scan` 在已有注册区域时调 `_apply_calibration()`；`step_next` 用 `_calibration_stop_reason()` 收紧放行 | `calibration`、`local_baseline` |
 | `DONE` / `PAUSED` / `STOPPED_SAFETY` | — | 不再调用 | 保留最后证据 |
 
 `_observed_context()` 只提供白名单观测：`segments`、`registered_regions`、`reinspection`、`execution_feedback`、`local_baseline`、`process_state`、`calibration`，以及恒为 `False` 的 `truth_used_for_control` / `truth_used_for_decision`。`_apply_process_adapter` 接受 `PARAMETER_DEFAULTS` 四个键加 `process_state` / `reason` / 真值标记；未给 `process_state` 时调用 `adapter.last_evidence()`。`_apply_calibration` 只接受 JSON 字典，并把 `bias_veto` 或非 `pass` 状态转成 `reinspection_calibration_*` 停因，`observational_release` 保持 `False`。
 
 适配器返回字典只含四个可应用键：`feed_scale`、`normal_offset_mm`、`passes`、`dwell_scale`，另带 `truth_used_for_control: False`。P0-A 只把前四个键写入 `segment["params"]`；真值标记不进入参数。
+
+零道次（观测高度 `<=` `finish_target_mm`，即 `desired <= 0.005 mm`）时适配器返回 `passes=0`，P0-A 的 `_apply_process_adapter` 把段标为 `skipped` 并写 `process_skip` 介入记录；`last_evidence()` 同时返回 `last_decision`（`stop_reason="already_within_target"`）用于检查点。`EngagementPlan` 的零道次分支使用显式关键字构造，字段与正常分支一致。
 
 `normal_offset_mm` 受 P0-A 的 `_prepare_segment` 硬门约束：
 
@@ -81,6 +83,8 @@ if not 0 <= path["material_allowance_mm"] <= CELL_CONFIG["planning"]["target_rem
 ```
 
 P1 适配器把单步 `normal_offset_mm` 限制在 ±0.20 mm，并保证 `material_allowance_mm + normal_offset_mm` 落在 ±0.30 mm 内。超出部分由 `offset_limited_mm` 报告，后续磨后观测的下一道次继续切除；绝不输出会触发该硬门的单步偏置。
+
+该限制是构造期硬门，不是可放宽的默认值：`ProcessLimits` 定义 `MAX_NORMAL_OFFSET_MM = 0.20`、`MAX_ALLOWANCE_MM = 0.30` 与 `FEED_SCALE_LIMITS = (0.1, 3.0)`，并拒绝 `max_normal_offset_mm > 0.20`、`max_allowance_mm > 0.30`、`max_normal_offset_mm > max_allowance_mm` 以及越出 `[0.1, 3.0]` 的 `feed_scale_bounds`。外部不能通过放宽 `ProcessLimits` 绕过单步/叠加偏置或进给倍率硬门。
 
 ### 1.3 需持久化的字段
 
@@ -96,13 +100,19 @@ P1 适配器把单步 `normal_offset_mm` 限制在 ±0.20 mm，并保证 `materi
       "last_snr": 4.8,
       "bounded": false,
       "low_snr_freezes": 0,
+      "duplicate_updates_ignored": 0,
+      "invalid_updates_ignored": 0,
+      "nonpositive_removal_freezes": 0,
       "truth_used_for_control": false
     },
     "last_decision": { "...": "EngagementPlan.record() without the truth field" },
     "identification_events": [
-      {"region_id": 1, "matched_anchors": 96, "engaged_seconds": 1.8,
-       "force_n": 60.0, "estimate": { "...": "..." }}
+      {"region_id": 1, "execution_count": 2, "matched_anchors": 96,
+       "engaged_seconds": 1.8, "force_n": 60.0,
+       "estimate": { "...": "..." }}
     ],
+    "previous_estimates": {"1": [0.38, 0.39, null]},
+    "consumed_executions": 2,
     "truth_used_for_control": false
   },
   "calibration": {
@@ -129,7 +139,15 @@ P1 适配器把单步 `normal_offset_mm` 限制在 ±0.20 mm，并保证 `materi
 
 `load_session` 会递归检查 `truth_used_for_control` / `truth_used_for_decision` 必须为 `False`；P1 返回的记录满足该检查。`process_state` 与 `calibration` 都存在 `session_state.json` 中，重载后由 `status()` 原样恢复；插件实例不序列化，`load_session` 需重新注入同一适配器。
 
+新进程首次调用 `SessionProcessAdapter.absorb_session_state()` 时，如果控制器仍是先验（`updates == 0`）且没有本地 `previous_estimates`，会从 `session_state["process_state"]` 恢复 `relative_rate`、`relative_sigma`、`updates`、`last_snr`、各冻结/重复计数、`last_decision`、`identification_events`、`previous_estimates` 与 `consumed_executions`。恢复采用严格类型/范围校验，任何真值标记为 `True` 或字段越界都会抛 `ValueError`，不会静默重置为先验。
+
+在线更新只消费 `execution_history` 中索引 `>= consumed_executions` 的新执行；接触时长只认 `engaged_duration_s` / `contact_duration_s` / `removal_contact_s`，**不把 `duration_s` 当作接触证据**。若执行记录显式含 `tool_contact_steps <= 0`，一律冻结并计入 `invalid_updates_ignored`（即使同时有 `duration_s`）；若只有真实 MuJoCo 接触步数，则按 `simulated_seconds * tool_contact_steps / simulation_steps` 推算接触时长。力通道依次读取 `commanded_force_n` / `force_n` / `max_contact_force_n`，缺失时仅在确认接触后回退 `finishing_force_n`。
+
+多区执行按 `region_id` 逐区配对：优先读取执行记录的 `region_id`，否则经 `session_state["segments"]` 的 `segment_id -> region_id` 解析；只有观测确实变化且有效锚点 ≥2 的区域才更新，按 `region_id` 排序保证确定性。同一区域多道次按 Preston 线性积分合并：`total_duration = Σd_i`，`effective_force = Σ(f_i·d_i)/Σd_i`，与单次更新数学等价。某区域只有无接触/缺接触时长记录时单独冻结并计 `invalid_updates_ignored`，不影响其他区域。既无 `region_id` 又无法映射的执行仅在“整批恰好 1 条且恰好 1 个区域变化”的 1 对 1 情形下允许配对；多区变化或多条未映射执行一律冻结，绝不以最后一条执行代替整批。任一已映射区域的有效执行尚未等到统一复检时，整批保持未消费，等待 `RESCANNED` 后一次性按区消费。
+
 P0-A 传出的手工锚点使用 `point` 键；P1 校准器同时接受 `point` / `point_m` / `xyz_m`，并从 `local_baseline["machined"]` 读取加工锚点（其次才是报告顶层的 `machined`）。
+
+生产 `workstation_inspection` 报告的 `regions` 是 `list[dict]`：P1 校准器在列表分支中同时兼容单锚点行（`height_mm`）和 region dict（`anchor_estimates_mm` / `anchor_bounds_mm` / `points_m` / `anchor_points_m`），逐 region 过滤 `None`、合并为统一的 `SignedAnchors`；全空 region 跳过，全部为空才返回 `baseline_unavailable`。若 `local_baseline` 缺失，`report["baseline_anchors"]` 或 `session_state["baseline_anchors"]` 可作为 baseline 回退来源，`require_both_sides`、重合检查与门限均不放宽。
 
 ### 1.4 人工介入协议
 
@@ -163,7 +181,7 @@ result = interventions_to_hard_examples(session.interventions())
 ### 1.5 何时不要调用
 
 - `session_state` 没有 `reinspection` 且没有 `execution_history` 时，适配器仍会返回段级覆盖（只用段自身的 `normal_height_mm`），但不会更新去除率；这是正常的冷启动。
-- 复检报告没有 `local_baseline` / `baseline_anchors` 时，校准器返回 `status="baseline_unavailable"`、`bias_veto=False`。P0-A 的 `_apply_calibration` 会把该状态写成 `reinspection_calibration_baseline_unavailable` 停因并保持 `observational_release=False`；这是不放行，不是放宽门限。需要正常放行时，P0-A 应在扫描结果中提供加工带两侧未加工的正常面锚点（`local_baseline`）。
+- 复检报告没有 `local_baseline` 且没有 `baseline_anchors` 回退源时，校准器返回 `status="baseline_unavailable"`、`bias_veto=False`。P0-A 的 `_apply_calibration` 会把该状态写成 `reinspection_calibration_baseline_unavailable` 停因并保持 `observational_release=False`；这是不放行，不是放宽门限。需要正常放行时，P0-A 应在扫描结果中提供加工带两侧未加工的正常面锚点（`local_baseline`）。
 
 ## 2. 与 P0-B 的对接
 
@@ -268,6 +286,10 @@ samples/<sample_id>/
 
 `roots.npz` 的 `root_instance` 与同一样本 `arrays["instance"]`、`points["instance"]` 使用完全相同的编号：场景样本覆盖该帧可见的全部缺陷实例，中间态样本只含本缺陷实例。密集点云是可见实例集合的局部子集，按 45 mm 局部球采样；实例编号不重新编号。中间态样本的 `arrays["protection"]` 与 `points["protection"]` 标出残留加工带两侧 2–3 mm 内的名义本体，二者物理一致且非全零。
 
+`meta.json` 的 `point_count` 在可见性过滤后与 `points.npz` 的 `count`、`len(points_m)` 以及 manifest 的 `point_count` 完全一致；12 个场景样本不再保留过滤前数量。
+
+`provenance.protection_regions` 与 `provenance.protection_regions_scope` 记录 P0-B 工件包声明的 `loading_datum` 无磨削区（`config/workpieces/wp_097.json` / `wp_021.json` 的 `protected_zones`），它是工件坐标系下的整件级保护域；`arrays["protection"]` / `points["protection"]` 是单样本局部邻接保护带（紧邻合成缺陷/残留加工带的名义本体），二者作用域独立，不能互相替代。导出时 CLI 默认加载这两个 P0-B JSON，`provenance.package_metadata.package_path` 保留声明文件路径；测试会对全部 30 个样本校验 `protection_regions` 非空且包含 `loading_datum`。
+
 unseen-CAD 划分按 `workpiece_id` 整体分配：`unseen_cad_split(ids)` 用于 ≥2 个 CAD；`assign_splits(ids)` 对单个 CAD 返回 `train` 且 `unseen_cad_evaluation_possible=False`。同一工件的所有视角、风格、局部裁剪和中间态只进入一个划分，`assert_samples_respect_split` 会拒绝泄漏。
 
 ## 3. 可复跑命令与实测
@@ -278,13 +300,16 @@ unseen-CAD 划分按 `workpiece_id` 整体分配：`unseen_cad_split(ids)` 用�
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
   .venv/bin/python -m daiyi_grinding.dataset_pipeline \
   --output dataset_097_021_new --workpieces 097 021 --seeds 20261124
+# 默认加载 config/workpieces/wp_097.json 与 wp_021.json；
+# 也可显式指定：
+# --packages config/workpieces/wp_097.json config/workpieces/wp_021.json
 
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
   .venv/bin/python -m daiyi_grinding.adaptive_process \
   --output process_stress_new --seeds 0
 ```
 
-正式产物：`runs/enterprise_offline_20261123/p1_data_process_01/dataset_097_021_05/` 与 `process_stress_06/`。`dataset_097_021_01`–`04`、`process_stress_01`–`05` 保留为早期复跑记录。
+正式产物：`runs/enterprise_offline_20261123/p1_data_process_01/dataset_097_021_06/` 与 `process_stress_10/`。`dataset_097_021_01`–`05`、`process_stress_01`–`09` 保留为早期复跑记录。
 
 ### 3.1 数据管线（097/021）
 
@@ -350,8 +375,13 @@ OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
 - `normal_offset_mm=0.20`（叠加 0.08 余量 = 0.28）通过 P0-A 的 `0 <= allowance + offset <= 0.3` 硬门，`parameter_gate_passed=True`；
 - `process_state`（估计、最后决策、识别事件）与 `calibration` 写入检查点，重载后逐字段一致；
 - `bias_veto=True` → `reinspection_calibration_bias_veto`；`hold` → `reinspection_calibration_hold`；`baseline_unavailable` → `reinspection_calibration_baseline_unavailable`；三种情况 `observational_release=False`；
+- 生产式 `report["regions"]`（无顶层 `machined`）+ 有效双侧 `local_baseline` 正常完成偏置校准：正例 `pass`、隐藏正超差 `positive_excess`/`bias_veto` 并阻断放行；
+- 零道次（观测 0.003 mm）真实调用适配器返回 `passes=0`，`last_evidence()` 返回 `already_within_target`，P0-A 记为 `process_skip`；
 - 在段/状态/报告中注入 `truth_used_for_control=True`、`truth_residual_mm`、`plant` 等毒化字段，适配器与校准器输出逐字段不变，真值标记仍为 `False`；
 - 真实 `set_segment_params` / `skip_segment` / `mask_false_positive` / `add_manual_region` 写入 `interventions.jsonl`，映射为 4 条结构化难例请求；
+- 双 CAD 全部 30 个样本的 `meta["point_count"]`、`points.npz` 计数、manifest 计数三者一致；`provenance.protection_regions` 非空且含 `loading_datum`；
+- 零接触（`tool_contact_steps == 0` + `duration_s`）冻结、MuJoCo 原生接触步数推算、跨进程多轮 `load_session` + 全新控制器续跑：后验从 `updates=1` 恢复并在第 2 轮推进到 `updates=2`，不归零、不重复消费历史执行；
+- 多区异时长（Region 1 `1.0 s @ 60 N`、Region 2 `2.0 s @ 60 N`）经真实 P0-A `_observed_context` 按区配对：`updates=2`、倍率 ≈1.0、95% 上界 ≥1.0；同区双道次聚合精确、零接触区域单独冻结；未映射歧义批次冻结且 `invalid_updates_ignored` 增加；
 - `workpiece_packages.load_workpiece_package("097"/"021")` 映射到 P1 后 CAD 路径、单位、保护区名称与边界、坐标系/夹具字段一致；`plan_staged_passes` + `segment_process_context` 保留 `region_id` / `grasp_setup` / `split_from`。
 
 ```bash
@@ -364,7 +394,7 @@ OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
 - 规划使用去除率**上界**安排接触时长：实际率偏快时只会少去除，不会过磨。
 - 低信噪比冻结估计（`low_snr_freezes`），不放大增益；非正去除（`observed ≤ 0`，含负去除/漂移噪声）单独计入 `nonpositive_removal_freezes` 并冻结，绝不把倍率裁到下界。已确认过磨或最低锚点越下限时停止。
 - 局部基准要求 ≥12 个基线锚点，且两侧各 ≥3；缺基线时 `hold` 且 `bias_veto=False`。`require_both_sides=True` 而 `sides` 缺失时也 `hold`/`baseline_sides_missing`，不得跳过检查。基线离散过大或偏置超过 0.6 mm 时 `hold` 且 `bias_veto=True`。若基线锚点与加工锚点的 `points_m` 距离小于 1 mm（用目标区自身做参考），直接 `hold`/`baseline_overlaps_target`，不得以自参考消偏。校准器从 list/dict 输入保留 `point_m` / `xyz_m` / `points_m`，确保该重合检查在会话路径上生效。参考点缺失、重叠、缺少两侧标记或不一致一律不放行。
-- 校准器与控制器都拒绝把 `tolerance_mm` 设到 0.3 mm 以上；`gate_unchanged: True`。
+- 校准器与控制器都拒绝把 `tolerance_mm` 设到 0.3 mm 以上；`gate_unchanged: True`。`ProcessLimits` 同时以共享常量强制单步偏置 ±0.20 mm、叠加偏置 ±0.30 mm 与进给倍率 `[0.1, 3.0]`，越界在构造期抛 `ValueError`。
 - plant、磨损、温升、柔顺、隐藏偏置均为合成代理；实机标定需要同件、同夹持、同点的磨前/磨后配对量测及砂带磨损、法向力、温度记录。
 - 097/021 的分型线是 CAD 拔模轮廓/二面角候选，不是已确认的模具分型线；浇口附着区是按可达性和平坦度打分的候选窗口。
 - 传感器退化参数是物理代理；`SensorDegradationProfile.calibrate_from_residuals` 在取得真实扫描残差后按角度×距离二维分箱拟合，当前结果标记为 `calibrated_from_real_scans=False`。
