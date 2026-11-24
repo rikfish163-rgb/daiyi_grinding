@@ -1,6 +1,8 @@
 import json
+import os
 import tempfile
 import unittest
+from importlib.util import find_spec
 from pathlib import Path
 from unittest.mock import patch
 
@@ -8,11 +10,52 @@ import numpy as np
 
 from daiyi_grinding.defect_training import data_index
 from daiyi_grinding.learned_defects import (
+    FEATURE_VERSION,
     LearnedDetector,
     registered_checkpoint,
     sensor_features,
     tile_origins,
 )
+
+
+@unittest.skipUnless(find_spec("torch"), "requires optional PyTorch")
+class LearnedThreadTests(unittest.TestCase):
+    def setUp(self):
+        import torch
+
+        from daiyi_grinding.defect_network import DefectUNet
+
+        self.addCleanup(torch.set_num_threads, torch.get_num_threads())
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.checkpoint = Path(directory.name) / "weights.pt"
+        model = DefectUNet(width=4)
+        torch.save(
+            {
+                "feature_version": FEATURE_VERSION,
+                "model_config": model.config,
+                "state_dict": model.state_dict(),
+                "probability_threshold": 0.7,
+            },
+            self.checkpoint,
+        )
+
+    def test_explicit_omp_thread_count_is_preserved(self):
+        import torch
+
+        for count in (1, 2):
+            with self.subTest(count=count):
+                with patch.dict(os.environ, {"OMP_NUM_THREADS": str(count)}):
+                    LearnedDetector(self.checkpoint, device="cpu")
+                    self.assertEqual(torch.get_num_threads(), count)
+
+    def test_unspecified_omp_thread_count_keeps_default(self):
+        import torch
+
+        with patch.dict(os.environ):
+            os.environ.pop("OMP_NUM_THREADS", None)
+            LearnedDetector(self.checkpoint, device="cpu")
+            self.assertEqual(torch.get_num_threads(), 4)
 
 
 class SensorFeatureTests(unittest.TestCase):

@@ -9,6 +9,7 @@ transform named ``T_workpiece_scan_m`` maps scan-frame column vectors into the
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -242,9 +243,10 @@ def validate_import_manifest(manifest, mesh, expected_cad_sha256):
 
     base = Path(manifest.get("_base_directory", "."))
     cloud_file = base / manifest["cloud_file"]
-    if sha256(cloud_file) != manifest["cloud_sha256"]:
+    cloud_bytes = cloud_file.read_bytes()
+    if hashlib.sha256(cloud_bytes).hexdigest() != manifest["cloud_sha256"]:
         raise ValueError("Raw point-cloud source hash mismatch")
-    points = load_cloud(cloud_file, manifest["units"])
+    points = load_cloud(cloud_file, manifest["units"], source_bytes=cloud_bytes)
     finite = np.isfinite(points).all(axis=1)
     train = _index_array(
         manifest["normal_train_indices"], len(points), "normal_train_indices"
@@ -935,6 +937,22 @@ def run(output, seed=20261123, monte_carlo_samples=20000):
                 "provenance": "supplied nominal 097 workpiece CAD",
             },
             *inputs,
+            *[
+                {
+                    "role": "implementation-or-test-source",
+                    "path": str(Path(__file__).resolve().parents[2] / name),
+                    "sha256": sha256(
+                        Path(__file__).resolve().parents[2] / name
+                    ),
+                }
+                for name in (
+                    "src/daiyi_grinding/registration_stress.py",
+                    "src/daiyi_grinding/casting_scan_calibration.py",
+                    "tests/test_registration_stress.py",
+                    "tests/test_team_data_reuse.py",
+                    "docs/registration_stress_20261123.md",
+                )
+            ],
         ],
         "metrics": {
             "projection_selfcheck_max_difference_mm": selfcheck_difference_mm,

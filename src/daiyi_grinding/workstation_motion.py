@@ -6,6 +6,7 @@ import csv
 import hashlib
 import json
 import time
+from numbers import Integral
 from pathlib import Path
 
 import mujoco
@@ -23,6 +24,7 @@ from .workstation_model import (
 
 NORMAL = np.array([-1.0, 0.0, 0.0])
 CONTACT = WHEEL_CENTER + np.array([WHEEL_HALF_WIDTH, 0.0, 0.0])
+PROCESS_RETREAT_M = 0.06
 PREFLIGHT_JOINT_STEP_RAD = 0.012
 PREFLIGHT_SAMPLE_BUDGET = 200_000
 
@@ -234,7 +236,7 @@ def make_commands(sim, paths, process_rotation, mode="removal"):
         gap = 0.00005 if mode == "removal" else 0.003
         first = workpiece_target(points[0], process_rotation, gap, contact)
         retreat = first.copy()
-        retreat[:3, 3] -= NORMAL * 0.06
+        retreat[:3, 3] -= NORMAL * PROCESS_RETREAT_M
         leg(retreat, "transfer")
         leg(
             first,
@@ -252,7 +254,7 @@ def make_commands(sim, paths, process_rotation, mode="removal"):
                 detection_id=path["detection_id"],
             )
         last = workpiece_target(points[-1], process_rotation, gap, contact)
-        last[:3, 3] -= NORMAL * 0.06
+        last[:3, 3] -= NORMAL * PROCESS_RETREAT_M
         leg(last, "retract", speed=0.05)
     leg(process_staging, "return")
     leg(staging, "return")
@@ -418,7 +420,24 @@ def preflight(
     It strengthens temporal sampling; it is not a proof of continuous mesh
     clearance or a substitute for measured tracking and profile acceptance.
     ``legacy_four`` is retained only for explicit same-input ablations.
+
+    Args:
+        sim: Workstation or analytical fixture used for collision checks.
+        commands: Existing joint commands with time, phase and attachment.
+        sampling_policy: Bounded joint sampling or the legacy ablation.
+        sample_budget: Nonnegative integer sample limit; floats and booleans
+            are rejected before reading commands or checking the geometry.
+        budget: Optional shared planning deadline and collision-call budget.
+
+    Raises:
+        ValueError: The sample budget or sampling policy is invalid.
     """
+    if (
+        isinstance(sample_budget, bool)
+        or not isinstance(sample_budget, Integral)
+        or sample_budget < 0
+    ):
+        raise ValueError("sample_budget must be a nonnegative integer")
     empty = {
         "passed": False,
         "checked_commands": 0,
@@ -541,12 +560,14 @@ def clip_excess(vertices, base, normals, pose, tool):
 class GeometricRemoval:
     """A swept-tool stock model driven by actual, not commanded, body poses.
 
-    This changes only the generated excess meshes. It is a geometric removal
-    simulation, without a calibrated force, temperature or material-rate model.
+    A configured rate limits normal removal during actual footprint engagement.
+    The rate is a synthetic plant assumption; force and material are uncalibrated.
+    Only excess meshes change.
     """
 
-    def __init__(self, sim):
+    def __init__(self, sim, rate_mm_s=None):
         self.sim = sim
+        self.rate_mm_s = rate_mm_s
         self.parts = []
         self.changed = False
         for item in sim.private_defects:
@@ -591,7 +612,8 @@ class GeometricRemoval:
                 }
             )
 
-    def cut(self):
+    def cut(self, duration_s=0.0):
+        """Remove swept stock, bounded by this interval's engaged duration."""
         pose = self.sim.body_transform(self.sim.workpiece)
         for part in self.parts:
             vertices, cutting = clip_excess(
@@ -603,6 +625,16 @@ class GeometricRemoval:
             )
             if not cutting.any():
                 continue
+            if self.rate_mm_s is not None:
+                depth = np.einsum(
+                    "ij,ij->i",
+                    part["vertices"] - vertices,
+                    part["normals"],
+                )
+                depth = np.minimum(depth, self.rate_mm_s * duration_s / 1000)
+                if not np.any(depth > 0):
+                    continue
+                vertices = part["vertices"] - part["normals"] * depth[:, None]
             part["vertices"] = vertices
             compiled = (vertices - part["origin"]) @ part["rotation"]
             self.sim.model.mesh_vert[
@@ -632,6 +664,8 @@ class GeometricRemoval:
         if not self.changed:
             return
         for renderer in self.sim.renderers.values():
+            if renderer._gl_context:
+                renderer._gl_context.make_current()
             for part in self.parts:
                 mujoco.mjr_uploadMesh(
                     self.sim.model, renderer._mjr_context, part["mesh"]
@@ -707,7 +741,9 @@ class GeometricRemoval:
             else None,
             "residual_regions": regions,
             "nominal_cad_modified": False,
-            "scope": "generated excess clipped by the actual swept tool along its own CAD surface normals; vertex statistics, not measured material volume, rate, force or surface finish",
+            "rate_mm_s": self.rate_mm_s,
+            "rate_calibrated": False,
+            "scope": "generated excess removed inside the actual swept tool footprint along CAD surface normals; a configured synthetic rate limits depth per engaged second; vertex statistics do not measure material volume, force or surface finish",
         }
 
 
@@ -790,7 +826,7 @@ def execute(
             and command["phase"] in {"trace", "approach"}
             and step % 5 == 0
         ):
-            removal.cut()
+            removal.cut(duration_s=5 * sim.model.opt.timestep)
         collisions = unexpected_contacts(sim, sim.data, command["phase"])
         if collisions:
             unexpected.extend(
@@ -949,7 +985,11 @@ def execute(
         "rigid_grasp_constraint": True,
         "joint_positions_teleported_during_execution": False,
         "material_removal_simulated": mode == "removal",
-        "material_removal_model": f"geometric swept-{sim.tool.key} clipping of generated excess"
+        "material_removal_model": (
+            f"finite-rate swept-{sim.tool.key} normal-depth removal"
+            if removal.rate_mm_s is not None
+            else f"geometric swept-{sim.tool.key} clipping of generated excess"
+        )
         if mode == "removal"
         else None,
         "tool": sim.tool.summary(),

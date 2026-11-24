@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import struct
@@ -54,9 +55,14 @@ def _lzf_decode(data, size):
     return bytes(output)
 
 
-def read_pcd(path):
+def read_pcd(path, *, source_bytes=None):
     """Read XYZ without changing row order, including NaNs and organized rows."""
-    with Path(path).open("rb") as stream:
+    stream = (
+        Path(path).open("rb")
+        if source_bytes is None
+        else io.BytesIO(source_bytes)
+    )
+    with stream:
         header = {}
         while True:
             line = stream.readline()
@@ -133,16 +139,18 @@ def read_pcd(path):
     raise ValueError(f"Unsupported PCD DATA mode: {mode}")
 
 
-def load_cloud(path, units):
+def load_cloud(path, units, *, source_bytes=None):
+    """Read XYZ, optionally from the exact bytes already bound by a manifest."""
     if units not in {"mm", "m"}:
         raise ValueError("Point-cloud units must be explicitly mm or m")
     path = Path(path)
+    source = path if source_bytes is None else io.BytesIO(source_bytes)
     if path.suffix.lower() == ".pcd":
-        points = read_pcd(path)
+        points = read_pcd(path, source_bytes=source_bytes)
     elif path.suffix.lower() == ".ply":
-        points = trimesh.load(path, file_type="ply", process=False).vertices
+        points = trimesh.load(source, file_type="ply", process=False).vertices
     elif path.suffix.lower() == ".npy":
-        points = np.load(path, allow_pickle=False)
+        points = np.load(source, allow_pickle=False)
     else:
         raise ValueError("Use PCD, PLY or NPY XYZ observations")
     points = np.asarray(points, float)
@@ -264,7 +272,8 @@ def register_normal_regions(mesh, normal_points_m, initial_transform):
 
 def calibrate_scan(manifest, output):
     manifest = Path(manifest).resolve()
-    specification = json.loads(manifest.read_text())
+    manifest_bytes = manifest.read_bytes()
+    specification = json.loads(manifest_bytes)
     if (
         specification.get("part_id") != "097"
         or specification.get("part_matches_cad_confirmed") is not True
@@ -286,9 +295,13 @@ def calibrate_scan(manifest, output):
             "Approved root labels and machining disposition are required"
         )
     cloud_file = manifest.parent / specification["cloud_file"]
-    if sha256(cloud_file) != specification["cloud_sha256"]:
+    cloud_bytes = cloud_file.read_bytes()
+    cloud_digest = hashlib.sha256(cloud_bytes).hexdigest()
+    if cloud_digest != specification["cloud_sha256"]:
         raise ValueError("Raw point-cloud source hash mismatch")
-    points = load_cloud(cloud_file, specification["units"])
+    points = load_cloud(
+        cloud_file, specification["units"], source_bytes=cloud_bytes
+    )
     normal_indices = np.asarray(specification["normal_region_indices"], int)
     processing_indices = np.asarray(
         specification["processing_region_indices"], int
@@ -330,7 +343,10 @@ def calibrate_scan(manifest, output):
             "No measured positive excess above normal-region variation"
         )
     roots_file = manifest.parent / specification["root_points_file"]
-    roots = load_cloud(roots_file, specification["units"])
+    root_bytes = roots_file.read_bytes()
+    roots = load_cloud(
+        roots_file, specification["units"], source_bytes=root_bytes
+    )
     roots = roots @ transform[:3, :3].T + transform[:3, 3]
     if len(roots) < 3 or not np.isfinite(roots).all():
         raise ValueError(
@@ -371,9 +387,9 @@ def calibrate_scan(manifest, output):
         "real_scan_fitted": specification["source_kind"] == "real_scan",
         "calibration_scope": "observed local normal height and root position; hidden sheet thickness/curl and whole-part distributions remain unknown",
         "part_id": "097",
-        "source_cloud_sha256": sha256(cloud_file),
-        "root_label_sha256": sha256(roots_file),
-        "manifest_sha256": sha256(manifest),
+        "source_cloud_sha256": cloud_digest,
+        "root_label_sha256": hashlib.sha256(root_bytes).hexdigest(),
+        "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
         "cad_sha256": sha256(DEFAULT_MESH),
         "input_units": specification["units"],
         "T_workpiece_scan_m": transform.tolist(),
@@ -401,10 +417,11 @@ def main():
     if args.inspect:
         if not args.units:
             parser.error("--inspect requires explicit --units")
-        points = load_cloud(args.inspect, args.units)
+        cloud_bytes = args.inspect.read_bytes()
+        points = load_cloud(args.inspect, args.units, source_bytes=cloud_bytes)
         finite = np.isfinite(points).all(axis=1)
         result = {
-            "source_sha256": sha256(args.inspect),
+            "source_sha256": hashlib.sha256(cloud_bytes).hexdigest(),
             "input_rows": len(points),
             "finite_rows": int(finite.sum()),
             "input_units": args.units,

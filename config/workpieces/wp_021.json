@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "workpiece_id": "021",
+  "label": "021 底座铸件",
+  "units": "m",
+  "coordinate_frame": "workpiece_021",
+  "body_name": "workpiece_021",
+  "material_name": "wp_021_mat0",
+  "cad_path": "assets/ier220_workstation/meshes/workpiece/wp_021_c0.stl",
+  "scene_path": "assets/ier220_workstation/scene_workpiece_021.xml",
+  "cell_config_path": "config/workstation.json",
+  "fixture_id": "6102152210_021_simulation",
+  "fixture_body_name": "base_fixture",
+  "loading_position_world_m": [-0.4, -1.8, 0.601],
+  "bounds_m": [[-0.2430001795, -0.1849997491, 0.0817999989], [0.1874998212, 0.1850002408, 0.3700000048]],
+  "grasp_setups": [
+    {
+      "name": "original",
+      "gripper_from_workpiece": [[0, 0, 1, -0.421], [1, 0, 0, -0.09], [0, 1, 0, 0.31], [0, 0, 0, 1]],
+      "loading_rotation_world": [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+      "simulation_only": true
+    },
+    {
+      "name": "opposite_simulation",
+      "gripper_from_workpiece": [[0, 0, 1, -0.421], [-1, 0, 0, -0.09], [0, -1, 0, 0.31], [0, 0, 0, 1]],
+      "loading_rotation_world": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      "simulation_only": true
+    }
+  ],
+  "grasp_provenance": "supplied 021 scene/CAD use the same fixture datum and upper envelope as 097; declared rigid simulation grasp pending real jaw engagement and load validation",
+  "protected_zones": [
+    {"name": "loading_datum", "bounds_m": [[-0.2431, -0.186, 0.08], [0.188, 0.186, 0.095]]}
+  ],
+  "protected_zone_status": "simulation datum no-grind envelope; measured review footprints remain separately mandatory",
+  "collision": {
+    "cache_path": null,
+    "slice_boundaries_m": [0.08, 0.17, 0.31, 0.371],
+    "angular_slices": 12
+  },
+  "contact_search": {
+    "edge_margin_mm": 5,
+    "max_process_tilt_deg": 2,
+    "tilt_candidates_deg": [0, 1, -1, 2, -2],
+    "roll_refinement_deg": [0, -5, 5],
+    "overlap_mm": 3,
+    "minimum_segment_length_mm": 4,
+    "max_split_depth": 3,
+    "max_joint_jump_rad": 0.4
+  },
+  "real_grasp_calibrated": false,
+  "physical_changeover_validated": false
+}

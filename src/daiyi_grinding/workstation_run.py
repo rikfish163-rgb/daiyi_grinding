@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import shutil
 import time
 import traceback
@@ -31,6 +32,7 @@ from .workstation_inspection import (
 )
 from .workstation_jobs import JOB_FIELDS, JOB_FILE, job_profile, job_profiles
 from .workstation_model import (
+    CAMERA_SETUPS,
     CELL_CONFIG,
     COMPONENTS,
     GRASP_SETUPS,
@@ -135,7 +137,7 @@ def global_plan(sim, paths, mode):
     )
 
 
-def export_commands(output, commands):
+def export_commands(output, commands, prefix=""):
     """Save exact joint commands plus a compact world-coordinate route preview."""
     serialized, route = [], []
     for item in commands:
@@ -156,9 +158,9 @@ def export_commands(output, commands):
                 "time_s": item["t"],
             }
         )
-    write_json(output / "motion_commands.json", serialized)
+    write_json(output / f"{prefix}motion_commands.json", serialized)
     write_json(
-        output / "motion_preview.json",
+        output / f"{prefix}motion_preview.json",
         {
             "frame": "world",
             "point": "gripper origin",
@@ -253,6 +255,7 @@ def run(args):
             },
         )
         write_json(out / f"{prefix}preflight.json", checks)
+        write_json(out / f"{prefix}admitted_paths.json", admitted)
         return commands, admitted, checks
 
     try:
@@ -284,8 +287,15 @@ def run(args):
             tool=args.tool,
             casting_profile=getattr(args, "casting_profile", BASE_PROFILE),
             grasp_setup=getattr(args, "grasp_setup", "original"),
+            camera_setup=getattr(args, "camera_setup", "original"),
         )
-        write_json(out / "config.json", {**vars(args), "cell": CELL_CONFIG})
+        write_json(
+            out / "config.json",
+            {
+                **vars(args),
+                "cell": {**CELL_CONFIG, "camera": sim.camera_config},
+            },
+        )
         export_scene(sim)
         write_json(out / "components.json", COMPONENTS)
         write_json(out / "live.json", sim.state())
@@ -319,6 +329,7 @@ def run(args):
             d["id"] for d in detections if d["machining_required"]
         }
         targets = inspection.registered_targets(include_unselected=full_scope)
+        permitted_paths = list(paths)
         write_json(
             out / "registered_regions.json",
             [
@@ -442,6 +453,8 @@ def run(args):
             "detector_configuration": asdict(CELL_DETECTOR_CONFIG),
             "force_control_validated": False,
             "camera": "fixed virtual 3D inspection camera",
+            "camera_setup": sim.camera_setup,
+            "camera_config": sim.camera_config,
             "source_reuse": provenance(),
             "executions": [],
             "reinspections": [],
@@ -460,7 +473,9 @@ def run(args):
             },
         }
         write_json(out / "result.json", result)
-        removal = GeometricRemoval(sim)
+        removal = GeometricRemoval(
+            sim, rate_mm_s=getattr(args, "removal_rate_mm_s", None)
+        )
         if not args.perception_only and admitted and checks["passed"]:
             for pass_index in range(args.max_passes):
                 execution, removal = execute(
@@ -500,8 +515,10 @@ def run(args):
                     learned_detector=learned_detector,
                     hybrid=detector_kind == "hybrid",
                     targets=targets,
+                    permitted_paths=permitted_paths,
                     whole_workpiece=full_scope,
                     targeted_rescan=args.targeted_rescan,
+                    removal_rate_mm_s=getattr(args, "removal_rate_mm_s", None),
                 )
                 remaining_detections, remaining_paths, measured = (
                     reinspection.scan(angles)
@@ -533,7 +550,8 @@ def run(args):
                     "revision": latest_revision,
                     "pass_index": pass_index,
                     "source": "new fixed-camera RGB-D after actual integrated robot motion and stock update",
-                    "machining_eligibility_source": "measured normal excess in best visible view; no evaluation labels",
+                    "machining_eligibility_source": "current measured normal excess and repeated signed anchor bounds on permitted CAD traces",
+                    "regrind": measured["region_reinspection"]["local_regrind"],
                 }
                 result["reinspections"].append(recheck)
                 result["reinspection"] = recheck
@@ -572,12 +590,14 @@ def run(args):
                     args.max_passes,
                     result["observational_release"],
                 )
+                recheck["stopping_reason"] = stopping["reason"]
                 if stopping["reason"] != "followup_planning":
                     break
                 status("planning")
                 commands, admitted, followup = plan_current(
                     remaining_paths, prefix=prefix
                 )
+                export_commands(out, commands, prefix=prefix)
                 recheck["followup_preflight"] = followup
                 next_ids = {path["detection_id"] for path in admitted}
                 targets = add_targets(
@@ -592,8 +612,12 @@ def run(args):
                 recheck["next_round_registered_ids"] = [
                     target["id"] for target in targets
                 ]
+                permitted_paths.extend(
+                    path for path in remaining_paths if "regrind" not in path
+                )
                 if not admitted or not followup["passed"]:
                     stopping["reason"] = "followup_safety_rejected"
+                    recheck["stopping_reason"] = stopping["reason"]
                     break
             shutil.copyfile(
                 out / f"pass_{pass_index:02d}_execution.csv",
@@ -657,12 +681,26 @@ def run(args):
             sim.close()
 
 
+def positive_removal_rate(value):
+    """Decode a finite, positive synthetic normal-depth rate in mm/s."""
+    rate = float(value)
+    if not math.isfinite(rate) or rate <= 0:
+        raise argparse.ArgumentTypeError("去除率必须是有限正数，单位 mm/s")
+    return rate
+
+
 def parser():
     argument_parser = argparse.ArgumentParser(description=__doc__)
     argument_parser.add_argument("--seed", type=int, default=7007)
     argument_parser.add_argument("--workpiece-profile", choices=job_profiles())
     argument_parser.add_argument(
         "--grasp-setup", choices=GRASP_SETUPS, default="original"
+    )
+    argument_parser.add_argument(
+        "--camera-setup",
+        choices=CAMERA_SETUPS,
+        default="original",
+        help="独立仿真固定相机布局，低位侧视用于名义 CAD 外壁补采",
     )
     argument_parser.add_argument(
         "--case",
@@ -695,6 +733,11 @@ def parser():
         "--max-passes", type=int, choices=(1, 2, 3), default=2
     )
     argument_parser.add_argument("--realtime-factor", type=float, default=2.0)
+    argument_parser.add_argument(
+        "--removal-rate-mm-s",
+        type=positive_removal_rate,
+        help="仿真假定法向去除率（mm/s），按实际工具足迹与积分时长累积",
+    )
     argument_parser.add_argument(
         "--detector",
         choices=("geometric", "learned", "hybrid"),

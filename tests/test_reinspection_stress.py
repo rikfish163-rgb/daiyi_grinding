@@ -1,6 +1,8 @@
 """Signed reinspection and offline sensor-array stress contracts."""
 
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -68,6 +70,37 @@ class SignedReinspectionTests(unittest.TestCase):
         result = tracker.report(TOLERANCE_MM)
         self.assertFalse(result["observational_release"])
         self.assertFalse(result["automatic_regrind_allowed"])
+
+    def test_normalized_numeric_lists_and_invalid_string_view(self):
+        observation, target = _sensor_observation(0.08)
+        normalized = {
+            key: value.tolist() if isinstance(value, np.ndarray) else value
+            for key, value in observation.items()
+        }
+        tracker = Reinspection([target])
+        self.assertEqual(tracker.observe(normalized, 0), 4)
+        self.assertTrue(tracker.report(TOLERANCE_MM)["observational_release"])
+        invalid = {**observation, "xyz": observation["xyz"].astype(str)}
+        self.assertEqual(tracker.observe(invalid, 1), 0)
+        result = tracker.report(TOLERANCE_MM)
+        self.assertEqual(len(result["invalid_observations"]), 1)
+        self.assertFalse(result["observational_release"])
+        self.assertFalse(result["automatic_regrind_allowed"])
+
+    def test_nonboolean_scan_scope_cannot_release(self):
+        observation, target = _sensor_observation(0.08)
+        tracker = Reinspection([target])
+        tracker.observe(observation, 0)
+        for scope in ("false", 1, np.nan, None):
+            with self.subTest(scope=scope):
+                with self.assertRaisesRegex(
+                    ValueError, "scope must be boolean"
+                ):
+                    tracker.report(TOLERANCE_MM, whole_workpiece_scan=scope)
+        result = tracker.report(
+            TOLERANCE_MM, whole_workpiece_scan=np.bool_(True)
+        )
+        self.assertIs(result["observational_release"], True)
 
     def test_nan_noise_is_invalid_and_does_not_release(self):
         observation, target = _sensor_observation(0.08, invalid_noise=True)
@@ -152,7 +185,38 @@ class ReinspectionSuiteTests(unittest.TestCase):
                 case = json.loads(case_file.read_text())
                 region = case["report"]["regions"][0]
                 self.assertEqual(len(region["anchor_bounds_mm"]), 4)
-            self.assertEqual(len(evidence["inputs"]["files"]), 4)
+            source_files = {
+                record["path"] for record in evidence["inputs"]["files"]
+            }
+            self.assertLessEqual(
+                {
+                    "src/daiyi_grinding/workstation_quality.py",
+                    "src/daiyi_grinding/workstation_run.py",
+                    "src/daiyi_grinding/reinspection_stress.py",
+                    "tests/test_workstation_stopping.py",
+                },
+                source_files,
+            )
+
+    def test_sensor_suite_imports_no_mujoco_or_torch(self):
+        program = (
+            "import sys, tempfile\n"
+            "from pathlib import Path\n"
+            "from daiyi_grinding.reinspection_stress import run\n"
+            "with tempfile.TemporaryDirectory() as folder:\n"
+            "    result = run(Path(folder) / 'sensor_only')\n"
+            "    assert result['all_expectations_met']\n"
+            "assert 'mujoco' not in sys.modules\n"
+            "assert 'torch' not in sys.modules\n"
+        )
+        completed = subprocess.run(
+            [sys.executable, "-c", program],
+            cwd=Path(__file__).resolve().parents[1],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
 
     def test_cli_returns_nonzero_for_unexpected_suite_failures(self):
         result = {

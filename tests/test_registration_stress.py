@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import trimesh
@@ -101,6 +102,49 @@ class RegistrationStressTests(unittest.TestCase):
             }
             with self.assertRaisesRegex(ValueError, "synthetic truth"):
                 validate_import_manifest(manifest, mesh, sha256(DEFAULT_MESH))
+
+    def test_cloud_replaced_after_hash_uses_the_bound_bytes(self):
+        mesh = trimesh.creation.box(extents=[0.2, 0.2, 0.2])
+        original = np.random.default_rng(20261123).uniform(
+            -0.1, 0.1, size=(104, 3)
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            cloud = Path(directory) / "cloud.npy"
+            np.save(cloud, original * 1000)
+            manifest = {
+                "schema": INPUT_SCHEMA,
+                "part_id": "097",
+                "cad_sha256": sha256(DEFAULT_MESH),
+                "part_matches_cad_confirmed": True,
+                "identity_evidence": "synthetic byte-binding control",
+                "source_kind": "synthetic_control",
+                "synthetic_data_only": True,
+                "truth": {"test_control": True},
+                "processing_permission_confirmed": True,
+                "_base_directory": directory,
+                "cloud_file": cloud.name,
+                "cloud_sha256": sha256(cloud),
+                "units": "mm",
+                "unit_consistency_mode": "nominal_full_part_extent",
+                "T_workpiece_scan_m": np.eye(4).tolist(),
+                "normal_train_indices": list(range(80)),
+                "normal_holdout_indices": list(range(80, 96)),
+                "processing_indices": list(range(96, 104)),
+            }
+
+            def replace_and_load(path, units, **kwargs):
+                np.save(path, (original + 0.01) * 1000)
+                return load_cloud(path, units, **kwargs)
+
+            with patch(
+                "daiyi_grinding.registration_stress.load_cloud",
+                side_effect=replace_and_load,
+            ):
+                result = validate_import_manifest(
+                    manifest, mesh, sha256(DEFAULT_MESH)
+                )
+            np.testing.assert_allclose(result["points"], original)
+            self.assertNotEqual(sha256(cloud), manifest["cloud_sha256"])
 
     def test_default_small_suite_separates_fit_and_holdout(self):
         with tempfile.TemporaryDirectory() as directory:

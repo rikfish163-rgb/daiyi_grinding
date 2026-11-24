@@ -2,6 +2,7 @@
 
 import unittest
 from types import SimpleNamespace
+from unittest import mock
 
 import numpy as np
 
@@ -24,6 +25,183 @@ from daiyi_grinding.workstation_planning import (
     PlanningBudgetExceeded,
 )
 from daiyi_grinding.workstation_transfers import bridge, shorten_transfers
+
+INVALID_SECONDS = (
+    float("nan"),
+    float("inf"),
+    float("-inf"),
+    -0.01,
+    True,
+    False,
+    np.bool_(True),
+    np.float32("nan"),
+    "12",
+    1 + 0j,
+    [12],
+    {"seconds": 12},
+)
+INVALID_COUNTS = (
+    float("nan"),
+    float("inf"),
+    float("-inf"),
+    -1,
+    0.0,
+    4.0,
+    0.5,
+    True,
+    False,
+    np.bool_(False),
+    np.float64(4.0),
+    np.int64(-1),
+    "4",
+    4 + 0j,
+    [4],
+    {"limit": 4},
+)
+
+
+class BudgetValidationTests(unittest.TestCase):
+    """Reject malformed limits before clocks, IK or collision work begins."""
+
+    def test_invalid_seconds_are_rejected_before_reading_the_clock(self):
+        for value in INVALID_SECONDS:
+            with self.subTest(seconds=repr(value)):
+                clock = mock.Mock(return_value=0.0)
+                with self.assertRaisesRegex(ValueError, "seconds"):
+                    PlanningBudget(value, now=clock)
+                clock.assert_not_called()
+
+    def test_invalid_call_limits_are_rejected_before_reading_the_clock(self):
+        for name in ("max_ik_calls", "max_collision_checks"):
+            for value in INVALID_COUNTS:
+                with self.subTest(limit=name, value=repr(value)):
+                    clock = mock.Mock(return_value=0.0)
+                    with self.assertRaisesRegex(ValueError, name):
+                        PlanningBudget(**{name: value}, now=clock)
+                    clock.assert_not_called()
+
+    def test_default_optional_limits_keep_the_existing_calling_api(self):
+        budget = PlanningBudget(now=lambda: 0.0)
+        budget.check("ik")
+        budget.check("collision")
+        self.assertIsNone(budget.seconds)
+        self.assertEqual(budget.limits, {"ik": None, "collision": None})
+        self.assertEqual(budget.calls, {"ik": 1, "collision": 1})
+        self.assertFalse(budget.exhausted)
+
+    def test_finite_positional_seconds_stop_at_the_original_deadline(self):
+        clock = [0.0]
+        budget = PlanningBudget(12, now=lambda: clock[0])
+        clock[0] = 11.999
+        budget.check("ik")
+        clock[0] = 12.0
+        with self.assertRaises(PlanningBudgetExceeded):
+            budget.check("collision")
+        self.assertEqual(budget.calls, {"ik": 1, "collision": 0})
+        self.assertTrue(budget.exhausted)
+
+    def test_zero_seconds_and_call_limits_block_the_first_operation(self):
+        for options, operation in (
+            ({"seconds": 0}, "ik"),
+            ({"seconds": 0.0}, "collision"),
+            ({"max_ik_calls": 0}, "ik"),
+            ({"max_collision_checks": 0}, "collision"),
+        ):
+            with self.subTest(options=options):
+                budget = PlanningBudget(**options, now=lambda: 0.0)
+                with self.assertRaises(PlanningBudgetExceeded):
+                    budget.check(operation)
+                self.assertEqual(budget.calls, {"ik": 0, "collision": 0})
+
+    def test_integer_call_limits_allow_exactly_the_declared_calls(self):
+        for name, operation in (
+            ("max_ik_calls", "ik"),
+            ("max_collision_checks", "collision"),
+        ):
+            for value in (2, np.int64(2)):
+                with self.subTest(limit=name, value=repr(value)):
+                    budget = PlanningBudget(**{name: value}, now=lambda: 0.0)
+                    budget.check(operation)
+                    budget.check(operation)
+                    with self.assertRaises(PlanningBudgetExceeded):
+                        budget.check(operation)
+                    self.assertEqual(budget.calls[operation], 2)
+
+    def test_numpy_real_seconds_remain_valid(self):
+        clock = [0.0]
+        for seconds in (np.float32(0.5), np.float64(0.5)):
+            with self.subTest(seconds=repr(seconds)):
+                clock[0] = 0.0
+                budget = PlanningBudget(seconds, now=lambda: clock[0])
+                clock[0] = 0.25
+                budget.check("ik")
+                clock[0] = 0.5
+                with self.assertRaises(PlanningBudgetExceeded):
+                    budget.check()
+
+    def test_invalid_preflight_budget_is_rejected_before_curve_or_contacts(
+        self,
+    ):
+        sim = PlanningFixture()
+        commands = [fixture_command(0.4)]
+        for value in (*INVALID_COUNTS, None):
+            with self.subTest(sample_budget=repr(value)):
+                with (
+                    mock.patch(
+                        "daiyi_grinding.workstation_motion.joint_curve"
+                    ) as curve,
+                    mock.patch.object(sim, "set_scratch_pose") as contact_pose,
+                ):
+                    with self.assertRaisesRegex(ValueError, "sample_budget"):
+                        preflight(sim, commands, sample_budget=value)
+                    curve.assert_not_called()
+                    contact_pose.assert_not_called()
+
+    def test_empty_commands_do_not_hide_an_invalid_sample_budget(self):
+        for value in (*INVALID_COUNTS, None):
+            with self.subTest(sample_budget=repr(value)):
+                with self.assertRaisesRegex(ValueError, "sample_budget"):
+                    preflight(None, [], sample_budget=value)
+
+    def test_nonnegative_sample_counts_keep_the_existing_sampling_boundary(
+        self,
+    ):
+        commands = [fixture_command(0.4)]
+        default = preflight(PlanningFixture(), commands)
+        self.assertTrue(default["passed"])
+        self.assertEqual(default["checked_interpolated_samples"], 35)
+        self.assertEqual(default["joint_step_bound_rad"], 0.012)
+        for value in (0, 34):
+            with self.subTest(sample_budget=value):
+                blocked = preflight(
+                    PlanningFixture(), commands, sample_budget=value
+                )
+                self.assertFalse(blocked["passed"])
+                self.assertTrue(blocked["budget_exhausted"])
+                self.assertEqual(blocked["checked_commands"], 0)
+        for value in (35, np.int64(35)):
+            with self.subTest(sample_budget=repr(value)):
+                checked = preflight(
+                    PlanningFixture(), commands, sample_budget=value
+                )
+                self.assertTrue(checked["passed"])
+                self.assertEqual(checked["checked_interpolated_samples"], 35)
+
+    def test_large_integer_limits_are_not_coerced_into_nonfinite_floats(self):
+        limit = 10**400
+        budget = PlanningBudget(
+            limit,
+            max_ik_calls=limit,
+            max_collision_checks=limit,
+            now=lambda: 0.0,
+        )
+        budget.check("ik")
+        self.assertEqual(budget.seconds, limit)
+        self.assertEqual(budget.calls["ik"], 1)
+        checked = preflight(
+            PlanningFixture(), [fixture_command(0.4)], sample_budget=limit
+        )
+        self.assertTrue(checked["passed"])
 
 
 class NarrowObstacleScene:

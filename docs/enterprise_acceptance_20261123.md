@@ -1,18 +1,22 @@
 # 企业要求、离线证据与验收演练
 
-2026-11-23 完成可机器执行的要求评估、现场输入校验和 27 个 synthetic
+2026-11-23 完成可机器执行的要求评估、现场输入校验和 44 个 synthetic
 接口演练。另只读评估 42 组同输入矩阵、七组主入口运行及当前现场清单示例，
 合计 50 份已有证据评估。没有重新运行这些磨削仿真，也没有操作实体机器人。
 本轮全部新产物在
 [acceptance](../runs/enterprise_offline_20261123/acceptance/)。
-最终代码的复核产物在
-[recheck_02](../runs/enterprise_offline_20261123/acceptance/recheck_02/)；
-首轮产物保留，供追查报告字段变化。
+合同修复后的最新产物在
+[spec_fix_01/cli_01](../runs/enterprise_offline_20261123/acceptance/spec_fix_01/cli_01/)；
+原 [recheck_02](../runs/enterprise_offline_20261123/acceptance/recheck_02/)
+及首轮产物保留，供核对历史统计与报告字段变化。
 
-[主证据](../runs/enterprise_offline_20261123/acceptance/evidence.json)记录实际命令、
+[当前证据](../runs/enterprise_offline_20261123/acceptance/spec_fix_01/cli_01/evidence.json)
+记录实际命令、
 输入路径/SHA256/来源、指标、具体失败、产物及真实数据待补项。
-[最终矩阵](../runs/enterprise_offline_20261123/acceptance/recheck_02/acceptance_matrix.json)
+[当前矩阵](../runs/enterprise_offline_20261123/acceptance/spec_fix_01/cli_01/acceptance_matrix.json)
 保存逐份记录、逐项要求的判定和对应输入引用。
+[修复验证](../runs/enterprise_offline_20261123/acceptance/spec_fix_01/validation.json)
+另登记相关测试、历史统计对照、旧证据哈希检查及三个独占文件的最终快照。
 
 **指标来源及结论边界。**
 [企业需求说明](../feishu_docs/上海戴屹具身AI检测打磨项目需求说明__wiki-TJ5Rwkla8i9zNgkV2zKchYuAn7g.md)
@@ -44,11 +48,12 @@ pending_confirmed_acceptance_protocol`；正式验收还需要确认采样、统
 | 三维定位 | 每点 reference/predicted 三维毫米坐标的欧氏误差加 uncertainty；最大值 ≤0.1 mm | 须有独立参考、标定、flash/burr/casting_root 覆盖；欧氏定义是保守本地约定 |
 | 运动跟踪 | 每一执行轮的抓手和加工点 P95 均严格 <1 mm，非预期接触为 0 | FK 相对目标关节曲线；无执行时为 unknown |
 | 仿真正余料 | 合成余料 positive peak ≤0.3 mm | 不量测负余量、真实过磨、力、热或粗糙度 |
+| 离线闭环复检 | 初检及逐轮复检至少六视角；原登记区域 ID/类别/锚点完整，最终全部 verified、零剩余区域，质量报告与回执一致 | 逐轮绑定 pass_index/revision；负余量、负边界风险、无效观测及最终区域 hold 阻止通过 |
 | signed 型面 | 同件同区同点 after ± uncertainty 的整个区间在双边公差内 | 加工区及保护区均须登记角色、独立覆盖 |
 | 换型 | changeover_ready − changeover_start 的完整单调墙钟 | 须确认首件合格；不使用运行/计划/仿真时长 |
 | 新品占机 | 同一设备、导入墙钟范围内 occupied_intervals 的区间并集 | 重叠区间只计一次；不能拼接规划耗时 |
 | 控制器/工艺 | 程序、计划、反馈哈希及同件/request/execution 绑定；完成、零接触和全部标定为 true | 只读取回执，不下发控制程序 |
-| 连续可靠性 | 同一 boot_id、严格递增心跳、完整健康状态、无故障及连续 ≥800 h | 真实日志还须有一致的带时区墙钟；本地最大心跳间隔 1 h |
+| 连续可靠性 | 回执与每个心跳均有相同、无首尾空白的 boot_id；严格递增时间、明确健康状态、无故障及连续 ≥800 h | 缺逐次身份或混合启动均拒绝；真实日志另须一致的带时区墙钟，本地最大心跳间隔 1 h |
 | 虚拟可靠性 | 虚拟时钟、同次启动、同样的故障/间隔检查 | 本轮生成 800 个虚拟小时的 trace 并验证；不是 800 个真实墙钟小时 |
 
 **学长能力 → 当前复用 → 差距 → 本轮证据。**
@@ -79,9 +84,29 @@ pending_confirmed_acceptance_protocol`；正式验收还需要确认采样、统
 | 42 组同输入归档 | 42 份评估；6 个正常无动作对照；0 个非平凡完整加工；18 份有执行，其中 17 份通过运动门槛 |
 | 七组主入口归档 | 7 份评估；1 个正常无动作对照；5 份有执行且通过运动门槛；0 个非平凡完整加工 |
 | 当前 site_acceptance.example.json | example 来源及空身份保持待补，被严格校验拒绝；没有转为实测 |
-| 合成接口 suite | 27/27 复现预期判定，所有企业目标均保持 unknown |
-| 针对性 unittest | 34 项通过：本轮 25 项及既有 workstation_quality 9 项 |
-| Ruff | 三个独占 Python 文件 check 和 format --check 均通过 |
+| 合成接口 suite | 44/44 复现预期判定，所有企业目标均保持 unknown |
+| 针对性 unittest | 51 项通过：验收模块 42 项及既有 workstation_quality 9 项 |
+| Ruff | 两个验收 Python 文件 check 和 format --check 均通过 |
+
+`execution_fact.robot_executed` 在运行输入通过哈希、schema 和同件检查后独立保留。
+`executed_runs` 使用这一执行声明计数，反馈是否合法另记为
+`executed_feedback_accepted/rejected/unknown`；无法读取或不可信的运行声明记入
+`execution_unknown_runs`。历史两组的反馈接受数分别为 18 和 5，拒绝与未知均为 0。
+合成“有效执行 + 缺字段/缺反馈执行”的两份对照保持执行分母 2、接受 1、拒绝 1、
+运动通过 1；质量或感知字段被拒绝时，合法运动反馈仍保留。
+
+闭环判定读取 `registered_regions.json` 原数组及原始逐轮质量报告。
+`reinspections` 数量须与执行轮数一致、最后一轮须等于 `reinspection`，
+其 `pass_index` 与递增 `revision/prediction_revision` 须绑定当轮及最终结果。
+最终锚点覆盖、signed 区间与峰谷读数必须支持放行，不能只依赖顶层完成布尔值。
+前轮只有正余料复核时可继续合法回磨并在最终验证后通过；前轮已出现过磨、
+负边界风险或无效观测时，即使最终报告清零，也不能声称合法自动闭环完成。
+正常无动作对照仍独立评估，无须补造磨后量测。
+
+旧报告的 `peak_mm/upper_peak_mm` 等真实归档字段原样保存在
+`reported_region_quality`。缺少 signed 下界、负向保护或决策来源字段时，
+`observation_gate.reasons` 明确记录 `legacy_signed_proof_missing` 等原因，
+不能据此新增完整闭环通过，也不会补造独立量测。历史非平凡通过数仍均为 0。
 
 普通批缝 `seam_9903` 的归档正余料为 0.206590 mm、加工点跟踪 P95 为
 0.123726 mm，类别匹配 1/1；两处复检峰值约 0.425 mm，第三处区间上界约
@@ -90,13 +115,16 @@ pending_confirmed_acceptance_protocol`；正式验收还需要确认采样、统
 1.750340/2.722325 mm，非预期接触为 0，类别匹配 0/3，运动与完整任务均失败。
 这些是已有仿真记录的实际评估结果，不是本轮真实工件试磨。
 
-27 个演练按用途保留独立目录：正常/无动作、正超差/负过磨/不确定度跨界、
+原 27 个演练按用途保留独立目录：正常/无动作、正超差/负过磨/不确定度跨界、
 保护点缺失/保护登记删除、CSV 哈希损坏/混件/NaN、JSON NaN、
 定位超差/类别缺失、运动超差/等于边界、二值完美但类别错误、
 墙钟超时/把计划时间当墙钟、控制未完成/计划哈希损坏/反馈缺失/控制混件、
 cycle receipt 不一致、虚拟故障/重启/心跳大间隔、全部证据缺失。
+新增 17 例覆盖初检/复检单视角、原区域/锚点删除、区域 hold、过磨/负边界风险/
+无效观测、登记质量回执不一致、当轮身份不一致、旧 signed 字段缺失、
+合法正余料回磨与危险前轮、执行反馈缺字段/缺失、虚拟心跳混启动/缺身份。
 每例有 `input.json`、原始 labeled 输入、`assessment.json`；
-[suite_summary.json](../runs/enterprise_offline_20261123/acceptance/recheck_02/synthetic_suite/suite_summary.json)
+[suite_summary.json](../runs/enterprise_offline_20261123/acceptance/spec_fix_01/cli_01/synthetic_suite/suite_summary.json)
 记录预期与实际判定及具体失败。程序/计划示例写明 `not_executable=true`、
 `simulation_only=true`，全部演练 `source_kind=synthetic`。
 
@@ -128,10 +156,10 @@ MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
 
 .venv/bin/python -m ruff check \
   src/daiyi_grinding/enterprise_acceptance.py \
-  src/daiyi_grinding/workstation_delivery.py tests/test_enterprise_acceptance.py
+  tests/test_enterprise_acceptance.py
 .venv/bin/python -m ruff format --check \
   src/daiyi_grinding/enterprise_acceptance.py \
-  src/daiyi_grinding/workstation_delivery.py tests/test_enterprise_acceptance.py
+  tests/test_enterprise_acceptance.py
 ```
 
 CLI 退出 0 表示评估计算及所选演练完成，不表示企业验收通过。自动化消费者必须
@@ -163,21 +191,28 @@ bundle 的最小外形：
 ```
 
 所有 artifact 路径相对 bundle 所在目录，或用绝对路径。完整可运行输入见
-[synthetic_normal/input.json](../runs/enterprise_offline_20261123/acceptance/recheck_02/synthetic_suite/synthetic_normal/input.json)。
+[synthetic_normal/input.json](../runs/enterprise_offline_20261123/acceptance/spec_fix_01/cli_01/synthetic_suite/synthetic_normal/input.json)。
 `artifact_reference(path, relative_to=...)` 可生成引用；其 SHA256 是读取时绑定，
 不认证该文件的来源。所有量测/回执角色须带同件
 `part_id,serial,cad_revision,fixture_revision`；存在不一致即拒绝。
 
+要求配置的解析与 SHA256 使用同一份读入 bytes；`evaluate_evidence` 和 CLI
+`--bundle` 同样传递已经捕获的 bundle bytes，评估过程不再重开该文件登记哈希。
+直接调用 `assess_bundle(bundle, bundle_path=...)` 时只读一次并核对字典与字节内容，
+不一致报 `bundle_content_mismatch`。mock 文件替换测试分别核对配置、Python 入口和
+CLI 入口：首次读取 A、后续可返回 B 时，判定内容与登记哈希仍同属于 A。
+
 | artifact 角色 | schema 与主要必需字段 |
 | --- | --- |
 | run_result / cycle_receipt | 现有 workstation v3 / daiyi-station-receipt-v1；回执 scope 必须是 simulation；双方质量/时钟一致 |
+| registered_regions | 现有 JSON 数组；唯一正整数 ID、kind、配对有限三维 points/normals；加工闭环须保留原登记 ID/类别/锚点数，按文件引用绑定，不补造旧身份字段 |
 | source_hashes | 现有 filename → SHA256；优先验证 source_snapshot，CAD/登记模型可按已知来源核对，未解析来源保持 unknown |
 | site_manifest | 保留原真实验收字段；本轮另接受 synthetic/example 供演练；CSV 六列及必需区域，zone_roles 映射 machined/protected |
 | localization | daiyi-localization-evidence-v1；units=mm、coordinate_frame、measurement_system、reviewer、独立/标定/覆盖布尔值、对应点 samples |
 | timing_receipt | daiyi-time-evidence-v1；wall_monotonic、equipment_id、两个产品、code_changed、完成/首件确认、四事件及 occupied_intervals |
 | controller_receipt | daiyi-controller-evidence-v1；request/execution/controller_id、plan/program/feedback 路径哈希、plan_sha256、完成及六个标定布尔值 |
 | controller feedback | daiyi-controller-feedback-v1；与回执相同身份、来源、request/execution、计划/程序哈希、完成及严格递增时间/非预期接触 samples |
-| reliability_receipt | daiyi-reliability-evidence-v1；boot_id、clock_kind、complete、逐次 healthy 心跳；real_software_log 另需一致的带时区 wall_started_at/wall_finished_at |
+| reliability_receipt | daiyi-reliability-evidence-v1；boot_id、clock_kind、complete、逐次 boot_id/healthy/t_s 心跳；real_software_log 另需一致的带时区 wall_started_at/wall_finished_at |
 
 真实来源严格按角色使用 `real_measurement`、`real_process_log`、
 `real_controller_receipt`、`real_software_log`。既有 `site_acceptance(manifest)`

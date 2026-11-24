@@ -59,7 +59,7 @@ REAL_DATA_PENDING = [
 ROLE_MATRIX = {
     "run_result": "historical simulation input only; not rerun",
     "cycle_receipt": "not produced by this controller/reliability slice",
-    "source_hashes": "historical inputs hashed; not a full source snapshot",
+    "source_hashes": "archived producer provenance; current offline sources frozen separately",
     "localization": "pending independent measurement",
     "timing_receipt": "pending real process log",
     "controller_receipt": "offline mock only; real controller pending",
@@ -119,6 +119,105 @@ def _artifact(path, output, role, source):
     }
 
 
+def _run_inputs(run_dir):
+    inputs = [
+        _input(run_dir / name, "historical_run", source)
+        for name, source in (
+            ("motion_commands.json", "archived accepted commands; mock only"),
+            ("preflight.json", "archived whole-segment admission; not rerun"),
+            ("estun_path_preview.csv", "archived preview; never executable"),
+            (
+                "result.json",
+                "archived quality/status; no current quality revalidation",
+            ),
+        )
+    ]
+    source_manifest = run_dir / "source_hashes.json"
+    if source_manifest.is_file():
+        inputs.append(
+            _input(
+                source_manifest,
+                "historical_source_manifest",
+                "archived producer provenance; does not claim current producer execution",
+            )
+        )
+    inputs.extend(
+        [
+            _input(
+                project.ROOT / "assets/ier220_workstation/scene.xml",
+                "robot_model",
+                "XML limits read as data; MuJoCo not imported",
+            ),
+            _input(
+                REQUIREMENTS, "requirements", "enterprise target definitions"
+            ),
+        ]
+    )
+    for name, reference in _read_json(REQUIREMENTS).get("sources", {}).items():
+        entry = _input(
+            project.ROOT / reference["path"],
+            "requirement_source",
+            f"enterprise specification source: {name}; read only",
+        )
+        entry["declared_sha256"] = reference["sha256"]
+        inputs.append(entry)
+    for name in (
+        "__init__.py",
+        "project.py",
+        "offline_controller.py",
+        "reliability_stress.py",
+        "enterprise_acceptance.py",
+        "workstation_delivery.py",
+    ):
+        inputs.append(
+            _input(
+                project.SOURCE / name,
+                "source",
+                "current offline module; frozen independently of archived producer hashes",
+            )
+        )
+    inputs.append(
+        _input(
+            project.SOURCE / "workstation_run.py",
+            "reference_source",
+            "current export contract reference; not executed or revalidated here",
+        )
+    )
+    for name in ("test_offline_controller.py", "test_reliability_stress.py"):
+        inputs.append(
+            _input(
+                project.ROOT / "tests" / name,
+                "validation_test_source",
+                "regression test source; tests run separately from this timed workload",
+            )
+        )
+    return inputs
+
+
+def _freeze_offline_sources(output, inputs):
+    root = output / "source_snapshot"
+    root.mkdir()
+    artifacts = []
+    for item in inputs:
+        if item["role"] not in {
+            "source",
+            "reference_source",
+            "validation_test_source",
+        }:
+            continue
+        path = root / Path(item["path"]).name
+        path.write_bytes(Path(item["path"]).read_bytes())
+        artifact = _artifact(
+            path, output, f"{item['role']}_snapshot", item["source"]
+        )
+        if artifact["sha256"] != item["sha256"]:
+            raise RuntimeError("source changed during snapshot capture")
+        item["snapshot_path"] = artifact["path"]
+        artifacts.append(artifact)
+    _write_json(output / "source_inputs.json", inputs)
+    return artifacts
+
+
 @dataclass
 class Scenario:
     """One expected controller outcome used in the fault matrix."""
@@ -156,12 +255,18 @@ SCENARIOS = (
     Scenario("feedback_batch_atomic", "reject", "invalid_feedback_status"),
     Scenario("feedback_sequence_gap", "reject", "feedback_sequence_gap"),
     Scenario("feedback_time_regression", "reject", "feedback_time_regression"),
-    Scenario("feedback_command_time", "reject", "feedback_command_time_mismatch"),
+    Scenario(
+        "feedback_command_time", "reject", "feedback_command_time_mismatch"
+    ),
     Scenario("feedback_dropout", "reject", "feedback_timeout"),
     Scenario("feedback_stream_ended", "reject", "feedback_stream_ended"),
-    Scenario("source_changed_during_execution", "reject", "source_hash_mismatch"),
+    Scenario(
+        "source_changed_during_execution", "reject", "source_hash_mismatch"
+    ),
     Scenario("program_hash_changed", "reject", "program_hash_mismatch"),
-    Scenario("checkpoint_counter_corrupt", "reject", "checkpoint_feedback_mismatch"),
+    Scenario(
+        "checkpoint_counter_corrupt", "reject", "checkpoint_feedback_mismatch"
+    ),
     Scenario("checkpoint_log_binding", "reject", "invalid_feedback_log"),
     Scenario("quality_binding", "reject", "quality_binding_mismatch"),
     Scenario("quality_hash_changed", "reject", "quality_hash_mismatch"),
@@ -393,7 +498,9 @@ def _quality(
     covered = list(plan.admitted_segments if covered is None else covered)
     suffix = plan.plan_sha256[:16]
     binding = (
-        controller.quality_binding() if controller is not None else {
+        controller.quality_binding()
+        if controller is not None
+        else {
             **plan.identity.to_dict(),
             "plan_sha256": plan.plan_sha256,
             "request_id": f"mock-request-{suffix}",
@@ -458,6 +565,8 @@ def _result(
     feedback_samples=0,
     covered_command_count=0,
     expected_command_count=0,
+    quality_reasons=(),
+    quality_region_failures=(),
 ):
     return {
         "scenario": scenario.name
@@ -481,6 +590,8 @@ def _result(
         "feedback_samples": feedback_samples,
         "covered_command_count": covered_command_count,
         "expected_command_count": expected_command_count,
+        "quality_reasons": list(quality_reasons),
+        "quality_region_failures": list(quality_region_failures),
     }
 
 
@@ -496,6 +607,8 @@ def _finish_result(scenario, controller, report, workspace):
         feedback_samples=report["feedback_samples"],
         covered_command_count=report["covered_command_count"],
         expected_command_count=report["expected_command_count"],
+        quality_reasons=report["quality"]["reasons"],
+        quality_region_failures=report["quality"].get("region_failures", []),
     )
 
 
@@ -608,8 +721,10 @@ def _execute_scenario(loop_dir, scenario, seed):
             controller.ingest_feedback(source[1])
             raise AssertionError("expired plan continued execution")
         if scenario.name in {
-            "feedback_batch_atomic", "feedback_sequence_gap",
-            "feedback_time_regression", "feedback_command_time",
+            "feedback_batch_atomic",
+            "feedback_sequence_gap",
+            "feedback_time_regression",
+            "feedback_command_time",
         }:
             controller = _start_controller(plan, controller_dir, clock)
             batch = next(iter(_source(plan, controller, batch_size=3)))
@@ -625,8 +740,11 @@ def _execute_scenario(loop_dir, scenario, seed):
             controller.ingest_feedback(batch)
             raise AssertionError("invalid feedback payload was accepted")
         if scenario.name in {
-            "feedback_dropout", "feedback_stream_ended", "clock_regression",
-            "source_changed_during_execution", "program_hash_changed",
+            "feedback_dropout",
+            "feedback_stream_ended",
+            "clock_regression",
+            "source_changed_during_execution",
+            "program_hash_changed",
         }:
             controller = _start_controller(plan, controller_dir, clock)
             source = list(_source(plan, controller, batch_size=3))
@@ -640,8 +758,11 @@ def _execute_scenario(loop_dir, scenario, seed):
             elif scenario.name == "feedback_stream_ended":
                 result = controller.run_mock([])
                 return _result(
-                    scenario, observed="reject", code=result["error"]["code"],
-                    state=controller.state, error=result["error"]["message"],
+                    scenario,
+                    observed="reject",
+                    code=result["error"]["code"],
+                    state=controller.state,
+                    error=result["error"]["message"],
                     plan_sha256=plan.plan_sha256,
                     workspace=_relative(controller_dir, loop_dir.parent.parent),
                     feedback_samples=controller.feedback_samples,
@@ -658,14 +779,16 @@ def _execute_scenario(loop_dir, scenario, seed):
                 controller.ingest_feedback(source[1])
             raise AssertionError("invalid active controller state was accepted")
         if scenario.name in {
-            "checkpoint_counter_corrupt", "checkpoint_log_binding",
+            "checkpoint_counter_corrupt",
+            "checkpoint_log_binding",
         }:
             controller = _start_controller(plan, controller_dir, clock)
             controller.ingest_feedback(
                 next(iter(_source(plan, controller, batch_size=3)))
             )
             controller.hold(
-                "interrupted_restart", "synthetic process interruption",
+                "interrupted_restart",
+                "synthetic process interruption",
                 cause="mock_process",
             )
             checkpoint = _read_json(controller.checkpoint_path)
@@ -675,17 +798,23 @@ def _execute_scenario(loop_dir, scenario, seed):
                 batch = _read_json(controller.feedback_path)
                 batch["serial"] = "other-serial"
                 controller.feedback_path.write_text(
-                    json.dumps(batch, ensure_ascii=False, sort_keys=True) + "\n",
+                    json.dumps(batch, ensure_ascii=False, sort_keys=True)
+                    + "\n",
                     encoding="utf-8",
                 )
-                checkpoint["feedback_sha256"] = sha256_file(controller.feedback_path)
+                checkpoint["feedback_sha256"] = sha256_file(
+                    controller.feedback_path
+                )
             _write_json(controller.checkpoint_path, checkpoint)
             _write_json(loop_dir / "injected_checkpoint.json", checkpoint)
             MockController.resume(controller.checkpoint_path, plan, clock=clock)
             raise AssertionError("corrupted recovery evidence was accepted")
         if scenario.name in {
-            "quality_binding", "quality_hash_changed", "quality_overgrind",
-            "quality_negative_limit_risk", "quality_invalid_view",
+            "quality_binding",
+            "quality_hash_changed",
+            "quality_overgrind",
+            "quality_negative_limit_risk",
+            "quality_invalid_view",
         }:
             controller = _start_controller(plan, controller_dir, clock)
             controller.run_mock(_source(plan, controller))
@@ -710,7 +839,9 @@ def _execute_scenario(loop_dir, scenario, seed):
                 )
             report = controller.finish()
             return _finish_result(
-                scenario, controller, report,
+                scenario,
+                controller,
+                report,
                 _relative(controller_dir, loop_dir.parent.parent),
             )
         if scenario.name == "process_exception":
@@ -846,7 +977,9 @@ def _execute_scenario(loop_dir, scenario, seed):
                 quality_evidence=_quality(plan),
             )
             return _finish_result(
-                scenario, controller, report,
+                scenario,
+                controller,
+                report,
                 _relative(controller_dir, loop_dir.parent.parent),
             )
         if scenario.name == "receipt_hashes":
@@ -855,14 +988,22 @@ def _execute_scenario(loop_dir, scenario, seed):
             )
             receipt = _read_json(controller_dir / "controller_receipt.json")
             for role in (
-                "plan", "program", "feedback", "checkpoint", "events",
-                "completion_report", "feedback_journal", "quality_evidence",
+                "plan",
+                "program",
+                "feedback",
+                "checkpoint",
+                "events",
+                "completion_report",
+                "feedback_journal",
+                "quality_evidence",
             ):
                 reference = receipt[role]
                 if sha256_file(reference["path"]) != reference["sha256"]:
                     raise AssertionError(f"{role} receipt hash mismatch")
             return _finish_result(
-                scenario, controller, report,
+                scenario,
+                controller,
+                report,
                 _relative(controller_dir, loop_dir.parent.parent),
             )
         if scenario.name == "happy_execution_only":
@@ -894,6 +1035,25 @@ def _execute_scenario(loop_dir, scenario, seed):
             controller.run_mock(source[1:])
             controller.set_quality_evidence(_quality(plan))
             report = controller.finish()
+            before = {
+                path.name: sha256_file(path)
+                for path in controller_dir.iterdir()
+                if path.is_file()
+            }
+            replay = controller.ingest_feedback(source[-1])
+            after = {
+                path.name: sha256_file(path)
+                for path in controller_dir.iterdir()
+                if path.is_file()
+            }
+            if (
+                not replay["idempotent"]
+                or replay["accepted"]
+                or before != after
+            ):
+                raise AssertionError(
+                    "terminal duplicate mutated controller evidence"
+                )
             return _finish_result(
                 scenario,
                 controller,
@@ -909,6 +1069,9 @@ def _execute_scenario(loop_dir, scenario, seed):
         RecoveryRejected,
         ControllerError,
     ) as error:
+        report = (
+            controller.completion_report() if "controller" in locals() else None
+        )
         return _result(
             scenario,
             observed="reject",
@@ -917,9 +1080,27 @@ def _execute_scenario(loop_dir, scenario, seed):
             plan_sha256=(plan.plan_sha256 if "plan" in locals() else None),
             workspace=_relative(controller_dir, loop_dir.parent.parent),
             error=str(error),
-            feedback_samples=(controller.feedback_samples if "controller" in locals() else 0),
-            covered_command_count=(len(controller.covered_commands) if "controller" in locals() else 0),
-            expected_command_count=(len(plan.commands) if "plan" in locals() else 0),
+            feedback_samples=(
+                controller.feedback_samples if "controller" in locals() else 0
+            ),
+            covered_command_count=(
+                len(controller.covered_commands)
+                if "controller" in locals()
+                else 0
+            ),
+            expected_command_count=(
+                len(plan.commands) if "plan" in locals() else 0
+            ),
+            execution_complete=report["execution_complete"]
+            if report
+            else False,
+            task_quality_complete=report["task_quality_complete"]
+            if report
+            else False,
+            quality_reasons=report["quality"]["reasons"] if report else (),
+            quality_region_failures=(
+                report["quality"].get("region_failures", []) if report else ()
+            ),
         )
     except Exception as error:  # noqa: BLE001 - fault matrix boundary
         return _result(
@@ -936,20 +1117,45 @@ def _execute_scenario(loop_dir, scenario, seed):
 
 def _matches(scenario, result):
     if scenario.expected == "reject":
+        if scenario.name in {"quality_binding", "quality_hash_changed"}:
+            expected_covered = result["expected_command_count"]
+        elif scenario.name in {
+            "duplicate_conflict",
+            "out_of_order_feedback",
+            "expired_during_execution",
+            "partial_feedback",
+            "feedback_dropout",
+            "feedback_stream_ended",
+            "source_changed_during_execution",
+            "program_hash_changed",
+            "checkpoint_counter_corrupt",
+            "checkpoint_log_binding",
+            "clock_regression",
+        }:
+            expected_covered = 3
+        else:
+            expected_covered = 0
         return (
-            result["observed"] == "reject" and result["code"] == scenario.code
+            result["observed"] == "reject"
+            and result["code"] == scenario.code
             and result["state"] in {None, "HELD"}
             and not result["execution_complete"]
             and not result["task_quality_complete"]
+            and result["covered_command_count"] == expected_covered
+            and result["feedback_samples"] == expected_covered
         )
     if scenario.expected == "cancel":
-        return result["observed"] == "cancelled" and result["state"] == "CANCELLED"
+        return (
+            result["observed"] == "cancelled" and result["state"] == "CANCELLED"
+        )
     if scenario.expected == "task_complete":
         return (
             result["observed"] == "finished"
             and result["state"] == "FINISHED"
             and result["execution_complete"]
             and result["task_quality_complete"]
+            and result["covered_command_count"]
+            == result["expected_command_count"]
         )
     if scenario.expected == "execution_complete":
         return (
@@ -957,6 +1163,8 @@ def _matches(scenario, result):
             and result["state"] == "FINISHED"
             and result["execution_complete"]
             and not result["task_quality_complete"]
+            and result["covered_command_count"]
+            == result["expected_command_count"]
         )
     raise AssertionError(f"unknown expectation {scenario.expected}")
 
@@ -972,9 +1180,14 @@ def run_virtual_reliability(
     for value in (hours, heartbeat_s, minimum_hours):
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise ValueError("virtual time values must be finite numbers")
-    hours = float(hours)
-    heartbeat_s = float(heartbeat_s)
-    minimum_hours = float(minimum_hours)
+    try:
+        hours = float(hours)
+        heartbeat_s = float(heartbeat_s)
+        minimum_hours = float(minimum_hours)
+    except OverflowError as error:
+        raise ValueError(
+            "virtual time values exceed the finite numeric range"
+        ) from error
     if not math.isfinite(hours) or hours <= 0:
         raise ValueError("virtual hours must be positive")
     if (
@@ -985,19 +1198,28 @@ def run_virtual_reliability(
         raise ValueError("heartbeat interval must be in (0, 3600] seconds")
     if not math.isfinite(minimum_hours) or minimum_hours <= 0:
         raise ValueError("minimum virtual hours must be positive and finite")
-    if not isinstance(boot_id, str) or not boot_id.strip() or boot_id != boot_id.strip():
+    if (
+        not isinstance(boot_id, str)
+        or not boot_id.strip()
+        or boot_id != boot_id.strip()
+    ):
         raise ValueError("boot_id must be a non-empty explicit identifier")
     started = time.perf_counter()
     total_seconds = hours * 3600.0
     estimated_count = total_seconds / heartbeat_s
-    if not math.isfinite(estimated_count) or estimated_count + 2 > MAX_VIRTUAL_HEARTBEATS:
+    if (
+        not math.isfinite(estimated_count)
+        or estimated_count + 2 > MAX_VIRTUAL_HEARTBEATS
+    ):
         raise ValueError("virtual trace exceeds the bounded heartbeat budget")
     heartbeats = []
     stamp = 0.0
     while stamp < total_seconds:
-        heartbeats.append({"t_s": stamp, "healthy": True})
+        heartbeats.append({"t_s": stamp, "healthy": True, "boot_id": boot_id})
         stamp = min(stamp + heartbeat_s, total_seconds)
-    heartbeats.append({"t_s": total_seconds, "healthy": True})
+    heartbeats.append(
+        {"t_s": total_seconds, "healthy": True, "boot_id": boot_id}
+    )
     wall_seconds = time.perf_counter() - started
     gaps = [
         after["t_s"] - before["t_s"]
@@ -1038,7 +1260,11 @@ def _virtual_rule_checks(output, trace):
     root.mkdir()
     cases = []
     for name in (
-        "healthy", "health_fault", "clock_restart", "heartbeat_gap", "clock_mismatch"
+        "healthy",
+        "health_fault",
+        "clock_restart",
+        "heartbeat_gap",
+        "clock_mismatch",
     ):
         directory = root / name
         directory.mkdir()
@@ -1051,7 +1277,13 @@ def _virtual_rule_checks(output, trace):
         elif name == "clock_restart":
             value["heartbeats"][midpoint]["t_s"] = 0.0
         elif name == "heartbeat_gap":
-            value["heartbeats"] = [value["heartbeats"][0], value["heartbeats"][-1]]
+            value["heartbeats"] = [
+                value["heartbeats"][0],
+                value["heartbeats"][-1],
+            ]
+            value["heartbeats"][-1]["t_s"] = max(
+                value["heartbeats"][-1]["t_s"], MAX_HEARTBEAT_GAP + 1.0
+            )
         elif name == "clock_mismatch":
             value["clock_kind"] = "wall_monotonic"
         path = directory / "trace.json"
@@ -1059,7 +1291,9 @@ def _virtual_rule_checks(output, trace):
         bundle = {
             "schema": "daiyi-enterprise-input-v1",
             "artifacts": {
-                "reliability_receipt": artifact_reference(path, relative_to=directory)
+                "reliability_receipt": artifact_reference(
+                    path, relative_to=directory
+                )
             },
         }
         _write_json(directory / "input.json", bundle)
@@ -1068,20 +1302,76 @@ def _virtual_rule_checks(output, trace):
         rows = {row["id"]: row for row in report["matrix"]}
         expected = "pass" if name == "healthy" and trace["complete"] else "fail"
         observed = rows["virtual_reliability"]["evidence_status"]
+        measured = rows["virtual_reliability"]["measured"] or {}
+        rejected = [
+            failure
+            for failure in report["failures"]
+            if failure["role"] == "reliability_receipt"
+        ]
+        rule_failures = [
+            failure
+            for failure in report["failures"]
+            if failure["role"] in {"reliability_receipt", "virtual_reliability"}
+        ]
+        other_failures = [
+            failure
+            for failure in report["failures"]
+            if failure["role"]
+            not in {"reliability_receipt", "virtual_reliability"}
+        ]
+        codes = {failure["code"] for failure in rejected}
+        if name == "healthy":
+            rule_match = not rejected
+        elif name == "health_fault":
+            rule_match = not rejected and any(
+                failure["reason"] == "synthetic_injected_failure"
+                for failure in measured.get("failures", [])
+            )
+        elif name == "heartbeat_gap":
+            rule_match = (
+                not rejected
+                and measured.get("maximum_gap_seconds", 0) > MAX_HEARTBEAT_GAP
+            )
+        else:
+            expected_code = (
+                "reliability_restart"
+                if name == "clock_restart"
+                else "reliability_clock_mismatch"
+            )
+            rule_match = codes == {expected_code}
         real_pending = (
             rows["continuous_reliability"]["status"] == "unknown"
             and not report["enterprise_acceptance_passed"]
         )
-        cases.append({
-            "case": name, "expected": expected, "observed": observed,
-            "match": observed == expected and real_pending,
-            "real_800h_pending": real_pending,
-            "expected_rejection_reasons": report["failures"],
-            "artifacts": [
-                _artifact(path, output, "virtual_rule_evidence", "synthetic rule fixture")
-                for path in sorted(directory.iterdir()) if path.is_file()
-            ],
-        })
+        cases.append(
+            {
+                "case": name,
+                "expected": expected,
+                "observed": observed,
+                "match": (
+                    observed == expected
+                    and rule_match
+                    and real_pending
+                    and not other_failures
+                ),
+                "fault_rule_matched": rule_match,
+                "real_800h_pending": real_pending,
+                "expected_rejection_reasons": rule_failures,
+                "evaluation_input_failures": other_failures,
+                "measured": rows["virtual_reliability"]["measured"],
+                "reason": rows["virtual_reliability"]["reason"],
+                "artifacts": [
+                    _artifact(
+                        path,
+                        output,
+                        "virtual_rule_evidence",
+                        "synthetic rule fixture",
+                    )
+                    for path in sorted(directory.iterdir())
+                    if path.is_file()
+                ],
+            }
+        )
     summary = {
         "schema": "daiyi-virtual-reliability-rule-checks-v1",
         "scope": "constructed clocks and faults; not a physical soak or failure-rate estimate",
@@ -1128,6 +1418,8 @@ def _validate_historical(output, run_dir):
         run_dir / "estun_path_preview.csv",
         run_dir / "result.json",
     ]
+    if (run_dir / "source_hashes.json").is_file():
+        files.append(run_dir / "source_hashes.json")
     missing = [str(path) for path in files if not path.is_file()]
     if missing:
         raise FileNotFoundError(f"historical run is missing files: {missing}")
@@ -1155,6 +1447,37 @@ def _validate_historical(output, run_dir):
         for name in before
         if before[name] != after[name]
     }
+    producer = (plan.result_evidence or {}).get("historical_source_manifest")
+    source_audit = []
+    for name, declared in (producer or {}).get("declared_hashes", {}).items():
+        if not name.endswith(".py") or Path(name).name != name:
+            continue
+        snapshot = run_dir / "source_snapshot" / name
+        current = project.SOURCE / name
+        source_audit.append(
+            {
+                "name": name,
+                "declared_historical_sha256": declared,
+                "archived_snapshot": (
+                    _input(
+                        snapshot,
+                        "archived_source",
+                        "historical Python source; not executed",
+                    )
+                    if snapshot.is_file()
+                    else None
+                ),
+                "snapshot_matches_declared": (
+                    sha256_file(snapshot) == declared
+                    if snapshot.is_file()
+                    else None
+                ),
+                "current_reference_sha256": sha256_file(current)
+                if current.is_file()
+                else None,
+                "current_reference_executed": False,
+            }
+        )
     validation = {
         "schema": "daiyi-historical-plan-validation-v1",
         "run_directory": str(run_dir),
@@ -1162,6 +1485,17 @@ def _validate_historical(output, run_dir):
         "source_hashes_after_mock": after,
         "sources_unchanged": not changed,
         "changed_sources": changed,
+        "historical_source_scope": {
+            "manifest": producer,
+            "python_source_audit": source_audit,
+            "current_source_drift": [
+                item["name"]
+                for item in source_audit
+                if item["current_reference_sha256"]
+                != item["declared_historical_sha256"]
+            ],
+            "scope": "archived provenance only; current producer code was not run",
+        },
         "plan_sha256": plan.plan_sha256,
         "plan_summary": plan.summary(),
         "mock_cycle": {
@@ -1208,6 +1542,24 @@ def _loop_summary(records):
         "observed_expected_rejections": sum(
             record["expected"] == "reject" and record["match"]
             for record in records
+        ),
+        "expected_rejection_codes": dict(
+            sorted(
+                Counter(
+                    record["expected_code"]
+                    for record in records
+                    if record["expected"] == "reject"
+                ).items()
+            )
+        ),
+        "observed_rejection_codes": dict(
+            sorted(
+                Counter(
+                    record["code"]
+                    for record in records
+                    if record["observed"] == "reject"
+                ).items()
+            )
         ),
         "expected_accepts": sum(
             record["expected"] != "reject" for record in records
@@ -1268,7 +1620,9 @@ def _run_loops(output, run_dir, loops, seed):
         record["match"] = _matches(scenario, record)
         record["inputs"] = [
             _artifact(
-                path, output, "synthetic_case_input",
+                path,
+                output,
+                "synthetic_case_input",
                 "synthetic fault fixture; includes intentionally rejected inputs",
             )
             for path in sorted((loop_dir / "case").iterdir())
@@ -1276,7 +1630,9 @@ def _run_loops(output, run_dir, loops, seed):
         ]
         record["artifacts"] = [
             _artifact(
-                path, output, "loop_evidence",
+                path,
+                output,
+                "loop_evidence",
                 "offline controller, injection or recovery evidence",
             )
             for path in sorted(loop_dir.rglob("*"))
@@ -1302,7 +1658,8 @@ def _run_loops(output, run_dir, loops, seed):
             "schema": "daiyi-reliability-loop-artifacts-v1",
             "scope": "synthetic loop inputs and outputs; no real measurements",
             "artifacts": [
-                artifact for record in records
+                artifact
+                for record in records
                 for artifact in (*record["inputs"], *record["artifacts"])
             ],
         },
@@ -1315,6 +1672,14 @@ def _report(evidence):
     historical = evidence["historical_validation"]
     loop = metrics["loops"]
     virtual = metrics["virtual"]
+    virtual_rules = metrics["virtual_fault_rules"]
+    archived_files = sum(
+        item["role"] in {"historical_run", "historical_source_manifest"}
+        for item in evidence["inputs"]
+    )
+    legacy_preflight = historical["plan_summary"]["preflight_binding"][
+        "legacy_unbound_preflight"
+    ]
     lines = [
         "# 离线控制回执与可靠性压力报告",
         "",
@@ -1328,7 +1693,7 @@ def _report(evidence):
         f"- 已接受命令 {historical['plan_summary']['command_count']} 条，"
         f"获准段 {historical['plan_summary']['admitted_segments']}，"
         f"拦截段 {historical['plan_summary']['blocked_segments']}。",
-        f"- 计划哈希 `{historical['plan_sha256']}`；四份历史文件 mock "
+        f"- 计划哈希 `{historical['plan_sha256']}`；{archived_files} 份历史文件 mock "
         "前后哈希一致。",
         f"- 原 `result.json` 任务状态为 "
         f"`{historical['plan_summary']['result_evidence']['task_status']}`；"
@@ -1336,6 +1701,16 @@ def _report(evidence):
         "- 候选 `estun_path_preview.csv` 仅按哈希绑定，"
         "`executable=false`，从未作为控制器程序。",
         "- 未复验碰撞、动力学、跟踪误差或真实运动；历史结论仍按原记录解释。",
+        (
+            "- 历史预检没有命令哈希，`legacy_unbound_preflight=true`；本次仅将"
+            "归档文件与其段、检测编号及覆盖计数绑定到 mock 计划，"
+            "不构成当前碰撞或跟踪准入复验。"
+            if legacy_preflight
+            else "- 预检与命令哈希匹配；预检本身未在当前代码重新执行。"
+        ),
+        "- 历史 `source_hashes.json` 与 Python 快照单列于 "
+        "`historical_source_scope`；当前 producer 源码漂移仍保留，"
+        "当前离线模块与测试另外冻结到 `source_snapshot/`。",
         "",
         "## 控制器状态机",
         "",
@@ -1355,17 +1730,31 @@ def _report(evidence):
         "被拦截段出现在命令文件会直接拒绝。",
         "- 重复完全相同的反馈批次幂等；同序号不同内容、序号倒退、"
         "时间倒退和命令索引倒退均拒绝并 hold。",
+        "- 整批验证完成后才提交反馈日志与覆盖计数；序号与命令索引"
+        "必须连续。完成态仅接受原批次的幂等重发，不改写已冻结回执。",
+        "- 质量必须另行绑定 plan/request/execution/execution_attempt "
+        "及完整工装、磨具、坐标和单位；明确观测放行与目标完成，"
+        "保留过磨、负公差风险和非法视角的失败原因。",
+        "- 默认 5 s mock 反馈间隔仅在 ingest/poll 调用时检查；"
+        "没有后台实时监视或硬件急停验证。",
         "",
         "## 低资源循环结果",
         "",
         f"- 实际循环：{loop['actual_cycles']}（最低要求 "
-        f"{loop['minimum_required']}）。",
+        f"{loop['minimum_required']}），覆盖 {len(loop['scenario_counts'])} 类场景。",
+        f"- 场景样本 {loop['sample_count']}；接受的合成反馈 "
+        f"{loop['control_feedback_samples']} 条，覆盖命令 "
+        f"{loop['covered_command_count']} 条。",
         f"- 预期拒绝：{loop['expected_rejections']}，观测符合："
         f"{loop['observed_expected_rejections']}。",
         f"- 预期接受/完成：{loop['expected_accepts']}，观测符合："
         f"{loop['observed_expected_accepts']}。",
         f"- 非预期异常：{loop['unexpected_exceptions']}；"
         f"分类不一致：{loop['mismatches']}。",
+        f"- 控制执行完整 {loop['execution_complete_cycles']} 次；"
+        f"合成质量规则 fixture 完整 {loop['quality_fixture_complete_cycles']} 次；"
+        f"真实任务质量完成 {loop['real_task_quality_complete_cycles']} 次。"
+        "前两项仅为接口规则样例，不是实物整件验收率。",
         f"- 实际墙钟 {metrics['wall_seconds']:.3f} s，CPU "
         f"{metrics['cpu_seconds']:.3f} s，峰值 RSS "
         f"{metrics['peak_rss_kb'] / 1024:.1f} MiB。"
@@ -1389,9 +1778,15 @@ def _report(evidence):
             f"{virtual['maximum_gap_s']:.1f} s。",
             f"- `accelerated_coverage=true`，"
             f"`real_800h_pending={str(evidence['real_800h_pending']).lower()}`。",
+            f"- 虚拟轨迹构造墙钟 {virtual['wall_seconds']:.6f} s；"
+            f"另外检查健康、故障、时钟重启、心跳缺口和时钟类型失配 "
+            f"{virtual_rules['case_count']} 个规则样例，"
+            f"{virtual_rules['matched']} 个符合预期。",
             "- 8.0e2 h 虚拟覆盖只证明调度器能在该时间轴上产生连续心跳，"
             "**不能作为企业 800 小时无故障验收**。真实验收还需要同一 "
             "boot_id 的墙钟日志、真实控制器回执、零重启和零故障。",
+            "- 故障矩阵的输入、次数和注入时间由演练预设；"
+            "这些统计不能推断真实失效率、MTBF 或实际长期资源稳定性。",
             "",
             "## 边界与待补证据",
             "",
@@ -1420,6 +1815,8 @@ def _report(evidence):
             "controller.run_mock(MockFeedbackSource(",
             "    plan, controller.request_id, controller.execution_id,",
             "))",
+            "binding = controller.quality_binding()",
+            "# 质量产生方须证明观测来自此绑定；不得给旧质量结果重新贴绑定。",
             "controller.set_quality_evidence(independent_quality)",
             "report = controller.finish()",
             "```",
@@ -1432,6 +1829,9 @@ def _report(evidence):
             "",
             "- `historical_validation.json`：历史只读校验与 mock 回执。",
             "- `loops/index.jsonl`、`loops/summary.json`：逐循环结果与统计。",
+            "- `loops/artifacts.json`：每次合成输入与输出的路径、大小和 SHA256。",
+            "- `source_inputs.json`、`source_snapshot/`：本次离线源码冻结。",
+            "- `virtual_rules/summary.json`：五类虚拟时钟规则及其企业评价结果。",
             "- `reliability_receipt.json`：虚拟时钟心跳证据。",
             "- `evidence.json`：任务、范围、命令、输入哈希、指标、失败和"
             "待补真实数据。",
@@ -1457,12 +1857,17 @@ def run_reliability_stress(
         raise ValueError("loops must be a positive integer")
     if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
         raise ValueError("seed must be a non-negative integer")
-    if (
-        isinstance(virtual_hours, bool)
-        or not isinstance(virtual_hours, (int, float))
-        or not math.isfinite(virtual_hours)
-        or virtual_hours <= 0
+    if isinstance(virtual_hours, bool) or not isinstance(
+        virtual_hours, (int, float)
     ):
+        raise ValueError("virtual hours must be positive and finite")
+    try:
+        virtual_hours = float(virtual_hours)
+    except OverflowError as error:
+        raise ValueError(
+            "virtual hours exceed the finite numeric range"
+        ) from error
+    if not math.isfinite(virtual_hours) or virtual_hours <= 0:
         raise ValueError("virtual hours must be positive and finite")
     if loops < MINIMUM_LOOPS and enforce_minimum:
         raise ValueError(
@@ -1474,16 +1879,25 @@ def run_reliability_stress(
     started = time.perf_counter()
     cpu_started = time.process_time()
     run_dir = Path(run_dir).resolve()
+    inputs = _run_inputs(run_dir)
+    source_artifacts = _freeze_offline_sources(output, inputs)
+    optional_modules_before = {
+        name
+        for name in sys.modules
+        if name.split(".")[0] in {"mujoco", "torch"}
+    }
     plan, historical = _validate_historical(output, run_dir)
     records, loop_summary = _run_loops(output, run_dir, loops, seed)
     virtual = run_virtual_reliability(
         virtual_hours,
         minimum_hours=DEFAULT_VIRTUAL_HOURS,
     )
-    virtual.update({
-        key: getattr(plan.identity, key)
-        for key in ("part_id", "serial", "cad_revision", "fixture_revision")
-    })
+    virtual.update(
+        {
+            key: getattr(plan.identity, key)
+            for key in ("part_id", "serial", "cad_revision", "fixture_revision")
+        }
+    )
     _write_json(output / "reliability_receipt.json", virtual)
     virtual_rules = _virtual_rule_checks(output, virtual)
     failures = []
@@ -1505,54 +1919,55 @@ def run_reliability_stress(
             )
     for case in virtual_rules["cases"]:
         if not case["match"]:
-            failures.append({
-                "scope": "virtual_fault_rule", "case": case["case"],
-                "expected": case["expected"], "observed": case["observed"],
-                "real_800h_pending": case["real_800h_pending"],
-            })
+            failures.append(
+                {
+                    "scope": "virtual_fault_rule",
+                    "case": case["case"],
+                    "expected": case["expected"],
+                    "observed": case["observed"],
+                    "fault_rule_matched": case["fault_rule_matched"],
+                    "expected_rejection_reasons": case[
+                        "expected_rejection_reasons"
+                    ],
+                    "evaluation_input_failures": case[
+                        "evaluation_input_failures"
+                    ],
+                    "real_800h_pending": case["real_800h_pending"],
+                }
+            )
     wall_seconds = time.perf_counter() - started
     cpu_seconds = time.process_time() - cpu_started
     peak_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    inputs = []
-    for name, source in (
-        ("motion_commands.json", "historical accepted commands"),
-        ("preflight.json", "historical whole-segment preflight"),
-        (
-            "estun_path_preview.csv",
-            "historical candidate preview; not executable",
-        ),
-        ("result.json", "historical simulation quality/disposition"),
-    ):
-        inputs.append(_input(run_dir / name, "historical_run", source))
-    inputs.extend(
-        [
-            _input(
-                project.ROOT / "assets/ier220_workstation/scene.xml",
-                "robot_model",
-                "ESTUN iER220-2700 imported scene XML for six-axis limits",
-            ),
-            _input(
-                REQUIREMENTS,
-                "requirements",
-                "enterprise requirement targets and pending status",
-            ),
-            _input(
-                project.SOURCE / "offline_controller.py",
-                "source",
-                "offline controller implementation",
-            ),
-            _input(
-                project.SOURCE / "reliability_stress.py",
-                "source",
-                "reliability harness implementation",
-            ),
-            _input(
-                project.SOURCE / "workstation_run.py",
-                "source",
-                "accepted motion command and preview export contract",
-            ),
-        ]
+    changed_inputs = []
+    for item in inputs:
+        path = Path(item["path"])
+        actual = sha256_file(path) if path.is_file() else None
+        if actual != item["sha256"]:
+            changed_inputs.append(
+                {
+                    "path": item["path"],
+                    "role": item["role"],
+                    "before_sha256": item["sha256"],
+                    "after_sha256": actual,
+                }
+            )
+    for item in changed_inputs:
+        if item["role"] != "reference_source":
+            failures.append({"code": "input_changed_during_run", **item})
+    imported_optional = sorted(
+        {
+            name.split(".")[0]
+            for name in sys.modules.keys() - optional_modules_before
+            if name.split(".")[0] in {"mujoco", "torch"}
+        }
     )
+    if imported_optional:
+        failures.append(
+            {
+                "code": "unexpected_heavy_import",
+                "modules": imported_optional,
+            }
+        )
     metrics = {
         "wall_seconds": wall_seconds,
         "cpu_seconds": cpu_seconds,
@@ -1602,7 +2017,11 @@ def run_reliability_stress(
         ),
         "scope": {
             "offline_only": True,
-            "mujoco_imported": False,
+            "mujoco_imported": "mujoco" in imported_optional,
+            "torch_imported": "torch" in imported_optional,
+            "preloaded_optional_modules": sorted(
+                {name.split(".")[0] for name in optional_modules_before}
+            ),
             "physical_socket_used": False,
             "external_message_used": False,
             "real_controller_used": False,
@@ -1629,6 +2048,19 @@ def run_reliability_stress(
             ]
         ],
         "inputs": inputs,
+        "source_consistency": {
+            "snapshot_at": "before historical replay and fault loops",
+            "changed_inputs": changed_inputs,
+            "offline_sources_unchanged": not any(
+                item["role"] == "source" for item in changed_inputs
+            ),
+            "scope": "current offline workload only; archived producer hashes remain historical",
+        },
+        "execution_environment": {
+            "python": sys.executable,
+            "OMP_NUM_THREADS": os.environ.get("OMP_NUM_THREADS"),
+            "MKL_NUM_THREADS": os.environ.get("MKL_NUM_THREADS"),
+        },
         "metrics": metrics,
         "failures": failures,
         "artifacts": [],
@@ -1642,6 +2074,7 @@ def run_reliability_stress(
             "sources_unchanged": historical["sources_unchanged"],
             "mock_cycle": historical["mock_cycle"],
             "reverified": historical["reverified"],
+            "historical_source_scope": historical["historical_source_scope"],
             "scope": historical["scope"],
         },
         "virtual_reliability": {
@@ -1663,6 +2096,11 @@ def run_reliability_stress(
             output / "historical_validation.json",
             "historical_validation",
             "read-only historical plan validation and mock execution",
+        ),
+        (
+            output / "source_inputs.json",
+            "source_inputs",
+            "start-of-workload inputs and separate current offline source snapshots",
         ),
         (
             output / "historical_mock/controller_receipt.json",
@@ -1722,6 +2160,7 @@ def run_reliability_stress(
     ]
     for path, role, source in artifact_specs:
         evidence["artifacts"].append(_artifact(path, output, role, source))
+    evidence["artifacts"].extend(source_artifacts)
     for case in virtual_rules["cases"]:
         evidence["artifacts"].extend(case["artifacts"])
     _write_json(output / "evidence.json", evidence)
@@ -1778,6 +2217,21 @@ def main(argv=None):
                 "output": str(output),
                 "schema": evidence["schema"],
                 "loops": evidence["metrics"]["loops"]["actual_cycles"],
+                "scenario_count": len(
+                    evidence["metrics"]["loops"]["scenario_counts"]
+                ),
+                "feedback_samples": evidence["metrics"]["loops"][
+                    "control_feedback_samples"
+                ],
+                "execution_complete_cycles": evidence["metrics"]["loops"][
+                    "execution_complete_cycles"
+                ],
+                "quality_fixture_complete_cycles": evidence["metrics"]["loops"][
+                    "quality_fixture_complete_cycles"
+                ],
+                "real_task_quality_complete_cycles": evidence["metrics"][
+                    "loops"
+                ]["real_task_quality_complete_cycles"],
                 "expected_rejections": evidence["metrics"]["loops"][
                     "expected_rejections"
                 ],
@@ -1786,6 +2240,10 @@ def main(argv=None):
                 ],
                 "unexpected_exceptions": evidence["metrics"]["loops"][
                     "unexpected_exceptions"
+                ],
+                "mismatches": evidence["metrics"]["loops"]["mismatches"],
+                "virtual_fault_rules": evidence["metrics"][
+                    "virtual_fault_rules"
                 ],
                 "virtual_hours": evidence["metrics"]["virtual"][
                     "virtual_hours"

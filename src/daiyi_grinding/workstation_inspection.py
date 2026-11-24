@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import time
 from dataclasses import replace
 
@@ -17,6 +18,7 @@ from .thin_reference import THIN_REFERENCE_CONFIG, detect_thin_reference
 from .workstation_evaluation import aggregate_views, evaluate_view
 from .workstation_model import CELL_CONFIG, write_json
 from .workstation_quality import Reinspection, surface_anchors
+from .workstation_regrind import additional_regrind_paths, regrind_paths
 from .workstation_reuse import filter_path
 
 BOUNDS = ([-0.29, -0.23, 0.04], [0.23, 0.23, 0.41])
@@ -24,6 +26,27 @@ CELL_DETECTOR_CONFIG = replace(
     THIN_REFERENCE_CONFIG, minimum_pixels=6, component_join_mm=2.0
 )
 NORMAL_HEIGHT_QUANTILE = 0.8
+REINSPECTION_DEPTH_FRAMES = 9
+MAX_REINSPECTION_DEPTH_FRAMES = 25
+
+
+def sample_depth(ideal, rng, sigma_m, dropout, frame_count, previous_frames=()):
+    """Acquire independent simulated depths at one fixed encoder pose."""
+    frames = list(previous_frames)
+    for _ in range(len(frames), frame_count):
+        frame = ideal + rng.normal(0, sigma_m, ideal.shape)
+        frame[rng.random(frame.shape) < dropout] = np.nan
+        frames.append(frame)
+    frames = np.stack(frames)
+    counts = np.isfinite(frames).sum(axis=0)
+    depth = np.full(ideal.shape, np.nan)
+    np.divide(
+        np.nansum(frames, axis=0),
+        counts,
+        out=depth,
+        where=counts > 0,
+    )
+    return depth, frames, counts
 
 
 def surface_normals(reference_xyz, camera):
@@ -316,8 +339,10 @@ class Inspection:
         learned_detector=None,
         hybrid=False,
         targets=None,
+        permitted_paths=None,
         whole_workpiece=True,
         targeted_rescan=False,
+        removal_rate_mm_s=None,
     ):
         self.sim, self.seed, self.roi = sim, seed, roi
         self.selected_ids = selected_ids
@@ -328,9 +353,11 @@ class Inspection:
         self.hybrid = hybrid
         self.whole_workpiece = whole_workpiece
         self.targeted_rescan = targeted_rescan
+        self.removal_rate_mm_s = removal_rate_mm_s
         self.reinspection = (
             Reinspection(targets) if targets is not None else None
         )
+        self.permitted_paths = permitted_paths or []
         self.geometric_review = []
         self.review_points = []
         self.protected_observations = []
@@ -506,11 +533,11 @@ class Inspection:
         stress = sim.case == "noisy"
         sensor = sim.sensor_prior or CELL_CONFIG["camera"]
         sigma = 0.00025 if stress else sensor["depth_noise_sigma_mm"] / 1000
-        depth = ideal + rng.normal(0, sigma, ideal.shape)
-        depth[
-            rng.random(depth.shape)
-            < (0.025 if stress else sensor["dropout_probability"])
-        ] = np.nan
+        dropout = 0.025 if stress else sensor["dropout_probability"]
+        frame_count = REINSPECTION_DEPTH_FRAMES if self.reinspection else 1
+        depth, depth_frames, sample_counts = sample_depth(
+            ideal, rng, sigma, dropout, frame_count
+        )
         selection_mask = None
         if self.first_projection is None:
             self.first_projection = (
@@ -525,23 +552,68 @@ class Inspection:
             selection_mask = surface_permission(
                 points, first_k, first_t, first_depth, permission
             )
-        detections, observation = detect_thin_reference(
-            rgb,
-            depth,
-            reference,
-            intrinsics,
-            camera,
-            inspection_bounds=BOUNDS,
-            roi=self.roi if index == 0 else None,
-            reference_object_mask=reference_mask,
-            selection_mask=selection_mask,
-            allow_sloped_surface=True,
-            config=CELL_DETECTOR_CONFIG,
+
+        def inspect_depth(depth, sample_counts, frame_count):
+            candidates, measured = detect_thin_reference(
+                rgb,
+                depth,
+                reference,
+                intrinsics,
+                camera,
+                inspection_bounds=BOUNDS,
+                roi=self.roi if index == 0 else None,
+                reference_object_mask=reference_mask,
+                selection_mask=selection_mask,
+                allow_sloped_surface=True,
+                config=CELL_DETECTOR_CONFIG,
+            )
+            measured["normals"] = surface_normals(
+                measured["reference_xyz"], camera
+            )
+            observed_counts = sample_counts[measured["surface"]]
+            if len(observed_counts):
+                # Noise is estimated on the averaged depth. Account for the
+                # least repeated valid pixel without smoothing across positions.
+                measured["noise_sigma_mm"] *= np.sqrt(
+                    frame_count / observed_counts.min()
+                )
+            measured["depth_sample_counts"] = sample_counts
+            measured["depth_frame_count"] = frame_count
+            measured["tool"] = sim.tool
+            return candidates, measured
+
+        detections, observation = inspect_depth(
+            depth, sample_counts, frame_count
         )
-        observation["normals"] = surface_normals(
-            observation["reference_xyz"], camera
+        acquisition_reason = (
+            "routine_reinspection"
+            if self.reinspection
+            else ("initial_observation")
         )
-        observation["tool"] = sim.tool
+        if self.reinspection is not None:
+            preview = copy.deepcopy(self.reinspection)
+            preview.observe(observation, index)
+            quality = preview.report(
+                CELL_CONFIG["planning"]["target_remaining_height_mm"]
+            )
+            if (
+                (quality["uncertain"] or quality["needs_rework"])
+                and not quality["overgrind"]
+                and not quality["invalid_observations"]
+            ):
+                frame_count = MAX_REINSPECTION_DEPTH_FRAMES
+                depth, depth_frames, sample_counts = sample_depth(
+                    ideal,
+                    rng,
+                    sigma,
+                    dropout,
+                    frame_count,
+                    previous_frames=depth_frames,
+                )
+                detections, observation = inspect_depth(
+                    depth, sample_counts, frame_count
+                )
+                acquisition_reason = "signed_interval_confirmation"
         geometric = detections
         if self.reinspection is not None:
             self.reinspection.observe(observation, index)
@@ -651,8 +723,16 @@ class Inspection:
             T_world_camera=sim.camera_info(frame="world")[1],
             encoder_angle_deg=float(np.rad2deg(sim.data.qpos[sim.table_qadr])),
             synthetic_noise_sigma_mm=float(sigma * 1000),
-            synthetic_dropout_probability=float(
-                0.025 if stress else sensor["dropout_probability"]
+            synthetic_dropout_probability=float(dropout),
+            depth_frame_count=frame_count,
+            depth_sample_counts=sample_counts.astype(np.uint8),
+            surface=observation["surface"],
+            selection=observation["selection"],
+            reference_object_mask=reference_mask,
+            **(
+                {"depth_frames": depth_frames.astype(np.float32)}
+                if frame_count > 1
+                else {}
             ),
         )
         if index == 0:
@@ -680,6 +760,8 @@ class Inspection:
                 "overlay": f"{name}_paths.png",
                 "point_count": int(observation["surface"].sum()),
                 "noise_sigma_mm": observation["noise_sigma_mm"],
+                "depth_frame_count": frame_count,
+                "depth_acquisition_reason": acquisition_reason,
                 "detections": len(detections),
                 "paths": len(local_paths),
                 "metrics": score,
@@ -795,7 +877,63 @@ class Inspection:
             quality["observational_release"] = (
                 quality["observational_release"] and not self.geometric_review
             )
+            local_paths, regrind = regrind_paths(
+                self.reinspection.targets,
+                quality,
+                self.permitted_paths,
+                start_segment_id=len(paths) + 1,
+                rate_mm_s=self.removal_rate_mm_s,
+            )
+            local_paths, blocked = exclude_review_footprint(
+                local_paths,
+                (
+                    np.concatenate(self.review_points)
+                    if self.review_points
+                    else np.empty((0, 3))
+                ),
+                self.sim.tool.footprint_radius,
+            )
+            additional = additional_regrind_paths(paths, local_paths)
+            paths.extend(additional)
+            for index, path in enumerate(paths):
+                path["segment_id"] = index + 1
+            self.review_path_guard["blocked_paths"].extend(blocked)
+            self.review_path_guard["blocked_paths_count"] += len(blocked)
+            quality["local_regrind"] = {
+                **regrind,
+                "review_blocked_paths": blocked,
+                "duplicate_trace_count": len(local_paths) - len(additional),
+                "candidate_path_count": len(additional),
+            }
             result["region_reinspection"] = quality
+            write_json(self.sim.output / f"{self.prefix}paths.json", paths)
+            if additional:
+                write_json(
+                    self.sim.output
+                    / "predictions"
+                    / f"revision_{self.revision:03d}.json",
+                    {
+                        "revision": self.revision,
+                        "paths": paths,
+                        "detections": self.summaries(),
+                        "views": self.views,
+                        "camera_fixed": True,
+                        "coordinate_frame": "workpiece_097",
+                        "source": "current signed anchor measurements and new fixed-camera detections",
+                        "truth_used_for_inference": False,
+                        "region_reinspection": quality,
+                    },
+                )
+                self.publish(
+                    self.sim.state(
+                        "inspect",
+                        prediction_revision=self.revision,
+                        view_count=len(self.views),
+                        path_count=len(paths),
+                    )
+                )
+                self.revision += 1
+                result["prediction_revision"] = self.revision - 1
         write_json(
             self.sim.output / f"{self.prefix}perception_metrics.json", result
         )

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 from pathlib import Path
 
@@ -126,7 +127,7 @@ class LearnedDetector:
         self.path = Path(checkpoint).resolve()
         self.sha256 = file_sha256(self.path)
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        torch.set_num_threads(4)
+        torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", "4")))
         package = torch.load(self.path, map_location="cpu", weights_only=True)
         if package.get("feature_version") != FEATURE_VERSION:
             raise ValueError(

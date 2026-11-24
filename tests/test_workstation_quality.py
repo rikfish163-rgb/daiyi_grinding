@@ -61,6 +61,75 @@ class ReinspectionTests(unittest.TestCase):
             ]
         )
 
+    def test_depth_axis_uncertainty_projects_onto_oblique_normal(self):
+        target = {
+            **self.target,
+            "normals": np.array([[0.8, 0, -0.6]]),
+        }
+        tracker = Reinspection([target])
+        tracker.observe(self.evidence(0.35), 0)
+        row = tracker.report(0.30)["regions"][0]
+        self.assertAlmostEqual(row["peak_mm"], 0.21)
+        np.testing.assert_allclose(row["anchor_bounds_mm"], [[0.18, 0.24]])
+
+    def test_repeat_mean_sigma_is_not_reduced_twice(self):
+        evidence = {
+            **self.evidence(0.24),
+            "noise_sigma_mm": 0.02,
+            "depth_sample_counts": np.full((2, 2), 9, dtype=int),
+            "depth_frame_count": 9,
+        }
+        tracker = Reinspection([self.target])
+        tracker.observe(evidence, 0)
+        row = tracker.report(0.30)["regions"][0]
+        np.testing.assert_allclose(row["anchor_bounds_mm"], [[0.20, 0.28]])
+        self.assertEqual(row["anchor_positive_observation_counts"], [9])
+        self.assertEqual(row["anchor_observation_counts"], [9])
+
+    def test_high_point_confirmation_uses_its_own_repeat_view(self):
+        tracker = Reinspection([self.target])
+        repeated = {
+            **self.evidence(0.05),
+            "noise_sigma_mm": 0.02,
+            "depth_sample_counts": np.full((2, 2), 9, dtype=int),
+            "depth_frame_count": 9,
+        }
+        tracker.observe(repeated, 0)
+        tracker.observe(repeated, 0)
+        tracker.observe(self.evidence(0.42), 1)
+        row = tracker.report(0.30)["regions"][0]
+        np.testing.assert_allclose(row["anchor_bounds_mm"], [[0.01, 0.47]])
+        np.testing.assert_allclose(row["anchor_positive_lower_mm"], [0.37])
+        np.testing.assert_allclose(row["anchor_positive_estimates_mm"], [0.42])
+        self.assertEqual(row["anchor_observation_counts"], [10])
+        self.assertEqual(row["anchor_positive_observation_counts"], [1])
+        self.assertEqual(row["anchor_positive_view_indices"], [1])
+
+        tracker.observe(self.evidence(-0.36), 2)
+        report = tracker.report(0.30)
+        row = report["regions"][0]
+        self.assertTrue(row["overgrind"])
+        self.assertFalse(report["automatic_regrind_allowed"])
+        self.assertAlmostEqual(row["lower_peak_mm"], -0.41)
+        self.assertAlmostEqual(row["anchor_positive_lower_mm"][0], 0.37)
+
+    def test_zero_raw_samples_do_not_supply_an_anchor_measurement(self):
+        tracker = Reinspection([self.target])
+        tracker.observe(
+            {
+                **self.evidence(0.05),
+                "depth_sample_counts": np.zeros((2, 2), dtype=int),
+                "depth_frame_count": 9,
+            },
+            0,
+        )
+        report = tracker.report(0.30)
+        row = report["regions"][0]
+        self.assertEqual(report["insufficient"], 1)
+        self.assertEqual(row["anchor_observation_counts"], [0])
+        self.assertEqual(row["anchor_positive_lower_mm"], [None])
+        self.assertFalse(report["observational_release"])
+
     def test_new_regions_keep_stable_ids_and_skip_existing_support(self):
         added = {**self.target, "points": np.array([[0.010, 0, 1]])}
         rows = add_targets([self.target], [self.target, added])

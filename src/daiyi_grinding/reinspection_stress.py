@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 from pathlib import Path
 
 import numpy as np
 
 from .project import RUNS
-from .team_data_reuse import sha256
-from .workstation_model import write_json
 from .workstation_quality import Reinspection
 
 OUTPUT_SCHEMA = "enterprise-reinspection-stress-v1"
@@ -24,6 +24,23 @@ SOURCE_FILES = (
     "tests/test_workstation_stopping.py",
     "docs/reinspection_stress_20261123.md",
 )
+
+
+def sha256(path):
+    """Hash a sensor input or source file without importing simulation code."""
+    with Path(path).open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def write_json(path, value):
+    """Publish finite JSON using only the standard library."""
+    path = Path(path)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(value, ensure_ascii=False, allow_nan=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(path)
 
 
 def _target():

@@ -1,7 +1,100 @@
 # 当前 ESTUN 工位与本机工程交接
 
+当前薄批缝主链已完成有限去除率下的实际局部回磨和整件观测放行：
+[回磨加工示例](runs/enterprise_offline_20261123/functional_resume/examples_success_thin_120483_finite_03/index.html)
+及其[原始运行结果](runs/enterprise_offline_20261123/functional_resume/thin_120483_finite_03/result.json)
+保存首次加工、重复量测确认、局部回磨和最终复检。
+首次加工后确认正超差，局部回磨去除重复覆盖并安排足够接触时长；
+最终注册区域及锚点均放行，仿真运动通过，完整仿真任务完成。
+控制器停在 `observed_regions_verified`，决策的 `truth_used_for_control` 为 `false`。
+
+| 阶段 | 实际结果 |
+| --- | ---: |
+| 首次候选 / 执行段 | 4 / 4 |
+| 回磨映射 / 去重后候选 / 执行段 | 4 / 3 / 3 |
+| 首轮 / 回磨后独立深度帧 | 150 / 54 |
+| 最终验证区域 / 注册区域 | 2 / 2 |
+| 最终观察锚点 / 注册锚点 | 145 / 145 |
+| 首轮 / 最终最大观测上界 mm | 0.435841 / 0.077113 |
+
+当前实现已通过两项 Ruff 检查及完整 `scripts/verify.sh`：
+368 项测试通过，mixed 入口为 14 条路径，normal 入口为 0 条路径。
+[规定验证记录](runs/enterprise_offline_20261123/functional_resume/verification_functional_01/required_checks.json)
+与[完整验证日志](runs/enterprise_offline_20261123/functional_resume/verification_functional_01/verify_after_rss.log)
+保存实际命令、退出码和结果。
+
+当前单件闭环入口是 `.venv/bin/python -m daiyi_grinding.workstation_run`。
+[离线加工与结果示例](README.md#离线加工与结果示例)提供带共享锁的完整命令、
+新输出目录与结果字段口径。接续加工时读取该运行的 `result.json`、
+`reinspections[].stopping_reason` 和 `reinspections[].regrind`，
+按当轮观测中的未放行原因推进量测、局部路径或对应运动。
+
+`workstation_inspection` 采集固定编码器位姿的独立深度帧，只对同一像素取有效均值。
+临时复检仍有不确定或正超差且没有过磨、非法输入时，保留已有帧再追加。
+跨视角有符号区间保留极值，平均深度的有效噪声投影到各 CAD 法向并构成 ±2σ 区间；
+不确定度模型保持未校准。
+
+`workstation_model.render` 的深度和分割标签使用像素中心射线，
+与相机标定及反投影的采样位置一致。`GeometricRemoval.upload` 将磨后余料网格
+同步到所有已建立的渲染 GL 上下文，使复检读取当前几何。
+
+| 采集或执行阶段 | 当前边界 |
+| --- | --- |
+| 初始观测 | 每视角 1 帧 |
+| 常规磨后量测 | 每视角 9 帧 |
+| 有符号区间确认 | 每视角有界追加至 25 帧 |
+| 总加工预算 | `--max-passes` 选择 1、2 或 3 轮，包括首次执行 |
+
+`rescan_XX_view_YY_observation.npz` 保存原始 `depth_frames`、
+`depth_sample_counts`、平均深度、正常 CAD 参考与相机变换；
+`rescan_XX_views.json` 记录实际帧数和追加原因。持续正超差的有符号下界超过
+上限且有独立采样支持时，`workstation_regrind` 在此前许可的 nominal CAD 轨迹上
+选局部子段，保留工具、ROI 与复核约束，再进入当轮完整运动规划。
+过磨、负边界风险和非法输入停止自动回磨；缺测、不确定及未映射高点保留待处置记录。
+设置 `--removal-rate-mm-s` 时，仿真去除量按实际工具足迹内的接触时间累计。
+局部回磨按当轮观测上界、原许可余量和名义率降低短段进给，并去除同轮重复轨迹；
+实际导出命令仍应用既有时间缩放。转运与未接触时长不能作为去除预算。
+该示例的名义率与 plant 率相同，尚未完成独立材料与工艺标定。
+
+`--camera-setup original` 保留原固定布局；
+`--camera-setup low_side_simulation` 选择独立低位固定相机。
+解析后的配置用于相机、外壳和标定变换，并记录到 `config.json`、`result.json`
+及 live 状态。默认配置文件保持原值。功能样例与限制见
+[功能加工说明](docs/functional_grinding_20261123.md)。
+
+[低位毛刺加工页](runs/enterprise_offline_20261123/functional_resume/examples_partial_burr_2026112397_low_camera_02/index.html)
+保留补见外壁后的实际加工与复检。单姿态和分段规划共用法向退让，
+外壁段已完成整段运动及观测放行；剩余顶面 `review` 仍有正超差。
+[断续目标准入报告](runs/enterprise_offline_20261123/functional_resume/perception_01/local_trace_admission_01/report.md)
+保留局部 CAD 轨迹及夹爪与砂带结构的实体拒绝。
+断续目标的新加工前量测与历史独立正下界分别记录，本次没有可执行磨削命令，
+后续从夹持或接触布局的具体改动继续准入。
+
+| 扩展工况 | 当前结果 |
+| --- | --- |
+| 低位毛刺 | 实际 2/2 段、零非预期接触；磨后 150 帧；区域 3/4 放行，整件 `partial` |
+| 顶面 `review` | 观测上界 2.971267 mm；许可路径上的回磨候选为 0 |
+| 共用法向退让 | 60 mm；端点、完整进出及连续曲线均按原条件检查 |
+
+运行结束后，用已保存结果导出可直接打开的加工示例：
+
+```bash
+.venv/bin/python -m daiyi_grinding.processing_example \
+  runs/enterprise_offline_20261123/functional_resume/thin_example_new \
+  --output runs/enterprise_offline_20261123/functional_resume/example_new
+```
+
+`index.html` 嵌入同视角前后图、各轮路径、运动、量测与回磨处置，
+`summary.json` 保存分层结果。`motion_gate_passed` 表示仿真运动通过；
+`observational_release` 表示当轮整件观测放行；`geometric_goal_complete`
+是生成余料与识别覆盖的事后评价；两项质量条件共同决定 `goal_complete`。
+合成真值用于事后评价，控制器依据观测、运动门、路径和预算继续或停止。
+企业实物验收使用独立现场记录。
+已保存的[重复量测失败比较页](runs/enterprise_offline_20261123/functional_resume/examples_failure_fixed_02/index.html)
+来自 `thin_120483_fixed_02`，其磨后区域区间仍跨越上限，任务保留待复核状态。
+
 2026-11-23 新增[企业对标离线经验库](docs/enterprise_offline_20261123.md)
-和[统一运行器说明](docs/enterprise_offline_runner_20261123.md)。
+和[统一运行器说明](docs/enterprise_offline_20261123.md#复现与证据读取)。
 运行入口为 `daiyi-enterprise-offline`，八类套件分别验证场景、标定、识别、
 规划、工艺、复检、可靠性及验收判据；`--include-main-chain` 追加当前
 ESTUN 的薄批缝执行和正常无动作对照。新运行目录不得覆盖历史证据。

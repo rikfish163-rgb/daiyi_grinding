@@ -11,6 +11,7 @@ import argparse
 import csv
 import fcntl
 import hashlib
+import io
 import json
 import math
 import os
@@ -337,8 +338,9 @@ def execute_task(
     """Run one process group and collect per-child kernel resource usage.
 
     ``wait4`` returns this child's high-water RSS, not the parent's cumulative
-    RUSAGE_CHILDREN statistic. Linux reports ru_maxrss in KiB. File-backed
-    stdout/stderr avoid pipe deadlocks and retain output after interruptions.
+    RUSAGE_CHILDREN statistic. Linux reports ru_maxrss in KiB and retains
+    resident launch memory across fork/exec. File-backed stdout/stderr avoid
+    pipe deadlocks and retain output after interruptions.
     """
     receipt_directory.mkdir(parents=True, exist_ok=False)
     stdout_path = receipt_directory / "stdout.log"
@@ -366,7 +368,7 @@ def execute_task(
         "failures": [],
     }
     resource = {
-        "method": "os.wait4(child_pid), Linux ru_maxrss in KiB",
+        "method": "os.wait4(child_pid), Linux process-lifetime ru_maxrss in KiB",
         "peak_rss_kib": None,
         "user_cpu_seconds": None,
         "system_cpu_seconds": None,
@@ -597,11 +599,13 @@ class EvidenceCheck:
     task: str
     output: Path
     evidence: dict = field(default_factory=dict)
+    evidence_source: dict | None = None
     references: list[dict] = field(default_factory=list)
     errors: list[dict] = field(default_factory=list)
     cases: list[dict] = field(default_factory=list)
     dispositions: list[dict] = field(default_factory=list)
     case_sources: dict[str, dict] = field(default_factory=dict)
+    root: Path = ROOT
 
     @property
     def passed(self):
@@ -621,14 +625,104 @@ class EvidenceCheck:
         return path
 
     def artifact(self, name):
-        path = self.artifact_path(name)
-        if path.suffix == ".jsonl":
+        text = self.artifact_bytes(name).decode("utf-8")
+        if Path(name).suffix == ".jsonl":
             return [
-                strict_json(line)
-                for line in path.read_text(encoding="utf-8").splitlines()
-                if line.strip()
+                strict_json(line) for line in text.splitlines() if line.strip()
             ]
-        return read_json(path)
+        return strict_json(text)
+
+    def artifact_bytes(self, name):
+        """Parse and hash the same bytes, even if a verified file later changes."""
+        path = self.artifact_path(name)
+        return self.verified_bytes(path, section="artifacts")
+
+    def verified_bytes(self, path, *, section=None):
+        path = Path(path).resolve()
+        reference = next(
+            (
+                row
+                for row in self.references
+                if row["path"] == str(path)
+                and (section is None or row["section"] == section)
+                and row["status"] == "verified"
+            ),
+            None,
+        )
+        _require(
+            reference is not None, f"Required file is not verified: {path}"
+        )
+        content = path.read_bytes()
+        if hashlib.sha256(content).hexdigest() != reference["actual_sha256"]:
+            raise EvidenceError(
+                "hash_mismatch",
+                f"Verified artifact changed before parsing: {path}",
+            )
+        return content
+
+    def verify_references(self, value, section, *, field_name=None, base=None):
+        """Verify all declared files, including explicit nested manifest records."""
+        references = list(
+            _references(
+                value, field_name or section, artifact=section == "artifacts"
+            )
+        )
+        for reference in references:
+            ledger = {
+                "section": section,
+                "field": reference["field"],
+                "declared_path": reference["path"],
+                "sha256": reference["sha256"],
+                "role": reference["record"].get("role"),
+                "path": None,
+                "status": "failed",
+            }
+            try:
+                path = _resolve_reference(
+                    reference["path"], base or self.output, self.root
+                )
+                ledger["path"] = str(path)
+                if path == self.output / "evidence.json":
+                    raise EvidenceError(
+                        "self_evidence_hash", "Evidence cannot hash itself"
+                    )
+                if section == "inputs" and _expected_missing_input(
+                    self, reference, path, self.root
+                ):
+                    ledger["status"] = "expected_missing_rejected"
+                else:
+                    if not path.is_file():
+                        raise EvidenceError(
+                            "missing_file", f"Expected a file: {path}"
+                        )
+                    if not _is_hash(reference["sha256"]):
+                        raise EvidenceError(
+                            "missing_or_invalid_hash", str(path)
+                        )
+                    actual = sha256(path)
+                    ledger["actual_sha256"] = actual
+                    if actual != reference["sha256"].lower():
+                        raise EvidenceError(
+                            "hash_mismatch", f"Hash changed: {path}"
+                        )
+                    ledger["status"] = "verified"
+            except (
+                OSError,
+                ValueError,
+                KeyError,
+                TypeError,
+                AttributeError,
+                IndexError,
+            ) as error:
+                self.errors.append(
+                    _error(
+                        getattr(error, "code", "reference_error"),
+                        error,
+                        field=reference["field"],
+                    )
+                )
+            self.references.append(ledger)
+        return references
 
     def case(self, name, outcome, details, source, *, data_kind, role):
         if source not in self.case_sources:
@@ -642,15 +736,19 @@ class EvidenceCheck:
                 ),
                 None,
             )
-            self.case_sources[source] = (
-                {
+            if (
+                path == (self.output / "evidence.json").resolve()
+                and self.evidence_source
+            ):
+                self.case_sources[source] = self.evidence_source
+            elif verified:
+                self.case_sources[source] = {
                     "path": str(path),
                     "sha256": verified["actual_sha256"],
                     "bytes": path.stat().st_size,
                 }
-                if verified
-                else file_reference(path)
-            )
+            else:
+                self.case_sources[source] = file_reference(path)
         self.cases.append(
             {
                 "case_id": str(name),
@@ -663,19 +761,39 @@ class EvidenceCheck:
         )
 
 
-def _expected_missing_input(task, output, reference, path) -> bool:
+def _expected_missing_input(check, reference, path, root) -> bool:
     """Admit only a reproduced, explicitly missing synthetic feedback case."""
     if (
-        task != "enterprise_acceptance"
+        check.task != "enterprise_acceptance"
         or reference["record"].get("integrity") != "missing"
         or reference["sha256"] is not None
         or path.exists()
     ):
         return False
-    case_root = output / "synthetic_suite/controller_feedback_missing"
+    case_root = check.output / "synthetic_suite/controller_feedback_missing"
     if not path.is_relative_to(case_root.resolve()):
         return False
-    suite = read_json(output / "synthetic_suite/suite_summary.json")
+    suite_path = check.output / "synthetic_suite/suite_summary.json"
+    digest = next(
+        (
+            row["sha256"]
+            for row in _references(
+                check.evidence["artifacts"], "artifacts", artifact=True
+            )
+            if _resolve_reference(row["path"], check.output, root) == suite_path
+        ),
+        None,
+    )
+    content = suite_path.read_bytes()
+    if (
+        not _is_hash(digest)
+        or hashlib.sha256(content).hexdigest() != digest.lower()
+    ):
+        raise EvidenceError(
+            "hash_mismatch",
+            "Expected missing feedback lacks a verified suite result",
+        )
+    suite = strict_json(content.decode("utf-8"))
     case = next(
         (
             row
@@ -700,12 +818,18 @@ def _expected_missing_input(task, output, reference, path) -> bool:
 def validate_evidence(task: Task, *, root=ROOT) -> EvidenceCheck:
     """Verify strict JSON, every declared file and the task's actual contract."""
     root, output = Path(root).resolve(), task.output.resolve()
-    check = EvidenceCheck(task.name, output)
+    check = EvidenceCheck(task.name, output, root=root)
     try:
         evidence_path = output / "evidence.json"
         if not evidence_path.is_file():
             raise EvidenceError("missing_evidence", str(evidence_path))
-        evidence = read_json(evidence_path)
+        content = evidence_path.read_bytes()
+        check.evidence_source = {
+            "path": str(evidence_path),
+            "sha256": hashlib.sha256(content).hexdigest(),
+            "bytes": len(content),
+        }
+        evidence = strict_json(content.decode("utf-8"))
         _require(isinstance(evidence, dict), "Evidence must be a JSON object")
         missing = REQUIRED_EVIDENCE - evidence.keys()
         _require(not missing, f"Missing evidence fields: {sorted(missing)}")
@@ -731,65 +855,14 @@ def validate_evidence(task: Task, *, root=ROOT) -> EvidenceCheck:
         check.evidence = evidence
         check.errors.extend(_command_errors(evidence["commands"]))
         for section in ("inputs", "artifacts"):
-            references = list(
-                _references(
-                    evidence[section], section, artifact=section == "artifacts"
-                )
-            )
+            references = check.verify_references(evidence[section], section)
             _require(references, f"No file references in {section}")
-            for reference in references:
-                ledger = {
-                    "section": section,
-                    "field": reference["field"],
-                    "declared_path": reference["path"],
-                    "sha256": reference["sha256"],
-                    "path": None,
-                    "status": "failed",
-                }
-                try:
-                    path = _resolve_reference(reference["path"], output, root)
-                    ledger["path"] = str(path)
-                    if path == evidence_path:
-                        raise EvidenceError(
-                            "self_evidence_hash", "Evidence cannot hash itself"
-                        )
-                    if section == "inputs" and _expected_missing_input(
-                        task.name, output, reference, path
-                    ):
-                        ledger["status"] = "expected_missing_rejected"
-                    else:
-                        if not path.is_file():
-                            raise EvidenceError(
-                                "missing_file", f"Expected a file: {path}"
-                            )
-                        if not _is_hash(reference["sha256"]):
-                            raise EvidenceError(
-                                "missing_or_invalid_hash", str(path)
-                            )
-                        actual = sha256(path)
-                        ledger["actual_sha256"] = actual
-                        if actual != reference["sha256"].lower():
-                            raise EvidenceError(
-                                "hash_mismatch", f"Hash changed: {path}"
-                            )
-                        ledger["status"] = "verified"
-                except (
-                    OSError,
-                    ValueError,
-                    KeyError,
-                    TypeError,
-                    AttributeError,
-                    IndexError,
-                ) as error:
-                    check.errors.append(
-                        _error(
-                            getattr(error, "code", "reference_error"),
-                            error,
-                            field=reference["field"],
-                        )
-                    )
-                check.references.append(ledger)
         _validate_contract(task, check)
+        if sha256(evidence_path) != check.evidence_source["sha256"]:
+            raise EvidenceError(
+                "hash_mismatch",
+                f"Evidence changed during validation: {evidence_path}",
+            )
     except (
         OSError,
         ValueError,
@@ -802,6 +875,149 @@ def validate_evidence(task: Task, *, root=ROOT) -> EvidenceCheck:
             _error(getattr(error, "code", "invalid_evidence"), error)
         )
     return check
+
+
+def _acceptance_archive_reports(check):
+    """Reconcile archive denominators with source-backed assessment facts."""
+    groups = check.evidence["metrics"].get("archive_groups", {})
+    _require(
+        isinstance(groups, dict), "Acceptance archive_groups must be an object"
+    )
+    reports, counts = {}, {}
+    for reference in check.references:
+        path = Path(reference["path"]) if reference["path"] else None
+        if not (
+            reference["section"] == "artifacts"
+            and reference["status"] == "verified"
+            and path.suffix == ".json"
+            and path.is_relative_to(check.output / "current")
+        ):
+            continue
+        relative = str(path.relative_to(check.output))
+        report = check.artifact(relative)
+        matrix = report.get("matrix")
+        _require(
+            isinstance(matrix, list)
+            and all(isinstance(row, dict) for row in matrix)
+            and report.get("enterprise_acceptance_passed") is False
+            and isinstance(report.get("failures"), list),
+            f"Acceptance archive assessment lacks explicit results: {relative}",
+        )
+        rows = {row.get("id"): row for row in matrix}
+        _require(
+            len(rows) == len(matrix)
+            and {"motion_tracking", "simulation_cycle"} <= rows.keys()
+            and all(
+                rows[key].get("status") in {"pass", "fail", "unknown"}
+                for key in ("motion_tracking", "simulation_cycle")
+            ),
+            f"Acceptance archive assessment lacks motion/cycle results: {relative}",
+        )
+        group = path.parent.name
+        prefix, separator, case_name = path.stem.partition("_")
+        _require(
+            separator and prefix.isdigit() and case_name,
+            f"Acceptance archive artifact has an unrecognized name: {relative}",
+        )
+        name = f"{group}/{case_name}"
+        _require(
+            name not in reports,
+            "Acceptance archive assessment IDs are not unique",
+        )
+        reports[name] = report
+        motion = rows["motion_tracking"]
+        cycle = rows["simulation_cycle"]
+        measured = cycle.get("measured") or {}
+        fact = report.get("execution_fact")
+        if fact is None:
+            # Archived reports before the fact/feedback split remain readable.
+            fact = {
+                "robot_executed": bool(
+                    (motion.get("measured") or {}).get("executed_passes")
+                ),
+                "feedback_status": "unknown",
+                "scope": "legacy assessment; feedback disposition not separated",
+            }
+        _require(
+            isinstance(fact, dict)
+            and (
+                type(fact.get("robot_executed")) is bool
+                or fact.get("robot_executed") is None
+            )
+            and fact.get("feedback_status")
+            in {"accepted", "rejected", "not_executed", "unknown"},
+            f"Acceptance archive execution fact is invalid: {relative}",
+        )
+        declared = fact.get("robot_executed")
+        facts = counts.setdefault(group, Counter())
+        facts["assessed_runs"] += 1
+        facts["executed_runs"] += declared is True
+        facts["execution_unknown_runs"] += declared is None
+        facts["executed_feedback_accepted"] += (
+            declared is True and fact["feedback_status"] == "accepted"
+        )
+        facts["executed_feedback_rejected"] += (
+            declared is True and fact["feedback_status"] == "rejected"
+        )
+        facts["motion_gate_passes"] += (
+            declared is True and motion.get("status") == "pass"
+        )
+        facts["normal_no_action_controls"] += (
+            cycle.get("status") == "pass"
+            and measured.get("normal_no_action_control") is True
+        )
+        facts["nontrivial_complete_cycles"] += (
+            cycle.get("status") == "pass"
+            and measured.get("nontrivial_grinding_complete") is True
+        )
+        check.case(
+            relative,
+            "observed_quality_hold"
+            if report["failures"]
+            else "assessment_completed",
+            {
+                "enterprise_acceptance_passed": False,
+                "execution_fact": fact,
+                "motion_tracking_status": motion.get("status"),
+                "simulation_cycle_status": cycle.get("status"),
+                "failures": report["failures"],
+            },
+            relative,
+            data_kind="archived_simulation_assessment",
+            role="known_regression",
+        )
+    _require(
+        set(groups) == set(counts),
+        "Acceptance archive groups lack their actual verified assessments",
+    )
+    for group, summary in groups.items():
+        _require(
+            isinstance(summary, dict),
+            f"Acceptance group {group} must be an object",
+        )
+        for key in (
+            "assessed_runs",
+            "normal_no_action_controls",
+            "nontrivial_complete_cycles",
+            "executed_runs",
+            "motion_gate_passes",
+            "real_enterprise_acceptances",
+        ):
+            _require(
+                _count(summary.get(key), key) == counts[group][key],
+                f"Acceptance {group}.{key} disagrees with actual assessment facts",
+            )
+        for key in (
+            "executed_feedback_accepted",
+            "executed_feedback_rejected",
+            "execution_unknown_runs",
+        ):
+            if key in summary:
+                _require(
+                    _count(summary[key], key) == counts[group][key],
+                    f"Acceptance {group}.{key} disagrees with feedback dispositions",
+                )
+    return reports
 
 
 def _validate_acceptance(check):
@@ -828,7 +1044,15 @@ def _validate_acceptance(check):
     known = set()
     for row in cases:
         _require(
-            row.get("expected_decision_reproduced") is True
+            isinstance(row.get("case"), str)
+            and bool(row["case"])
+            and isinstance(row.get("expected"), dict)
+            and bool(row["expected"])
+            and all(
+                value in {"pass", "fail", "unknown"}
+                for value in row["expected"].values()
+            )
+            and row.get("expected_decision_reproduced") is True
             and row.get("expected") == row.get("observed")
             and row.get("all_enterprise_targets_unknown") is True,
             f"Acceptance expectation failed: {row.get('case')}",
@@ -837,6 +1061,21 @@ def _validate_acceptance(check):
         rejected = any(
             status == "fail" for status in row.get("observed", {}).values()
         )
+        assessment = {}
+        if row.get("assessment"):
+            declared = Path(row["assessment"])
+            path = (
+                declared if declared.is_absolute() else check.output / declared
+            ).resolve()
+            _require(
+                path.is_relative_to(check.output),
+                "Acceptance synthetic assessment must be in its independent output",
+            )
+            assessment = check.artifact(str(path.relative_to(check.output)))
+            _require(
+                assessment.get("enterprise_acceptance_passed") is False,
+                "Acceptance synthetic assessment must retain enterprise pending",
+            )
         check.case(
             row["case"],
             "expected_rejection" if rejected else "expected_decision",
@@ -844,12 +1083,15 @@ def _validate_acceptance(check):
                 "expected": row["expected"],
                 "observed": row["observed"],
                 "enterprise_targets_unknown": True,
+                "execution_fact": assessment.get("execution_fact"),
+                "failures": row.get("failures", []),
             },
             "synthetic_suite/suite_summary.json",
             data_kind="synthetic_contract",
             role="development",
         )
     _require(len(known) == total, "Acceptance case IDs are not unique")
+    reports = _acceptance_archive_reports(check)
     _require(isinstance(failures, list), "Acceptance failures must be a list")
     for failure in failures:
         assessment = failure.get("assessment", "")
@@ -859,6 +1101,12 @@ def _validate_acceptance(check):
             failure.get("code") == "criterion_not_met"
             and failure.get("scope")
             == "measured offline criterion; real status is evaluated separately"
+            and {
+                key: value
+                for key, value in failure.items()
+                if key != "assessment"
+            }
+            in reports.get(assessment, {}).get("failures", [])
         ):
             outcome = "observed_quality_hold"
         elif assessment == "site_manifest_00" and any(
@@ -867,36 +1115,23 @@ def _validate_acceptance(check):
             and Path(reference["path"]).name == "site_acceptance.example.json"
             for reference in check.references
         ):
+            report = check.artifact("site_manifest_00.json")
+            _require(
+                report.get("enterprise_acceptance_passed") is False
+                and {
+                    key: value
+                    for key, value in failure.items()
+                    if key != "assessment"
+                }
+                in report.get("failures", []),
+                "Acceptance pending site input lacks its verified rejection",
+            )
             outcome = "pending_real"
         else:
             raise EvidenceError(
                 "unexpected_acceptance_failure", json.dumps(failure)
             )
         check.dispositions.append({"outcome": outcome, "details": failure})
-    for reference in check.references:
-        path = Path(reference["path"]) if reference["path"] else None
-        if (
-            reference["section"] == "artifacts"
-            and reference["status"] == "verified"
-            and path.suffix == ".json"
-            and path.is_relative_to(check.output / "current")
-        ):
-            report = read_json(path)
-            check.case(
-                str(path.relative_to(check.output)),
-                "observed_quality_hold"
-                if report.get("failures")
-                else "assessment_completed",
-                {
-                    "enterprise_acceptance_passed": report.get(
-                        "enterprise_acceptance_passed"
-                    ),
-                    "failures": report.get("failures", []),
-                },
-                str(path.relative_to(check.output)),
-                data_kind="archived_simulation_assessment",
-                role="known_regression",
-            )
     _require(
         metrics.get("virtual_800h_is_real_800h") is False
         and metrics.get("real_enterprise_acceptances") == 0,
@@ -958,12 +1193,17 @@ def _validate_registration(check):
         )
     _require(
         isinstance(check.evidence["failures"], list)
+        and len(check.evidence["failures"]) == 3
         and all(
             row.get("expected") is True
             and row.get("status") == "rejected_expected"
             for row in check.evidence["failures"]
+        )
+        and sorted(row.get("case") for row in check.evidence["failures"])
+        == sorted(
+            row["case"] for row in cases if row["status"] == "rejected_expected"
         ),
-        "Registration contains an unexpected failure",
+        "Registration rejection catalog disagrees with its three actual cases",
     )
     budget = check.artifact("error_budget.json")
     _require(
@@ -1308,20 +1548,131 @@ def _validate_reliability(check):
     )
     cases = check.artifact("loops/index.jsonl")
     _require(
-        len(cases) == cycles and all(row.get("match") is True for row in cases),
+        isinstance(cases, list)
+        and len(cases) == cycles
+        and all(
+            isinstance(row, dict)
+            and row.get("match") is True
+            and row.get("unexpected_exception") is False
+            for row in cases
+        ),
         "Reliability aggregate disagrees with explicit loop records",
     )
-    for index, row in enumerate(cases):
+    names, facts, scenarios = set(), Counter(), Counter()
+    for row in cases:
+        name = _count(row.get("loop"), "loop")
+        _require(name not in names, "Reliability loop IDs must be unique")
+        names.add(name)
+        expectation = row.get("expected")
+        observed, state = row.get("observed"), row.get("state")
+        executed, quality = (
+            row.get("execution_complete"),
+            row.get("task_quality_complete"),
+        )
+        _require(
+            type(executed) is bool and type(quality) is bool,
+            f"Reliability loop {name} lacks explicit completion flags",
+        )
+        if expectation == "reject":
+            _require(
+                observed == "reject"
+                and isinstance(row.get("expected_code"), str)
+                and bool(row["expected_code"])
+                and row.get("code") == row["expected_code"]
+                and state in {None, "HELD"}
+                and not executed
+                and not quality,
+                f"Reliability loop {name} did not reproduce its rejection",
+            )
+            outcome = "expected_rejection"
+        elif expectation == "cancel":
+            _require(
+                observed == "cancelled"
+                and state == "CANCELLED"
+                and not executed
+                and not quality,
+                f"Reliability loop {name} did not stop on cancellation",
+            )
+            outcome = "expected_interruption"
+        elif expectation in {"task_complete", "execution_complete"}:
+            _require(
+                observed == "finished"
+                and state == "FINISHED"
+                and executed
+                and quality == (expectation == "task_complete"),
+                f"Reliability loop {name} contradicts its completion expectation",
+            )
+            outcome = (
+                "mock_quality_fixture_complete"
+                if quality
+                else "mock_execution_quality_pending"
+            )
+        else:
+            raise EvidenceError(
+                "suite_contract",
+                f"Unknown reliability expectation: {expectation}",
+            )
+        scenario = row.get("scenario")
+        _require(
+            isinstance(scenario, str) and scenario.strip(),
+            f"Reliability loop {name} lacks a scenario",
+        )
+        scenarios[scenario] += 1
+        rejected = expectation == "reject"
+        facts["expected_rejections"] += rejected
+        facts["observed_expected_rejections"] += rejected
+        facts["expected_accepts"] += not rejected
+        facts["observed_expected_accepts"] += not rejected
+        facts["execution_complete_cycles"] += executed
+        facts["task_quality_complete_cycles"] += quality
+        for key, metric in (
+            ("feedback_samples", "control_feedback_samples"),
+            ("covered_command_count", "covered_command_count"),
+        ):
+            if key in row:
+                facts[metric] += _count(row[key], key)
         check.case(
-            row.get("loop_id", index),
-            "expected_rejection"
-            if not row.get("accepted", False)
-            else "mock_execution",
-            row,
+            name,
+            outcome,
+            {
+                key: value
+                for key, value in row.items()
+                if key not in {"inputs", "artifacts"}
+            },
             "loops/index.jsonl",
             data_kind="mock_controller",
             role="development",
         )
+    for key in (
+        "expected_rejections",
+        "observed_expected_rejections",
+        "expected_accepts",
+        "observed_expected_accepts",
+        "execution_complete_cycles",
+        "task_quality_complete_cycles",
+    ):
+        _require(
+            _count(loops.get(key), key) == facts[key],
+            f"Reliability {key} disagrees with actual loops",
+        )
+    for key, actual in (
+        ("sample_count", cycles),
+        ("control_feedback_samples", facts["control_feedback_samples"]),
+        ("covered_command_count", facts["covered_command_count"]),
+        (
+            "quality_fixture_complete_cycles",
+            facts["task_quality_complete_cycles"],
+        ),
+        ("real_task_quality_complete_cycles", 0),
+        ("expected_process_exception_cycles", scenarios["process_exception"]),
+        ("scenario_counts", dict(scenarios)),
+        ("scenario_matched", dict(scenarios)),
+    ):
+        if key in loops:
+            _require(
+                loops[key] == actual,
+                f"Reliability {key} disagrees with actual mock evidence",
+            )
 
 
 def _validate_perception(check):
@@ -1355,9 +1706,30 @@ def _validate_perception(check):
                 == {"geometric", "learned", "hybrid"},
                 f"Perception lacks actual backend results: {name}/{index}",
             )
+            gaps = {}
+            for backend, result in row["results"].items():
+                matching = result.get("object_matching", {})
+                visible = _count(
+                    matching.get("visible_objects"),
+                    f"{backend}.visible_objects",
+                )
+                matched = _count(
+                    matching.get("matched_objects"),
+                    f"{backend}.matched_objects",
+                )
+                _require(
+                    matched <= visible,
+                    f"Perception {backend} matches exceed visible instances",
+                )
+                if visible > matched:
+                    gaps[backend] = {
+                        "visible_instance_observations": visible,
+                        "correct_kind_matches": matched,
+                        "unmatched_or_wrong_kind": visible - matched,
+                    }
             check.case(
                 f"{name}/{row.get('case')}/{row.get('view')}/{index}",
-                "diagnostic_observation",
+                "diagnostic_gap" if gaps else "diagnostic_observation",
                 {
                     "case": row.get("case"),
                     "view": row.get("view"),
@@ -1370,6 +1742,8 @@ def _validate_perception(check):
                     "paired_observation_hashes": row.get(
                         "paired_observation_hashes"
                     ),
+                    "correct_kind_instance_gaps": gaps,
+                    "count_scope": "instance observations in archived views; not independent parts",
                     "results": {
                         backend: {
                             "binary": result.get("binary"),
@@ -1413,7 +1787,9 @@ def _main_chain_result(check):
     expected_seed = 120483 if expected_case == "thin" else 9904
     _require(
         result.get("case") == expected_case
-        and result.get("seed") == expected_seed,
+        and result.get("seed") == expected_seed
+        and result.get("controller_stopping", {}).get("truth_used_for_control")
+        is False,
         "Main-chain identity differs from the requested paired case",
     )
     for key, expected in (
@@ -1489,8 +1865,9 @@ def _main_chain_result(check):
             ),
             "Main-chain declared motion gate disagrees with actual tracking",
         )
-        with check.artifact_path("pass_00_execution.csv").open(
-            encoding="utf-8", newline=""
+        with io.StringIO(
+            check.artifact_bytes("pass_00_execution.csv").decode("utf-8"),
+            newline="",
         ) as stream:
             reader = csv.DictReader(stream)
             columns = [
@@ -1748,7 +2125,7 @@ def _experiences(checks, task_results):
     receipts = {row["task"]: row for row in task_results}
     for check in checks:
         evidence_path = check.output / "evidence.json"
-        source = (
+        source = check.evidence_source or (
             file_reference(evidence_path) if evidence_path.is_file() else None
         )
         input_scope = {
@@ -1889,13 +2266,18 @@ def _catalog(task_results, experiences):
             for failure in row["failures"]
         ],
         "expected_rejections": [],
+        "expected_interruptions": [],
         "observed_quality_holds": [],
+        "perception_diagnostic_gaps": [],
         "known_false_releases": [],
         "pending_real": [],
     }
     categories = {
         "expected_rejection": "expected_rejections",
+        "expected_interruption": "expected_interruptions",
         "observed_quality_hold": "observed_quality_holds",
+        "mock_execution_quality_pending": "observed_quality_holds",
+        "diagnostic_gap": "perception_diagnostic_gaps",
         "known_false_release": "known_false_releases",
         "pending_real": "pending_real",
     }
@@ -1960,7 +2342,13 @@ def _next_experiments(checks):
         ),
     )
     sources = [
-        {"task": check.task, **file_reference(check.output / "evidence.json")}
+        {
+            "task": check.task,
+            **(
+                check.evidence_source
+                or file_reference(check.output / "evidence.json")
+            ),
+        }
         for check in checks
         if (check.output / "evidence.json").is_file()
     ]
@@ -2004,7 +2392,8 @@ def _write_report(output, summary, experiences):
         [
             "",
             "每任务真实 argv、环境、起止、日志和资源均见 `receipts/`。",
-            "峰值来自独立子进程的 `os.wait4`，单位为 Linux KiB。",
+            "峰值来自独立子进程的 `os.wait4`，单位为 Linux KiB，"
+            "包含 fork/exec 前的启动内存及已等待的后代进程峰值。",
             "process CLI 的受限输出根目录由实际回执中的 output 字段注明。",
             "",
             "## 已见结果与范围",
@@ -2140,7 +2529,10 @@ def run(
                     row["outcome"]
                     in {
                         "expected_rejection",
+                        "expected_interruption",
                         "observed_quality_hold",
+                        "mock_execution_quality_pending",
+                        "diagnostic_gap",
                         "known_false_release",
                     }
                     for row in [*check.cases, *check.dispositions]
@@ -2151,9 +2543,12 @@ def run(
                 ),
                 "metrics": check.evidence.get("metrics", {}),
                 "real_data_pending": check.evidence.get("real_data_pending"),
-                "source_evidence": file_reference(evidence_path)
-                if evidence_path.is_file()
-                else None,
+                "source_evidence": check.evidence_source
+                or (
+                    file_reference(evidence_path)
+                    if evidence_path.is_file()
+                    else None
+                ),
                 "receipt": file_reference(receipt_directory / "receipt.json"),
                 "integrity": file_reference(
                     receipt_directory / "integrity.json"
@@ -2167,7 +2562,18 @@ def run(
                 f"{results[-1]['software_contract_passed']}, "
                 f"exit={receipt['exit_code']}, failures={len(failures)}"
             )
-    after = snapshot_sources(root)
+    try:
+        after = snapshot_sources(root)
+    except (OSError, EvidenceError) as error:
+        after = {
+            "root": str(root),
+            "files": {},
+            "tree_sha256": None,
+            "snapshot_error": str(error),
+        }
+        freeze.changes = sorted(
+            set(freeze.changes) | {f"snapshot_error: {error}"}
+        )
     freeze.check(force=True)
     write_json(output / "sources_after.json", after)
     software_passed = not freeze.changes and all(

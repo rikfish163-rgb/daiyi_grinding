@@ -56,7 +56,7 @@ MAX_PLAN_SECONDS = 86_400.0
 MAX_FEEDBACK_LAG_SECONDS = 5.0
 MAX_FEEDBACK_GAP_SECONDS = 5.0
 MAX_POSITION_M = 10.0
-MAX_TRANSLATION_M = 1_000.0
+MAX_TRANSLATION_M = 10.0
 
 
 class ControllerError(RuntimeError):
@@ -727,10 +727,7 @@ def _parse_preflight(value, commands, support_segments, command_file_hash):
     digest = hashlib.sha256(
         _canonical_bytes([command.normalized() for command in commands])
     ).hexdigest()
-    if (
-        "commands_sha256" in value
-        and value["commands_sha256"] != digest
-    ):
+    if "commands_sha256" in value and value["commands_sha256"] != digest:
         raise PlanRejected(
             "preflight_binding_mismatch", "预检未绑定同一完整命令列表"
         )
@@ -745,12 +742,11 @@ def _parse_preflight(value, commands, support_segments, command_file_hash):
         if row["status"] != "passed":
             continue
         items = [
-            command for command in commands
+            command
+            for command in commands
             if command.segment_id == row["segment_id"]
         ]
-        if row.get("coverage") != 1.0 or isinstance(
-            row.get("coverage"), bool
-        ):
+        if row.get("coverage") != 1.0 or isinstance(row.get("coverage"), bool):
             raise PlanRejected(
                 "partial_preflight", "获准段预检覆盖须明确为 1.0"
             )
@@ -764,16 +760,11 @@ def _parse_preflight(value, commands, support_segments, command_file_hash):
         if "command_count" in row and _integer(
             row["command_count"], "preflight.command_count"
         ) != len(items):
-            raise PlanRejected(
-                "partial_segment", "段命令数量与预检绑定不一致"
-            )
+            raise PlanRejected("partial_segment", "段命令数量与预检绑定不一致")
         segment_digest = hashlib.sha256(
             _canonical_bytes([command.normalized() for command in items])
         ).hexdigest()
-        if (
-            "command_sha256" in row
-            and row["command_sha256"] != segment_digest
-        ):
+        if "command_sha256" in row and row["command_sha256"] != segment_digest:
             raise PlanRejected(
                 "preflight_binding_mismatch", "获准段命令哈希与预检不一致"
             )
@@ -835,7 +826,8 @@ def _segment_rows(commands, support_segments, admitted_segments):
                 not {"approach", "trace"} <= set(phases)
                 or phases[0] != "approach"
                 or not (phases[-1] == "retract" or support_retract)
-                or phases != sorted(
+                or phases
+                != sorted(
                     phases, key={"approach": 0, "trace": 1, "retract": 2}.get
                 )
             ):
@@ -1047,10 +1039,10 @@ class ControllerPlan:
             "preview": self.preview,
             "result_evidence": self.result_evidence,
         }
-        if (
-            hashlib.sha256(self.manifest_bytes()).hexdigest()
-            != self.plan_sha256
-            or any(self.manifest.get(key) != value for key, value in bound.items())
+        if hashlib.sha256(
+            self.manifest_bytes()
+        ).hexdigest() != self.plan_sha256 or any(
+            self.manifest.get(key) != value for key, value in bound.items()
         ):
             raise PlanRejected(
                 "plan_hash_mismatch", "内存中的计划与已绑定清单不一致"
@@ -1681,11 +1673,19 @@ def normalize_quality_evidence(evidence, identity):
     for key in ("overgrind", "negative_limit_risk"):
         if key in evidence and not (
             isinstance(evidence[key], bool)
-            or isinstance(evidence[key], int) and evidence[key] >= 0
+            or isinstance(evidence[key], int)
+            and evidence[key] >= 0
         ):
             raise StateRejected(
                 "invalid_quality", f"{key} 须为非负计数或布尔值"
             )
+    for key in (
+        "observational_release",
+        "goal_complete",
+        "automatic_regrind_allowed",
+    ):
+        if key in evidence and not isinstance(evidence[key], bool):
+            raise StateRejected("invalid_quality", f"{key} 须为布尔值")
     source_kind = evidence.get("source_kind", "unknown")
     return {
         **evidence,
@@ -1700,7 +1700,10 @@ def normalize_quality_evidence(evidence, identity):
             evidence.get("independent") is True
             and source_kind != "historical_simulation_result"
         ),
-        "real_evidence": evidence.get("real_evidence") is True,
+        "real_evidence": (
+            evidence.get("real_evidence") is True
+            and source_kind == "real_measurement"
+        ),
     }
 
 
@@ -1773,7 +1776,9 @@ class MockController:
             "request_id",
         )
         self.execution_id = _text(
-            f"mock-execution-{suffix}-01" if execution_id is None else execution_id,
+            f"mock-execution-{suffix}-01"
+            if execution_id is None
+            else execution_id,
             "execution_id",
         )
         self.controller_id = controller_id
@@ -1839,6 +1844,7 @@ class MockController:
             "physical_io": False,
             "execution": "state machine only; no joint command is transmitted",
         }
+
     def _write_program(self):
         content = _canonical_bytes(self._program_value())
         _atomic_write(self.program_path, content)
@@ -1945,6 +1951,15 @@ class MockController:
         except OSError as error:
             self.hold("missing_source", str(error), cause="plan_validation")
             raise PlanRejected("missing_source", str(error)) from error
+        except (TypeError, ValueError, AttributeError) as error:
+            self.hold(
+                "plan_hash_mismatch",
+                "计划内部数据发生非法变化",
+                cause="plan_validation",
+            )
+            raise PlanRejected(
+                "plan_hash_mismatch", "计划内部数据发生非法变化"
+            ) from error
         except PlanRejected as error:
             self.hold(error.code, str(error), cause="plan_validation")
             raise
@@ -2069,6 +2084,25 @@ class MockController:
 
     def ingest_feedback(self, batch):
         """Accept one ordered batch. Exact replay is idempotent."""
+        if self.state == "FINISHED":
+            try:
+                prepared = self._prepare_feedback(batch)
+            except PlanRejected as error:
+                raise FeedbackRejected(error.code, str(error)) from error
+            except (TypeError, ValueError, OverflowError) as error:
+                raise FeedbackRejected(
+                    "invalid_feedback", "反馈不是有效有限 JSON"
+                ) from error
+            if not prepared["idempotent"]:
+                raise StateRejected(
+                    "invalid_state", "已完成执行只允许确认原批次的幂等重发"
+                )
+            return {
+                "accepted": False,
+                "idempotent": True,
+                "sequence": prepared["sequence"],
+                "state": self.state,
+            }
         self._require_state("EXECUTING")
         self.check_feedback_timeout()
         try:
@@ -2210,7 +2244,10 @@ class MockController:
                     "feedback_command_time_mismatch",
                     "反馈时间未对应同一命令的计划时间与允许延迟",
                 )
-            if sample.get("segment_id") != command.segment_id:
+            if (
+                _integer(sample.get("segment_id"), "feedback.segment_id")
+                != command.segment_id
+            ):
                 self._feedback_reject(
                     "feedback_segment_mismatch",
                     "反馈段编号与命令不一致",
@@ -2555,7 +2592,8 @@ class MockController:
     def _validated_quality(self, evidence):
         normalized = normalize_quality_evidence(evidence, self.plan.identity)
         _integer(
-            normalized.get("execution_attempt"), "quality.execution_attempt",
+            normalized.get("execution_attempt"),
+            "quality.execution_attempt",
             minimum=1,
         )
         for key, expected in self.quality_binding().items():
@@ -2563,7 +2601,9 @@ class MockController:
                 raise StateRejected(
                     "quality_binding_mismatch", f"质量证据 {key} 不一致"
                 )
-        if set(normalized["covered_segments"]) - set(self.plan.admitted_segments):
+        if set(normalized["covered_segments"]) - set(
+            self.plan.admitted_segments
+        ):
             raise StateRejected(
                 "quality_unknown_segment", "质量证据包含未获准段"
             )
@@ -2583,7 +2623,8 @@ class MockController:
             raise StateRejected("invalid_quality", "result.json 须为对象")
         artifact = next(
             (
-                artifact for artifact in self.plan.artifacts
+                artifact
+                for artifact in self.plan.artifacts
                 if artifact.role == "historical_run_result"
             ),
             None,
@@ -2773,7 +2814,9 @@ class MockController:
             raise StateRejected("non_mock_controller", "检查点不是 mock 控制器")
         if not controller.events_path.exists():
             raise StateRejected("missing_source", "检查点事件日志缺失")
-        controller.plan.write_manifest(controller.workdir / "plan_manifest.json")
+        controller.plan.write_manifest(
+            controller.workdir / "plan_manifest.json"
+        )
         for name, digest in (
             ("mock_program.json", checkpoint.get("program_sha256")),
             ("feedback.jsonl", checkpoint.get("feedback_sha256")),
@@ -2791,7 +2834,9 @@ class MockController:
                 )
         controller.program_sha256 = checkpoint["program_sha256"]
         if (
-            hashlib.sha256(_canonical_bytes(controller._program_value())).hexdigest()
+            hashlib.sha256(
+                _canonical_bytes(controller._program_value())
+            ).hexdigest()
             != controller.program_sha256
         ):
             raise StateRejected(
@@ -2802,9 +2847,7 @@ class MockController:
             controller._load_checkpoint_fields(checkpoint)
             controller._validate_event_log(checkpoint)
         except PlanRejected as error:
-            raise StateRejected(
-                "invalid_checkpoint", str(error)
-            ) from error
+            raise StateRejected("invalid_checkpoint", str(error)) from error
         if previous in TERMINAL_STATES:
             controller.state = previous
             if (
@@ -2848,20 +2891,19 @@ class MockController:
             },
             "last_sequence": self.last_sequence,
             "last_command_index": self.last_command_index,
-            "last_t_s": (
-                None if self.last_t_s == -math.inf else self.last_t_s
-            ),
+            "last_t_s": (None if self.last_t_s == -math.inf else self.last_t_s),
             "completion_claimed": self.completion_claimed,
             "early_completion_claim": self.early_completion_claim,
             "total_contacts": self.total_contacts,
             "sequence_gaps": self.sequence_gaps,
             "seen_sequence": {
-                str(key): value for key, value in sorted(self.seen_sequence.items())
+                str(key): value
+                for key, value in sorted(self.seen_sequence.items())
             },
         }
-        if _canonical_bytes({
-            key: checkpoint.get(key) for key in derived
-        }) != _canonical_bytes(derived):
+        if _canonical_bytes(
+            {key: checkpoint.get(key) for key in derived}
+        ) != _canonical_bytes(derived):
             raise StateRejected(
                 "checkpoint_feedback_mismatch",
                 "检查点计数、时间、完成状态或覆盖与完整反馈日志不一致",
@@ -2883,13 +2925,15 @@ class MockController:
             )
         self.last_control_clock_s = _finite(
             checkpoint.get("last_control_clock_s"),
-            "checkpoint.last_control_clock_s", minimum=0,
+            "checkpoint.last_control_clock_s",
+            minimum=0,
         )
         self.last_feedback_clock_s = checkpoint.get("last_feedback_clock_s")
         if self.last_feedback_clock_s is not None:
             self.last_feedback_clock_s = _finite(
                 self.last_feedback_clock_s,
-                "checkpoint.last_feedback_clock_s", minimum=0,
+                "checkpoint.last_feedback_clock_s",
+                minimum=0,
             )
             if self.last_feedback_clock_s > self.last_control_clock_s:
                 raise StateRejected(
@@ -2935,8 +2979,11 @@ class MockController:
                             "invalid_feedback_log", "日志包含重复批次"
                         )
                 except (
-                    json.JSONDecodeError, ControllerError, TypeError,
-                    ValueError, OverflowError,
+                    json.JSONDecodeError,
+                    ControllerError,
+                    TypeError,
+                    ValueError,
+                    OverflowError,
                 ) as error:
                     raise StateRejected(
                         "invalid_feedback_log",
@@ -2955,16 +3002,16 @@ class MockController:
             for number, line in enumerate(stream, 1):
                 try:
                     event = json.loads(
-                        line, object_pairs_hook=_reject_duplicate_keys,
+                        line,
+                        object_pairs_hook=_reject_duplicate_keys,
                         parse_constant=_reject_constant,
                     )
                     stamp = _finite(event.get("clock_s"), "event.clock_s")
                     if (
                         _integer(event.get("event"), "event.index") != number
                         or stamp < previous_clock
-                        or event.get("state") not in (
-                            TERMINAL_STATES | RECOVERABLE_STATES
-                        )
+                        or event.get("state")
+                        not in (TERMINAL_STATES | RECOVERABLE_STATES)
                         or any(
                             event.get(key) != expected
                             for key, expected in (
@@ -2977,7 +3024,10 @@ class MockController:
                     ):
                         raise ValueError("事件顺序、时间或身份不一致")
                 except (
-                    json.JSONDecodeError, PlanRejected, TypeError, ValueError,
+                    json.JSONDecodeError,
+                    PlanRejected,
+                    TypeError,
+                    ValueError,
                 ) as error:
                     raise StateRejected(
                         "invalid_event_log", "恢复事件日志验证失败"
@@ -2988,7 +3038,8 @@ class MockController:
                     attempts += 1
                     last_started = last_feedback = stamp
                 elif event.get("type") in {
-                    "feedback_accepted", "feedback_fault"
+                    "feedback_accepted",
+                    "feedback_fault",
                 }:
                     last_feedback = stamp
                 elif event.get("type") == "recovered":

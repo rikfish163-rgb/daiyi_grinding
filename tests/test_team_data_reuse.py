@@ -5,6 +5,7 @@ import struct
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import trimesh
@@ -63,6 +64,14 @@ class PointCloudContractTests(unittest.TestCase):
                 )
                 with self.assertRaisesRegex(ValueError, "explicitly"):
                     load_cloud(path, "auto")
+                bound_bytes = path.read_bytes()
+                path.write_bytes(b"source replaced after manifest binding")
+                np.testing.assert_allclose(
+                    load_cloud(path, "mm", source_bytes=bound_bytes),
+                    values / 1000,
+                    atol=1e-8,
+                    equal_nan=True,
+                )
         self.assertEqual(
             _lzf_decode(bytes([2, 97, 98, 99, 64, 2]), 7), b"abcabca"
         )
@@ -132,7 +141,26 @@ class PointCloudContractTests(unittest.TestCase):
                     }
                 )
             )
-            result = calibrate_scan(manifest, folder / "output")
+            cloud_digest = sha256(cloud_file)
+            root_digest = sha256(root_file)
+            manifest_digest = sha256(manifest)
+
+            def replace_after_parse(path, units, **kwargs):
+                parsed = load_cloud(path, units, **kwargs)
+                np.save(path, np.full_like(parsed, 999999))
+                manifest.write_text("{}")
+                return parsed
+
+            with patch(
+                "daiyi_grinding.casting_scan_calibration.load_cloud",
+                side_effect=replace_after_parse,
+            ):
+                result = calibrate_scan(manifest, folder / "output")
+            self.assertEqual(result["source_cloud_sha256"], cloud_digest)
+            self.assertEqual(result["root_label_sha256"], root_digest)
+            self.assertEqual(result["manifest_sha256"], manifest_digest)
+            self.assertNotEqual(sha256(cloud_file), cloud_digest)
+            self.assertNotEqual(sha256(manifest), manifest_digest)
             self.assertFalse(result["real_scan_fitted"])
             self.assertEqual(result["registration"]["rank"], 6)
             self.assertGreater(result["measured_positive_points"], 6)

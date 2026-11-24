@@ -20,9 +20,9 @@ from daiyi_grinding.offline_controller import (
     PlanRejected,
     RecoveryRejected,
     StateRejected,
+    load_joint_limits,
     load_plan,
     load_plan_from_run,
-    load_joint_limits,
     run_mock_cycle,
     sha256_file,
     write_case_files,
@@ -129,8 +129,10 @@ def build_case(
             continue
         for offset in range(commands_per_segment):
             phase = (
-                "approach" if offset == 0
-                else "retract" if offset == commands_per_segment - 1
+                "approach"
+                if offset == 0
+                else "retract"
+                if offset == commands_per_segment - 1
                 else "trace"
             )
             commands.append(
@@ -247,7 +249,9 @@ def quality(
     covered = list(plan.admitted_segments if covered is None else covered)
     suffix = plan.plan_sha256[:16]
     binding = (
-        controller.quality_binding() if controller is not None else {
+        controller.quality_binding()
+        if controller is not None
+        else {
             **plan.identity.to_dict(),
             "plan_sha256": plan.plan_sha256,
             "request_id": f"mock-request-{suffix}",
@@ -347,7 +351,10 @@ class PlanValidationTests(unittest.TestCase):
             ("detection", "preflight_detection_mismatch"),
             ("retract", "incomplete_machining_segment"),
         ):
-            with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(change=change),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 build_case(directory)
                 commands_path = Path(directory) / "motion_commands.json"
                 preflight_path = Path(directory) / "preflight.json"
@@ -364,17 +371,24 @@ class PlanValidationTests(unittest.TestCase):
                     preflight_path.write_text(json.dumps(preflight))
                 else:
                     commands[4]["phase"] = "trace"
-                    write_case_files(directory, commands=commands, preflight=preflight)
+                    write_case_files(
+                        directory, commands=commands, preflight=preflight
+                    )
                 with self.assertRaises(PlanRejected) as caught:
                     load_plan(
-                        directory, identity=identity(), issued_at_s=BASE_TIME,
+                        directory,
+                        identity=identity(),
+                        issued_at_s=BASE_TIME,
                         expires_at_s=BASE_TIME + 3600,
                     )
                 self.assertEqual(caught.exception.code, code)
 
     def test_robot_limits_require_explicit_radians(self):
         for angle in ("degree", ""):
-            with self.subTest(angle=angle), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(angle=angle),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 content = DEFAULT_ROBOT_XML.read_text().replace(
                     'angle="radian"', f'angle="{angle}"'
                 )
@@ -387,9 +401,13 @@ class PlanValidationTests(unittest.TestCase):
     def test_runtime_commands_cannot_diverge_from_plan_hash(self):
         with tempfile.TemporaryDirectory() as directory:
             plan, _ = build_case(directory)
-            altered = replace(plan.commands[2], q=(0.7, -0.1, 0.8, 2.0, 0.5, -2.0))
+            altered = replace(
+                plan.commands[2], q=(0.7, -0.1, 0.8, 2.0, 0.5, -2.0)
+            )
             plan.commands = (*plan.commands[:2], altered, *plan.commands[3:])
-            controller = MockController(plan, Path(directory) / "controller", clock=Clock())
+            controller = MockController(
+                plan, Path(directory) / "controller", clock=Clock()
+            )
             with self.assertRaises(PlanRejected) as caught:
                 controller.confirm("operator")
             self.assertEqual(caught.exception.code, "plan_hash_mismatch")
@@ -603,7 +621,9 @@ class StateMachineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             plan, _ = build_case(directory)
             clock = Clock()
-            controller = MockController(plan, Path(directory) / "controller", clock=clock)
+            controller = MockController(
+                plan, Path(directory) / "controller", clock=clock
+            )
             controller.confirm("operator")
             controller.start()
             batch = batches(plan)[0]
@@ -615,15 +635,23 @@ class StateMachineTests(unittest.TestCase):
             self.assertEqual(controller.segment_coverage, {})
             self.assertEqual(controller.feedback_path.read_text(), "")
             self.assertEqual(controller.last_sequence, 0)
-            resumed = MockController.resume(controller.checkpoint_path, plan, clock=clock)
+            resumed = MockController.resume(
+                controller.checkpoint_path, plan, clock=clock
+            )
             self.assertEqual(resumed.covered_commands, set())
             self.assertEqual(resumed.state, "HELD")
             resumed.recover(
-                explicit_mock_recovery=True, operator="operator", acknowledge_hold=True
+                explicit_mock_recovery=True,
+                operator="operator",
+                acknowledge_hold=True,
             )
             resumed.confirm("operator")
             resumed.start()
-            resumed.run_mock(MockFeedbackSource(plan, resumed.request_id, resumed.execution_id))
+            resumed.run_mock(
+                MockFeedbackSource(
+                    plan, resumed.request_id, resumed.execution_id
+                )
+            )
             resumed.set_quality_evidence(quality(plan, controller=resumed))
             self.assertTrue(resumed.finish()["task_quality_complete"])
 
@@ -632,15 +660,21 @@ class StateMachineTests(unittest.TestCase):
             ("sequence_gap", "feedback_sequence_gap"),
             ("command_gap", "feedback_command_gap"),
             ("boolean_sequence", "invalid_integer"),
+            ("boolean_segment", "invalid_integer"),
             ("missing_q", "invalid_vector"),
             ("boolean_completed", "invalid_feedback"),
             ("nan", "invalid_feedback"),
             ("early_time", "feedback_command_time_mismatch"),
             ("time_regression", "feedback_time_regression"),
         ):
-            with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(change=change),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 plan, _ = build_case(directory)
-                controller = MockController(plan, Path(directory) / "controller", clock=Clock())
+                controller = MockController(
+                    plan, Path(directory) / "controller", clock=Clock()
+                )
                 controller.confirm("operator")
                 controller.start()
                 batch = batches(plan)[0]
@@ -650,6 +684,8 @@ class StateMachineTests(unittest.TestCase):
                     batch["samples"] = batch["samples"][1:]
                 elif change == "boolean_sequence":
                     batch["sequence"] = True
+                elif change == "boolean_segment":
+                    batch["samples"][0]["segment_id"] = False
                 elif change == "missing_q":
                     batch["samples"][0].pop("q_actual")
                 elif change == "boolean_completed":
@@ -673,10 +709,15 @@ class StateMachineTests(unittest.TestCase):
             ("dropout", "feedback_timeout"),
             ("stream_end", "feedback_stream_ended"),
         ):
-            with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(change=change),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 plan, _ = build_case(directory)
                 clock = Clock()
-                controller = MockController(plan, Path(directory) / "controller", clock=clock)
+                controller = MockController(
+                    plan, Path(directory) / "controller", clock=clock
+                )
                 controller.confirm("operator")
                 controller.start()
                 source = batches(plan)
@@ -686,11 +727,15 @@ class StateMachineTests(unittest.TestCase):
                     self.assertEqual(result["error"]["code"], code)
                 else:
                     clock.advance(-1.0 if change == "clock" else 6.0)
-                    with self.assertRaises((PlanRejected, FeedbackRejected)) as caught:
+                    with self.assertRaises(
+                        (PlanRejected, FeedbackRejected)
+                    ) as caught:
                         controller.check_feedback_timeout()
                     self.assertEqual(caught.exception.code, code)
                 self.assertEqual(controller.state, "HELD")
-                self.assertFalse(controller.completion_report()["execution_complete"])
+                self.assertFalse(
+                    controller.completion_report()["execution_complete"]
+                )
 
     def test_active_command_sources_and_program_remain_hash_bound(self):
         for name, code in (
@@ -699,15 +744,21 @@ class StateMachineTests(unittest.TestCase):
             ("estun_path_preview.csv", "source_hash_mismatch"),
             ("mock_program.json", "program_hash_mismatch"),
         ):
-            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(name=name),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 plan, _ = build_case(directory)
-                controller = MockController(plan, Path(directory) / "controller", clock=Clock())
+                controller = MockController(
+                    plan, Path(directory) / "controller", clock=Clock()
+                )
                 controller.confirm("operator")
                 controller.start()
                 source = batches(plan)
                 controller.ingest_feedback(source[0])
                 path = (
-                    controller.workdir / name if name == "mock_program.json"
+                    controller.workdir / name
+                    if name == "mock_program.json"
                     else Path(directory) / name
                 )
                 path.write_bytes(path.read_bytes() + b"\n")
@@ -726,12 +777,21 @@ class StateMachineTests(unittest.TestCase):
             ("covered_commands", [0, True], "checkpoint_feedback_mismatch"),
             ("execution_attempts", 8, "checkpoint_event_mismatch"),
             ("state", "FINISHED", "checkpoint_event_mismatch"),
-            ("last_feedback_clock_s", BASE_TIME - 1, "checkpoint_event_mismatch"),
+            (
+                "last_feedback_clock_s",
+                BASE_TIME - 1,
+                "checkpoint_event_mismatch",
+            ),
         ):
-            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(field=field),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 plan, _ = build_case(directory)
                 clock = Clock()
-                controller = MockController(plan, Path(directory) / "controller", clock=clock)
+                controller = MockController(
+                    plan, Path(directory) / "controller", clock=clock
+                )
                 controller.confirm("operator")
                 controller.start()
                 controller.ingest_feedback(batches(plan)[0])
@@ -739,7 +799,9 @@ class StateMachineTests(unittest.TestCase):
                 checkpoint[field] = value
                 controller.checkpoint_path.write_text(json.dumps(checkpoint))
                 with self.assertRaises(StateRejected) as caught:
-                    MockController.resume(controller.checkpoint_path, plan, clock=clock)
+                    MockController.resume(
+                        controller.checkpoint_path, plan, clock=clock
+                    )
                 self.assertEqual(caught.exception.code, code)
 
     def test_resume_checks_log_and_program_payload_after_hash_rebinding(self):
@@ -747,55 +809,95 @@ class StateMachineTests(unittest.TestCase):
             ("feedback", "invalid_feedback_log"),
             ("program", "program_hash_mismatch"),
         ):
-            with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(change=change),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 plan, _ = build_case(directory)
                 clock = Clock()
-                controller = MockController(plan, Path(directory) / "controller", clock=clock)
+                controller = MockController(
+                    plan, Path(directory) / "controller", clock=clock
+                )
                 controller.confirm("operator")
                 controller.start()
                 controller.ingest_feedback(batches(plan)[0])
                 checkpoint = json.loads(controller.checkpoint_path.read_text())
-                path = controller.feedback_path if change == "feedback" else controller.program_path
+                path = (
+                    controller.feedback_path
+                    if change == "feedback"
+                    else controller.program_path
+                )
                 payload = json.loads(path.read_text())
-                payload["serial" if change == "feedback" else "plan_sha256"] = "other"
+                payload["serial" if change == "feedback" else "plan_sha256"] = (
+                    "other"
+                )
                 path.write_text(json.dumps(payload) + "\n")
                 checkpoint[
-                    "feedback_sha256" if change == "feedback" else "program_sha256"
+                    "feedback_sha256"
+                    if change == "feedback"
+                    else "program_sha256"
                 ] = sha256_file(path)
                 controller.checkpoint_path.write_text(json.dumps(checkpoint))
                 with self.assertRaises(StateRejected) as caught:
-                    MockController.resume(controller.checkpoint_path, plan, clock=clock)
+                    MockController.resume(
+                        controller.checkpoint_path, plan, clock=clock
+                    )
                 self.assertEqual(caught.exception.code, code)
 
     def test_unstarted_resume_is_held_and_receipts_match_final_artifacts(self):
         with tempfile.TemporaryDirectory() as directory:
             plan, _ = build_case(directory)
             clock = Clock()
-            controller = MockController(plan, Path(directory) / "controller", clock=clock)
-            resumed = MockController.resume(controller.checkpoint_path, plan, clock=clock)
+            controller = MockController(
+                plan, Path(directory) / "controller", clock=clock
+            )
+            resumed = MockController.resume(
+                controller.checkpoint_path, plan, clock=clock
+            )
             self.assertEqual(resumed.state, "HELD")
             self.assertEqual(resumed.feedback_batches, 0)
             with self.assertRaises(StateRejected):
                 resumed.start()
             resumed.recover(
-                explicit_mock_recovery=True, operator="operator", acknowledge_hold=True
+                explicit_mock_recovery=True,
+                operator="operator",
+                acknowledge_hold=True,
             )
             resumed.confirm("operator")
             resumed.start()
-            resumed.run_mock(MockFeedbackSource(plan, resumed.request_id, resumed.execution_id))
+            resumed.run_mock(
+                MockFeedbackSource(
+                    plan, resumed.request_id, resumed.execution_id
+                )
+            )
             resumed.finish()
-            terminal = MockController.resume(resumed.checkpoint_path, plan, clock=clock)
+            terminal = MockController.resume(
+                resumed.checkpoint_path, plan, clock=clock
+            )
             self.assertEqual(terminal.state, "FINISHED")
-            receipt = json.loads((terminal.workdir / "controller_receipt.json").read_text())
+            receipt = json.loads(
+                (terminal.workdir / "controller_receipt.json").read_text()
+            )
             for key in (
-                "plan", "program", "feedback", "completion_report", "events",
-                "checkpoint", "feedback_journal",
+                "plan",
+                "program",
+                "feedback",
+                "completion_report",
+                "events",
+                "checkpoint",
+                "feedback_journal",
             ):
                 self.assertEqual(
-                    receipt[key]["sha256"], sha256_file(receipt[key]["path"]), key
+                    receipt[key]["sha256"],
+                    sha256_file(receipt[key]["path"]),
+                    key,
                 )
-            feedback = json.loads((terminal.workdir / "feedback_evidence.json").read_text())
-            self.assertEqual(feedback["program_sha256"], receipt["program"]["sha256"])
+            feedback = json.loads(
+                (terminal.workdir / "feedback_evidence.json").read_text()
+            )
+            self.assertEqual(
+                feedback["program_sha256"], receipt["program"]["sha256"]
+            )
             self.assertTrue(receipt["execution_complete"])
             self.assertFalse(receipt["task_quality_complete"])
             self.assertTrue(receipt["real_acceptance_pending"])
@@ -813,31 +915,56 @@ class StateMachineTests(unittest.TestCase):
             ("frame", "world", "quality_identity_mismatch"),
             ("units", {}, "quality_unit_mismatch"),
         ):
-            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(field=field),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 plan, _ = build_case(directory)
-                controller = MockController(plan, Path(directory) / "controller", clock=Clock())
+                controller = MockController(
+                    plan, Path(directory) / "controller", clock=Clock()
+                )
                 controller.confirm("operator")
                 controller.start()
-                controller.run_mock(MockFeedbackSource(plan, controller.request_id, controller.execution_id))
+                controller.run_mock(
+                    MockFeedbackSource(
+                        plan, controller.request_id, controller.execution_id
+                    )
+                )
                 evidence = quality(plan)
                 evidence[field] = value
                 with self.assertRaises(StateRejected) as caught:
                     controller.set_quality_evidence(evidence)
                 self.assertEqual(caught.exception.code, code)
                 self.assertEqual(controller.state, "HELD")
-                self.assertFalse(controller.completion_report()["task_quality_complete"])
+                self.assertFalse(
+                    controller.completion_report()["task_quality_complete"]
+                )
 
     def test_quality_requires_explicit_release_and_rejects_signed_risk(self):
         for change in (
-            "missing_release", "missing_goal", "overgrind", "negative_limit_risk",
-            "region_overgrind", "invalid_view", "automatic_regrind_disallowed",
+            "missing_release",
+            "missing_goal",
+            "overgrind",
+            "negative_limit_risk",
+            "region_overgrind",
+            "invalid_view",
+            "automatic_regrind_disallowed",
         ):
-            with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
+            with (
+                self.subTest(change=change),
+                tempfile.TemporaryDirectory() as directory,
+            ):
                 plan, _ = build_case(directory)
-                controller = MockController(plan, Path(directory) / "controller", clock=Clock())
+                controller = MockController(
+                    plan, Path(directory) / "controller", clock=Clock()
+                )
                 controller.confirm("operator")
                 controller.start()
-                controller.run_mock(MockFeedbackSource(plan, controller.request_id, controller.execution_id))
+                controller.run_mock(
+                    MockFeedbackSource(
+                        plan, controller.request_id, controller.execution_id
+                    )
+                )
                 evidence = quality(plan)
                 if change == "missing_release":
                     evidence.pop("observational_release")
@@ -846,9 +973,13 @@ class StateMachineTests(unittest.TestCase):
                 elif change in {"overgrind", "negative_limit_risk"}:
                     evidence[change] = 1
                 elif change == "region_overgrind":
-                    evidence["regions"] = [{"id": 1, "status": "verified", "overgrind": True}]
+                    evidence["regions"] = [
+                        {"id": 1, "status": "verified", "overgrind": True}
+                    ]
                 elif change == "invalid_view":
-                    evidence["regions"] = [{"id": 1, "status": "verified", "observations": [6]}]
+                    evidence["regions"] = [
+                        {"id": 1, "status": "verified", "observations": [6]}
+                    ]
                 else:
                     evidence["automatic_regrind_allowed"] = False
                 controller.set_quality_evidence(evidence)
@@ -857,30 +988,48 @@ class StateMachineTests(unittest.TestCase):
                 self.assertFalse(report["task_quality_complete"])
                 self.assertTrue(report["quality"]["reasons"])
 
-    def test_quality_snapshot_and_file_hash_are_independent_of_caller_mutation(self):
+    def test_quality_snapshot_and_file_hash_are_independent_of_caller_mutation(
+        self,
+    ):
         with tempfile.TemporaryDirectory() as directory:
             plan, _ = build_case(directory)
-            controller = MockController(plan, Path(directory) / "controller", clock=Clock())
+            controller = MockController(
+                plan, Path(directory) / "controller", clock=Clock()
+            )
             controller.confirm("operator")
             controller.start()
-            controller.run_mock(MockFeedbackSource(plan, controller.request_id, controller.execution_id))
+            controller.run_mock(
+                MockFeedbackSource(
+                    plan, controller.request_id, controller.execution_id
+                )
+            )
             evidence = quality(plan)
             controller.set_quality_evidence(evidence)
             evidence["covered_segments"].clear()
             evidence["segment_results"].clear()
-            self.assertTrue(controller.completion_report()["task_quality_complete"])
-            controller.quality_path.write_bytes(controller.quality_path.read_bytes() + b"\n")
+            self.assertTrue(
+                controller.completion_report()["task_quality_complete"]
+            )
+            controller.quality_path.write_bytes(
+                controller.quality_path.read_bytes() + b"\n"
+            )
             with self.assertRaises(PlanRejected) as caught:
                 controller.finish()
             self.assertEqual(caught.exception.code, "quality_hash_mismatch")
             self.assertEqual(controller.state, "HELD")
-            self.assertFalse(controller.completion_report()["task_quality_complete"])
+            self.assertFalse(
+                controller.completion_report()["task_quality_complete"]
+            )
 
-    def test_reported_contact_cannot_be_cleared_by_recovery_acknowledgement(self):
+    def test_reported_contact_cannot_be_cleared_by_recovery_acknowledgement(
+        self,
+    ):
         with tempfile.TemporaryDirectory() as directory:
             plan, _ = build_case(directory)
             clock = Clock()
-            controller = MockController(plan, Path(directory) / "controller", clock=clock)
+            controller = MockController(
+                plan, Path(directory) / "controller", clock=clock
+            )
             controller.confirm("operator")
             controller.start()
             source = batches(plan)
@@ -888,16 +1037,22 @@ class StateMachineTests(unittest.TestCase):
             controller.ingest_feedback(source[0])
             self.assertEqual(controller.state, "HELD")
             controller.recover(
-                explicit_mock_recovery=True, operator="operator", acknowledge_hold=True
+                explicit_mock_recovery=True,
+                operator="operator",
+                acknowledge_hold=True,
             )
             controller.confirm("operator")
             controller.start()
             controller.run_mock(source[1:])
-            controller.set_quality_evidence(quality(plan, controller=controller))
+            controller.set_quality_evidence(
+                quality(plan, controller=controller)
+            )
             with self.assertRaises(CompletionRejected):
                 controller.finish()
             self.assertEqual(controller.total_contacts, 1)
-            self.assertFalse(controller.completion_report()["task_quality_complete"])
+            self.assertFalse(
+                controller.completion_report()["task_quality_complete"]
+            )
 
     def test_plan_confirm_feedback_finish_and_receipt(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1018,6 +1173,48 @@ class StateMachineTests(unittest.TestCase):
                 len(controller.covered_commands), len(batch["samples"])
             )
             self.assertEqual(controller.state, "EXECUTING")
+
+    def test_finished_replay_is_idempotent_without_mutating_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            plan, _ = build_case(directory)
+            clock = Clock()
+            controller = MockController(
+                plan, Path(directory) / "controller", clock=clock
+            )
+            controller.confirm("operator")
+            controller.start()
+            source = batches(plan)
+            controller.run_mock(source)
+            controller.set_quality_evidence(
+                quality(plan, controller=controller)
+            )
+            controller.finish()
+            before = {
+                path.name: sha256_file(path)
+                for path in controller.workdir.iterdir()
+                if path.is_file()
+            }
+            summary = controller.summary()
+            clock.advance(10.0)
+            for batch in (source[-1], source[0]):
+                replay = controller.ingest_feedback(batch)
+                self.assertTrue(replay["idempotent"])
+                self.assertFalse(replay["accepted"])
+                self.assertEqual(replay["state"], "FINISHED")
+            conflict = json.loads(json.dumps(source[-1]))
+            conflict["samples"][-1]["q_actual"][0] += 0.001
+            with self.assertRaises(FeedbackRejected) as caught:
+                controller.ingest_feedback(conflict)
+            self.assertEqual(
+                caught.exception.code, "feedback_duplicate_conflict"
+            )
+            self.assertEqual(controller.summary(), summary)
+            after = {
+                path.name: sha256_file(path)
+                for path in controller.workdir.iterdir()
+                if path.is_file()
+            }
+            self.assertEqual(after, before)
 
     def test_duplicate_conflict_and_out_of_order_hold(self):
         with tempfile.TemporaryDirectory() as directory:

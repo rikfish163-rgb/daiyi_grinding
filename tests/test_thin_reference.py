@@ -1,12 +1,16 @@
 """Thin-reference regressions with independently constructed RGB-D signals."""
 
 import unittest
+from dataclasses import replace
 
 import numpy as np
 
 from daiyi_grinding.perception import roi_mask
 from daiyi_grinding.reference_detection import detect_reference
-from daiyi_grinding.thin_reference import detect_thin_reference
+from daiyi_grinding.thin_reference import (
+    THIN_REFERENCE_CONFIG,
+    detect_thin_reference,
+)
 
 
 class ThinReferenceTests(unittest.TestCase):
@@ -57,6 +61,70 @@ class ThinReferenceTests(unittest.TestCase):
         self.assertEqual(len(detections), 1)
         self.assertEqual(detections[0].kind, "seam")
         self.assertGreater(detections[0].length_mm, 100)
+
+    def test_metric_join_retains_weak_fragment_with_a_nearby_seed(self):
+        observed = self.reference.copy()
+        observed[120, 40:43] -= 0.00055
+        observed[120, 43:45] = np.nan
+        observed[120, 45:52] -= 0.00023
+        detections, _ = self.run_detector(
+            observed,
+            config=replace(
+                THIN_REFERENCE_CONFIG,
+                minimum_pixels=6,
+                component_join_mm=2.0,
+            ),
+        )
+        self.assertEqual(len(detections), 1)
+        self.assertEqual(
+            set(map(tuple, detections[0].pixels)),
+            {(120, column) for column in [*range(40, 43), *range(45, 52)]},
+        )
+
+    def test_metric_join_requires_a_seed_in_each_connected_region(self):
+        observed = self.reference.copy()
+        observed[120, 40:50] -= 0.00055
+        observed[120, 70:90] -= 0.00023
+        detections, observation = self.run_detector(
+            observed,
+            config=replace(
+                THIN_REFERENCE_CONFIG,
+                minimum_pixels=6,
+                component_join_mm=2.0,
+            ),
+        )
+        self.assertEqual(len(detections), 1)
+        self.assertEqual(
+            set(map(tuple, detections[0].pixels)),
+            {(120, column) for column in range(40, 50)},
+        )
+        self.assertFalse(observation["unresolved_components"])
+
+    def test_sparse_seed_retains_nominal_reacquisition_candidates(self):
+        observed = self.reference.copy()
+        observed[120, 40:43] -= 0.00055
+        detections, observation = self.run_detector(
+            observed,
+            config=replace(
+                THIN_REFERENCE_CONFIG,
+                minimum_pixels=6,
+                component_join_mm=2.0,
+            ),
+        )
+        self.assertFalse(detections)
+        self.assertFalse(observation["mask"].any())
+        candidates = observation["unresolved_components"]
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(
+            candidates[0]["pixels"], [[120, 40], [120, 41], [120, 42]]
+        )
+        self.assertEqual(candidates[0]["seed_count"], 3)
+        self.assertEqual(candidates[0]["support_count"], 3)
+        self.assertEqual(candidates[0]["minimum_pixels"], 6)
+        np.testing.assert_allclose(
+            np.asarray(candidates[0]["nominal_xyz"])[:, 2], 0.625, atol=1e-7
+        )
+        self.assertGreater(candidates[0]["optical_residual_range_mm"][0], 0.54)
 
     def test_random_noise_does_not_create_processing_regions(self):
         rng = np.random.default_rng(19)

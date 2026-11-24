@@ -75,3 +75,31 @@ MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 \
 [汇总 evidence.json](/home/dianrobot/daiyi_grinding/runs/enterprise_offline_20261123/planning/evidence.json)提供 `task, scope, commands, inputs(path/hash), metrics, failures, artifacts, real_data_pending`；每个独立运行目录也有自己的证据文件。尚缺同件杨 097 原始扫描、确认根部、实机坐标映射、相机/TCP 与装夹重复定位标定、力/磨具/去除标定，以及带不确定度的独立磨前磨后双边型面量测。
 
 [最终冻结清单](/home/dianrobot/daiyi_grinding/runs/enterprise_offline_20261123/planning/final_manifests_01/freeze_manifest.json)登记六个本 agent 所有文件、汇总证据和三份闭环逐文件清单的 SHA256。汇总的闭环输入引用这些带哈希的清单；目录字段仅说明输出位置。逐文件清单包含运行时源码快照，原始记录不改标为主线程最终集成版本。
+
+## 预算输入校验修复
+
+只读交叉审查发现，NaN 秒数和 NaN 调用上限会使比较始终为假，未触发预算耗尽；NaN 采样上限也能绕过 `required_samples > sample_budget`。修复前契约反例及源码字节保存在独立的 [budget_validation_01](/home/dianrobot/daiyi_grinding/runs/enterprise_offline_20261123/planning/budget_validation_01/)；原规划汇总、冻结清单和三组闭环目录均保留原值。
+
+`PlanningBudget(seconds, *, max_ik_calls, max_collision_checks, now)` 保持原位置参数及默认值。`seconds=None` 继续表示未设置墙钟截止；显式秒数必须是有限、非布尔且非负的实数。两个调用上限必须是 `None` 或非布尔、非负整数，`4.0` 也会拒绝。零秒数或零调用数合法，在首次对应检查时停止。全部限值在读取时钟前完成校验。
+
+`preflight(sim, commands, *, sample_budget=200_000, ...)` 的采样上限必须是非布尔、非负整数；NaN、Inf、浮点数、字符串和 `None` 均拒绝，即使命令为空也不会跳过校验。校验在关节曲线和碰撞工作开始前执行。200,000 默认上限、0.012 rad 间距、12 s 每段预算、RRT/shortcut 上限、门限和轨迹生成均保持原值。
+
+新增纯软件契约测试覆盖非法预算、空命令入口、默认 `None`、零预算、原截止边界、整数调用数和样本数边界。测试使用解析软件夹具，执行守卫阻止 MuJoCo 模型创建、渲染及积分调用；没有运行真实 MuJoCo 负例或整站主链。
+
+修复前新增的 11 个契约测试方法记录了 78 个失败子测试；修复后这 11 个方法与原有 14 个规划故障测试共 **25/25 通过**。[green 回执](/home/dianrobot/daiyi_grinding/runs/enterprise_offline_20261123/planning/budget_validation_01/green_checks.json)绑定本次使用的两份源码与测试文件精确字节 SHA256，记录 MuJoCo 库已导入、受守卫的执行调用为零、torch 未加载。[Ruff 回执](/home/dianrobot/daiyi_grinding/runs/enterprise_offline_20261123/planning/budget_validation_01/ruff_checks.json)记录限定文件 check 与 format check 均退出 0。[历史保护核对](/home/dianrobot/daiyi_grinding/runs/enterprise_offline_20261123/planning/budget_validation_01/history_verification.json)确认 428 个受保护文件的集合、大小及 SHA256 与修复前一致，四份修复前源码/测试/文档快照也未变。
+
+```bash
+.venv/bin/python -B \
+  runs/enterprise_offline_20261123/planning/budget_validation_01/run_budget_checks.py \
+  --phase green
+
+.venv/bin/python -B -m ruff check \
+  src/daiyi_grinding/workstation_planning.py \
+  src/daiyi_grinding/workstation_motion.py tests/test_planning_stress.py
+
+.venv/bin/python -B -m ruff format --check \
+  src/daiyi_grinding/workstation_planning.py \
+  src/daiyi_grinding/workstation_motion.py tests/test_planning_stress.py
+```
+
+检查脚本拒绝覆盖同名回执；复现时应将该脚本复制到新的独立运行目录。此次 [修复证据](/home/dianrobot/daiyi_grinding/runs/enterprise_offline_20261123/planning/budget_validation_01/evidence.json)和 [新源码冻结清单](/home/dianrobot/daiyi_grinding/runs/enterprise_offline_20261123/planning/budget_validation_01/freeze_manifest.json)只支持预算输入契约及纯软件回归。旧 `final_manifests_01/freeze_manifest.json` 中的源码路径现在对应历史版本，其登记哈希不能改写成新版本哈希。主线程将在统一冻结后独立重跑 minimal MuJoCo fixture 与 thin/normal 主链，再形成当前集成版本的物理仿真证据。

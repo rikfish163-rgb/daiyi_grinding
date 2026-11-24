@@ -14,5 +14,14 @@
     "detector": "geometric",
     "tool": "belt",
     "views": "multi"
+  },
+  "021_standard": {
+    "label": "021 底座 · 离线工件包",
+    "cad_id": "021",
+    "case": "normal",
+    "detector": "geometric",
+    "tool": "belt",
+    "views": "multi",
+    "simulation_only": true
   }
 }

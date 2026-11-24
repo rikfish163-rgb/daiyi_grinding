@@ -1,6 +1,6 @@
 """Sensor-only signed reinspection of registered nominal-surface anchors."""
 
-from numbers import Real
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.spatial import cKDTree
@@ -40,6 +40,8 @@ def _validated_targets(targets):
 
 
 def _observation_shape_or_raise(observation):
+    if not isinstance(observation, dict):
+        raise ValueError("Observation must be an object")
     required = (
         "T",
         "K",
@@ -52,12 +54,18 @@ def _observation_shape_or_raise(observation):
     missing = [name for name in required if name not in observation]
     if missing:
         raise ValueError(f"Observation is missing {', '.join(missing)}")
-    camera = np.asarray(observation["T"], float)
-    intrinsics = np.asarray(observation["K"], float)
+    numeric = {
+        name: np.asarray(observation[name])
+        for name in ("T", "K", "reference_xyz", "xyz")
+    }
+    if any(array.dtype.kind not in "iuf" for array in numeric.values()):
+        raise ValueError("Observation numeric arrays require real numbers")
+    camera = np.asarray(numeric["T"], float)
+    intrinsics = np.asarray(numeric["K"], float)
     surface = np.asarray(observation["surface"])
     selection = np.asarray(observation["selection"])
-    reference = np.asarray(observation["reference_xyz"], float)
-    measured = np.asarray(observation["xyz"], float)
+    reference = np.asarray(numeric["reference_xyz"], float)
+    measured = np.asarray(numeric["xyz"], float)
     noise = observation["noise_sigma_mm"]
     if (
         camera.shape != (4, 4)
@@ -86,7 +94,32 @@ def _observation_shape_or_raise(observation):
         or noise < 0
     ):
         raise ValueError("Observation schema, camera or noise is invalid")
-    return camera, intrinsics, surface.shape
+    sample_counts = np.asarray(
+        observation.get("depth_sample_counts", np.ones(surface.shape, int))
+    )
+    frame_count = observation.get("depth_frame_count", 1)
+    if (
+        isinstance(frame_count, (bool, np.bool_))
+        or not isinstance(frame_count, Integral)
+        or frame_count < 1
+        or sample_counts.shape != surface.shape
+        or sample_counts.dtype.kind not in "iu"
+        or np.any(sample_counts < 0)
+        or np.any(sample_counts > frame_count)
+    ):
+        raise ValueError("Repeated-depth frame and sample counts are invalid")
+    return {
+        **observation,
+        "T": camera,
+        "K": intrinsics,
+        "surface": surface,
+        "selection": selection,
+        "reference_xyz": reference,
+        "xyz": measured,
+        "noise_sigma_mm": float(noise),
+        "depth_sample_counts": sample_counts,
+        "depth_frame_count": int(frame_count),
+    }
 
 
 def surface_anchors(detection, observation):
@@ -134,8 +167,10 @@ class Reinspection:
 
     Positive residual is material above the nominal surface; negative residual
     is overgrinding. Each view contributes its extreme residual and an
-    uncalibrated +/-2 reported-sigma interval. Missing anchors always hold the
-    region rather than being inferred from neighbouring measurements.
+    uncalibrated +/-2 interval after projecting reported depth noise onto the
+    anchor normal. Fixed-pixel repeat means arrive with their effective sigma;
+    measurements from different views retain their extreme bounds. Missing
+    anchors always hold rather than being inferred from neighbours.
     """
 
     def __init__(self, targets):
@@ -149,20 +184,29 @@ class Reinspection:
         self.heights = [values.copy() for values in self.upper]
         self.troughs = [values.copy() for values in self.lower]
         self.views = [set() for _ in self.targets]
+        self.sample_counts = [{} for _ in self.targets]
+        self.positive_lower = [values.copy() for values in self.upper]
+        self.positive_estimates = [values.copy() for values in self.upper]
+        self.positive_counts = [
+            np.zeros(len(row["points"]), dtype=int) for row in self.targets
+        ]
+        self.positive_views = [
+            [None] * len(row["points"]) for row in self.targets
+        ]
         self.last_camera = None
         self.invalid_observations = []
 
     def observe(self, observation, view_index):
         """Absorb one sensor array view and return measured anchor count."""
         try:
-            camera, intrinsics, image_shape = _observation_shape_or_raise(
-                observation
-            )
-        except ValueError as error:
+            observation = _observation_shape_or_raise(observation)
+        except (TypeError, ValueError, OverflowError) as error:
             self.invalid_observations.append(
                 {"view": view_index, "reason": str(error)}
             )
             return 0
+        camera, intrinsics = observation["T"], observation["K"]
+        image_shape = observation["surface"].shape
         width, height = image_shape[::-1]
         self.last_camera = camera
         measured_count = 0
@@ -195,6 +239,7 @@ class Reinspection:
                 & observation["selection"][v, u]
                 & np.isfinite(reference).all(axis=1)
                 & np.isfinite(selected_measured).all(axis=1)
+                & (observation["depth_sample_counts"][v, u] > 0)
                 & (
                     np.linalg.norm(reference - points[indices], axis=1)
                     <= REFERENCE_MATCH_M
@@ -208,8 +253,32 @@ class Reinspection:
             )
             finite = np.isfinite(residual)
             indices, residual = indices[finite], residual[finite]
+            u, v = u[finite], v[finite]
             if len(indices):
+                rays = (
+                    np.column_stack(
+                        (
+                            (u - intrinsics[0, 2]) / intrinsics[0, 0],
+                            (v - intrinsics[1, 2]) / intrinsics[1, 1],
+                            np.ones(len(u)),
+                        )
+                    )
+                    @ camera[:3, :3].T
+                )
+                # The sensor sigma is along camera Z, not the CAD normal.
+                normal_sigma = observation["noise_sigma_mm"] * np.abs(
+                    np.einsum("ij,ij->i", rays, normals[indices])
+                )
+                lower = residual - 2 * normal_sigma
+                upper = residual + 2 * normal_sigma
                 self.views[index].add(view_index)
+                view_counts = self.sample_counts[index].setdefault(
+                    view_index, np.zeros(len(points), dtype=int)
+                )
+                view_counts[indices] = np.maximum(
+                    view_counts[indices],
+                    observation["depth_sample_counts"][v, u],
+                )
                 self.troughs[index][indices] = np.minimum(
                     self.troughs[index][indices], residual
                 )
@@ -218,12 +287,23 @@ class Reinspection:
                 )
                 self.lower[index][indices] = np.minimum(
                     self.lower[index][indices],
-                    residual - 2 * observation["noise_sigma_mm"],
+                    lower,
                 )
                 self.upper[index][indices] = np.maximum(
                     self.upper[index][indices],
-                    residual + 2 * observation["noise_sigma_mm"],
+                    upper,
                 )
+                strongest = lower > self.positive_lower[index][indices]
+                positive_indices = indices[strongest]
+                self.positive_lower[index][positive_indices] = lower[strongest]
+                self.positive_estimates[index][positive_indices] = residual[
+                    strongest
+                ]
+                self.positive_counts[index][positive_indices] = observation[
+                    "depth_sample_counts"
+                ][v[strongest], u[strongest]]
+                for anchor_index in positive_indices:
+                    self.positive_views[index][anchor_index] = view_index
                 measured_count += len(indices)
         return measured_count
 
@@ -256,6 +336,9 @@ class Reinspection:
 
     def report(self, tolerance_mm, *, whole_workpiece_scan=True):
         """Return signed per-region bounds, coverage and hold decisions."""
+        if not isinstance(whole_workpiece_scan, (bool, np.bool_)):
+            raise ValueError("Whole-workpiece scan scope must be boolean")
+        whole_workpiece_scan = bool(whole_workpiece_scan)
         if (
             isinstance(tolerance_mm, (bool, np.bool_))
             or not isinstance(tolerance_mm, Real)
@@ -268,13 +351,30 @@ class Reinspection:
         upper_limit_mm = float(tolerance_mm)
         lower_limit_mm = -abs(upper_limit_mm)
         rows = []
-        for target, lower, upper, heights, troughs, views in zip(
+        for (
+            target,
+            lower,
+            upper,
+            heights,
+            troughs,
+            views,
+            samples,
+            positive_lower,
+            positive_estimates,
+            positive_counts,
+            positive_views,
+        ) in zip(
             self.targets,
             self.lower,
             self.upper,
             self.heights,
             self.troughs,
             self.views,
+            self.sample_counts,
+            self.positive_lower,
+            self.positive_estimates,
+            self.positive_counts,
+            self.positive_views,
         ):
             measured = np.isfinite(upper) | np.isfinite(lower)
             peak = float(heights[measured].max()) if measured.any() else None
@@ -339,6 +439,27 @@ class Reinspection:
                     "lower_peak_mm": lower_peak,
                     "upper_peak_mm": upper_peak,
                     "anchor_bounds_mm": anchor_bounds,
+                    "anchor_estimates_mm": [
+                        float(value) if np.isfinite(value) else None
+                        for value in heights
+                    ],
+                    "anchor_observation_counts": (
+                        np.sum(list(samples.values()), axis=0).tolist()
+                        if samples
+                        else [0] * len(upper)
+                    ),
+                    "anchor_positive_lower_mm": [
+                        float(value) if np.isfinite(value) else None
+                        for value in positive_lower
+                    ],
+                    "anchor_positive_estimates_mm": [
+                        float(value) if np.isfinite(value) else None
+                        for value in positive_estimates
+                    ],
+                    "anchor_positive_observation_counts": (
+                        positive_counts.tolist()
+                    ),
+                    "anchor_positive_view_indices": positive_views,
                 }
             )
         pending = [r["status"] for r in rows if r["status"] != "verified"]
@@ -366,7 +487,9 @@ class Reinspection:
             },
             "uncertainty_model": {
                 "sigma_multiplier": 2,
-                "source": "reported sensor noise only",
+                "source": "reported effective camera-depth noise projected onto each CAD normal",
+                "cross_view_fusion": "extreme interval envelope",
+                "positive_confirmation": "same-pixel independent depth samples in the strongest positive view",
                 "calibrated": False,
             },
             "invalid_observations": self.invalid_observations,

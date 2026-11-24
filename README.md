@@ -45,8 +45,116 @@ MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
 重新安装入口可运行 `.venv/bin/python -m pip install --no-deps --no-build-isolation -e .`。
 模块方式为 `.venv/bin/python -m daiyi_grinding.enterprise_offline`。
 视觉定位 ±0.1 mm、型面 ±0.3 mm、换型 30 分钟、新品占机 2 小时和连续
-800 小时仍需现场独立证据。当前签名复检已经区分正余量与负向过磨；
+800 小时仍需现场独立证据。当前有符号余量复检已经区分正余量与负向过磨；
 过磨、负边界不确定或非法复检会停止自动回磨。
+
+## 离线加工与结果示例
+
+当前主链用合成 RGB-D 和 MuJoCo 连续积分执行识别、携件加工、磨后复检
+与有界回磨。薄批缝配置 `097_thin_seam` 使用正常 CAD 参考与几何检测器；
+示例种子属于开发回归。
+
+已完成的[有限去除率回磨示例](runs/enterprise_offline_20261123/functional_resume/examples_success_thin_120483_finite_03/index.html)
+来自[原始运行结果](runs/enterprise_offline_20261123/functional_resume/thin_120483_finite_03/result.json)，
+[调用记录](runs/enterprise_offline_20261123/functional_resume/thin_120483_finite_03.invocation.json)
+保存本次参数、单线程环境和退出结果。
+首次加工后，独立复检确认局部正超差；控制器选择此前许可轨迹的子段，
+去重并按观测余量降低进给。实际第二轮回磨后整件观测放行，
+控制器以 `observed_regions_verified` 停止。
+
+| 项目 | 实际结果 |
+| --- | --- |
+| 初始候选 / 接纳路径 | 4 / 4 段 |
+| 回磨映射 / 去重后候选 / 实际执行 | 4 / 3 / 3 段，同轮去重 1 段 |
+| 执行 / 复检 | 2 / 2 轮 |
+| 首轮 / 回磨后深度帧 | 150 / 54，均为 6 视角独立采集 |
+| 注册区域验证 | 2 / 2 |
+| 可量测锚点 | 145 / 145 |
+| 首轮 / 最终最大观测上界 | 0.435841 / 0.077113 mm |
+| 假定法向去除率 | 0.009 mm/s |
+| 仿真运动 | 通过 |
+| 磨后整件观测 | 放行 |
+| 完整仿真任务 | 完成 |
+| 企业实物验收 | 待现场独立量测 |
+
+单独运行主链时使用共享锁和单线程环境，每次加工与示例导出均写入新目录：
+
+```bash
+MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+  flock runs/enterprise_offline_20261123/mujoco.lock \
+  .venv/bin/python -m daiyi_grinding.workstation_run \
+  --workpiece-profile 097_thin_seam --seed 120483 --grasp-setup original \
+  --mode removal --removal-rate-mm-s 0.009 --max-passes 3 --realtime-factor 0 \
+  --output runs/enterprise_offline_20261123/functional_resume/thin_example_new
+
+.venv/bin/python -m daiyi_grinding.processing_example \
+  runs/enterprise_offline_20261123/functional_resume/thin_example_new \
+  --output runs/enterprise_offline_20261123/functional_resume/example_new
+```
+
+打开导出目录的 `index.html`，可查看同视角的加工前后图、各轮表面路径、
+实际接纳段数、加工点跟踪、量测帧数、区域区间与停止原因。图像和结果嵌入
+页面，可直接打开。[薄批缝基线示例](runs/enterprise_offline_20261123/functional_resume/examples_baseline_01/index.html)
+保留了运动通过、磨后观测未放行的实际结果。
+[重复量测失败比较页](runs/enterprise_offline_20261123/functional_resume/examples_failure_fixed_02/index.html)
+展示追加采样后仍因上边界不确定而停止的记录。
+
+磨后量测在固定编码器位姿采集独立深度帧，只平均同一像素的有效采样。
+临时复检仍有不确定或正超差且没有过磨、非法观测时，在该位姿追加采样；
+不同视角的余量区间仍保留极值。采集帧数和追加原因写入 `rescan_XX_views.json`，
+各视角的 `rescan_XX_view_YY_observation.npz` 保存原始 `depth_frames`、
+逐像素 `depth_sample_counts`、平均深度和相机变换。
+
+深度与分割标签按像素中心采样，使标定射线与渲染网格采样一致。
+磨后余料网格同步到全部已建立的渲染 GL 上下文，复检读取当前几何。
+
+| 边界 | 当前值 | 含义 |
+| --- | ---: | --- |
+| 初始深度采集 | 1 帧/视角 | 保留初始识别观测 |
+| 常规磨后量测 | 9 帧/视角 | 独立采样的同像素均值 |
+| 磨后量测上限 | 25 帧/视角 | 保留已有帧后追加，用于有符号区间确认 |
+| 局部正超差确认 | 至少 2 次有效独立采样 | 正余量区间下界超过容差上限 |
+| 复检双边容差 | ±0.30 mm | 逐锚点的有效噪声区间参与判定 |
+| 量测区间 | ±2σ | 平均深度的有效噪声投影到 CAD 法向 |
+| `--max-passes` | 1、2 或 3 轮 | 总执行预算，包括首次加工 |
+
+局部回磨从当轮有符号锚点观测选择此前许可表面轨迹的子段。复检完整、
+边界确定且无负向风险时，持续正超差才进入局部路径；缺测、不确定和未映射
+高点保留处置记录。路径保持原 CAD 表面与工具/ROI 许可，随后重新规划整段运动。
+控制器按当轮观测、运动门、路径与轮数预算决定继续或停止。
+同轮局部子段与已有路径逐一比较，避免重复加工相同 CAD 轨迹。
+设置 `--removal-rate-mm-s` 时，去除量受实际工具足迹内的积分时长限制；
+局部回磨按观测上界、原材料余量和声明的名义率安排轨迹时间。转运时间不计入去除。
+未设置该参数时保留原几何扫掠模式。示例的名义规划率与仿真 plant 率相同，
+用于验证闭环衔接，真实材料、力、磨耗和温升尚未标定。
+
+[功能样例与复现说明](docs/functional_grinding_20261123.md)汇集薄批缝、批缝、
+毛刺、正常无加工和未放行记录。`--camera-setup original` 使用原固定相机；
+`--camera-setup low_side_simulation` 使用独立低位侧视布局。相机布局、
+实际世界位姿与光学参数随每次运行保存，默认配置文件保持原值。
+
+[低位毛刺加工页](runs/enterprise_offline_20261123/functional_resume/examples_partial_burr_2026112397_low_camera_02/index.html)
+保存补见外壁后的实际加工及复检。共用法向退让让外壁路径完成进出与回位，
+外壁观测已放行；整件仍有顶面复核区域需要处置。
+[断续目标准入报告](runs/enterprise_offline_20261123/functional_resume/perception_01/local_trace_admission_01/report.md)
+保存局部量测、名义 CAD 轨迹和夹爪与砂带结构干涉的拒绝结果。
+两类扩展的未完成环节与后续处置见功能说明的已知问题。
+
+| 扩展工况 | 候选 / 实际执行段 | 磨后验证区域 | 整件结果 |
+| --- | ---: | ---: | --- |
+| 低位毛刺 | 2 / 2 | 3 / 4 | `partial`，顶面 `review` 仍有正超差 |
+| 断续局部轨迹 | 1 / 0 | 未进入磨后复检 | `motion_admission_blocked` |
+
+| 结果字段 | 读取含义 |
+| --- | --- |
+| `motion_gate_passed` | 已执行各轮的实际积分跟踪与非预期接触满足仿真运动条件 |
+| `observational_release` | 当前整件观测、逐锚点双边区间与运动条件共同放行 |
+| `geometric_goal_complete` | 生成余料几何与初始识别覆盖的事后评价 |
+| `goal_complete` | 观测放行与事后评价共同满足完整仿真任务 |
+| `controller_stopping.reason`、`reinspections[].stopping_reason` | 最后及各轮的实际停止或继续原因 |
+| `reinspections[].regrind` | 持续正超差、局部追加路径、未映射与复核记录 |
+
+合成真值只用于事后评价。企业实物验收使用独立现场量测与工艺记录。
 
 ## 启动
 
@@ -54,8 +162,10 @@ MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
 
 ```bash
 bash scripts/bootstrap.sh
-bash scripts/verify.sh
-MUJOCO_GL=egl .venv/bin/daiyi-serve --port 8848
+MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+  flock runs/enterprise_offline_20261123/mujoco.lock bash scripts/verify.sh
+MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+  .venv/bin/daiyi-serve --port 8848
 ```
 
 打开 [当前整站演示](http://127.0.0.1:8848/)。网页默认载入与当前源码匹配的
@@ -64,13 +174,17 @@ ESTUN 记录；没有匹配记录时自动采集、检测和规划。点击“�
 重新规划和执行各自创建独立记录，写入 `runs/`。
 
 ```bash
-MUJOCO_GL=egl .venv/bin/daiyi-workstation \
+MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+  flock runs/enterprise_offline_20261123/mujoco.lock .venv/bin/daiyi-workstation \
   --case mixed --seed 7007 --views multi --tool belt \
-  --max-passes 2 --realtime-factor 0 --output runs/current_full_new
+  --max-passes 2 --realtime-factor 0 \
+  --output runs/enterprise_offline_20261123/current_full_new
 
-MUJOCO_GL=egl .venv/bin/daiyi-workstation-benchmark \
+MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+  flock runs/enterprise_offline_20261123/mujoco.lock \
+  .venv/bin/daiyi-workstation-benchmark \
   --seeds 9201,9202 --development-seeds 7007,9101,9102 \
-  --output runs/current_holdout_new
+  --output runs/enterprise_offline_20261123/current_holdout_new
 ```
 
 独立验证报告：
@@ -186,6 +300,8 @@ CAD 底座使用独立参考检测器，必须提供与观测注册到同一姿�
 不能作为真实金属铸件泛化成绩。固定相机/转台和砂带功能面有显式仿真假设；
 机械臂与携件碰撞体是 CAD 派生近似。材料去除为实际工具扫掠的余料顶点几何模型，
 尚无标定恒力、材料去除速率、热效应和表面质量结论。真实机器人操作未接入。
+重复深度采集降低模拟随机噪声，仍需独立校准和交叉量测确认未知系统偏差；
+当前复检的不确定度模型保持未校准状态。
 
 下面是先前 FR5 实验的适用条件，保留用于解释历史结果：
 

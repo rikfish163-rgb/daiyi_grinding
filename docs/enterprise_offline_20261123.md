@@ -33,7 +33,7 @@
 | 粗磨、精磨和回磨 | `daiyi-process-sandbox` | [配对工艺沙盒](process_sandbox_20261123.md) |
 | 磨后双边容差 | `daiyi-reinspection-stress` | [signed 复检与停止](reinspection_stress_20261123.md) |
 | 控制与可靠性 | `daiyi-reliability-stress` | [控制故障与回执](reliability_stress_20261123.md) |
-| 统一运行与经验导出 | `daiyi-enterprise-offline` | [运行器说明](enterprise_offline_runner_20261123.md) |
+| 统一运行与经验导出 | `daiyi-enterprise-offline` | [运行器与证据读取](#复现与证据读取) |
 
 模型调度按用户最新要求优先 anyrouter 的 6.1 Sol，其次 Gemini 4、其他来源的
 DeepSeek Flash、Kimi 和 GLM。收尾任务使用 6.1 Sol；场景与工艺的两项 6.2 Sol
@@ -127,6 +127,8 @@ MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
 单进程峰值 RSS 和源码前后哈希。工艺输出使用 `process/` 根下的新子目录，
 在统一回执中记录真实路径。所有 MuJoCo 创建模型、渲染和积分共用
 `runs/enterprise_offline_20261123/mujoco.lock`，不要给自持锁模块重复外套锁。
+峰值 RSS 使用 Linux `wait4(child_pid)` 的进程全生命周期统计，包含 fork/exec 前
+的启动内存及已等待的后代进程峰值；多个任务的资源回执分别记录。
 
 独立仓库检查：
 

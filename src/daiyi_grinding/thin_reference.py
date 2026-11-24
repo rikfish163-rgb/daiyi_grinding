@@ -188,9 +188,9 @@ def detect_thin_reference(
     )
     support = (signed_difference > support_threshold) & paired
     seeds = (signed_difference > seed_threshold) & paired
-    connected = ndimage.binary_propagation(
-        seeds, mask=support, structure=np.ones((3, 3), bool)
-    )
+    # Keep weak measured fragments until metric connectivity can associate
+    # them with a strong seed. No samples are added across the gaps.
+    connected = support.copy()
     if config.closing_pixels:
         connected = ndimage.binary_closing(
             connected,
@@ -226,13 +226,41 @@ def detect_thin_reference(
         mapping = np.r_[0, dense + 1]
         components = mapping[components]
         count = len(roots)
+    seeded_components = np.unique(components[seeds & connected])
+    mapping = np.zeros(count + 1, dtype=np.intp)
+    mapping[seeded_components] = np.arange(1, len(seeded_components) + 1)
+    components = mapping[components]
+    count = len(seeded_components)
     residual = np.maximum(signed_difference, 0.0)
     detections = []
+    unresolved_components = []
     selected_mask = np.zeros(depth.shape, bool)
     for component_id in range(1, count + 1):
         component = components == component_id
         pixels = np.argwhere(component)
         if len(pixels) < config.minimum_pixels:
+            permitted = selection[tuple(pixels.T)]
+            selected = pixels[permitted]
+            if len(selected):
+                values = residual[tuple(pixels.T)] * 1000
+                unresolved_components.append(
+                    {
+                        "component_id": component_id,
+                        "reason": "strong_seed_insufficient_support",
+                        "pixels": selected.tolist(),
+                        "nominal_xyz": reference_xyz[
+                            tuple(selected.T)
+                        ].tolist(),
+                        "seed_count": int((seeds & component).sum()),
+                        "support_count": len(pixels),
+                        "permitted_pixel_count": len(selected),
+                        "minimum_pixels": config.minimum_pixels,
+                        "optical_residual_range_mm": [
+                            float(values.min()),
+                            float(values.max()),
+                        ],
+                    }
+                )
             continue
         points = xyz[tuple(pixels.T)]
         length_mm, width_mm, height_mm = _measure_region(
@@ -295,4 +323,5 @@ def detect_thin_reference(
         "support_threshold_mm": support_threshold * 1000,
         "seed_threshold_mm": seed_threshold * 1000,
         "reference_discontinuity_guard": discontinuities,
+        "unresolved_components": unresolved_components,
     }

@@ -32,16 +32,19 @@ from .casting_profiles import (
 from .learned_defects import registered_model_hashes
 from .workstation_jobs import JOB_FILE
 from .workstation_replay import ReplayRecorder
-from .workstation_tooling import fixed_tool
+from .workpiece_packages import load_cell_package, load_workpiece_package
 
 ASSETS = project.ROOT / "assets/ier220_workstation"
 SOURCE_SCENE = ASSETS / "scene.xml"
 WORKPIECE_MESH = ASSETS / "meshes/workpiece/wp_097_c0.stl"
 MODEL_VERSION = 3
 CELL_CONFIG_FILE = project.ROOT / "config/workstation.json"
-CELL_CONFIG = json.loads(CELL_CONFIG_FILE.read_text())
+CELL_PACKAGE = load_cell_package(CELL_CONFIG_FILE)
+CELL_CONFIG = CELL_PACKAGE.config
+DEFAULT_WORKPIECE_PACKAGE = load_workpiece_package()
 SOURCE_FILES = (
     "workstation_model.py",
+    "workpiece_packages.py",
     "workstation_motion.py",
     "workstation_run.py",
     "workstation_benchmark.py",
@@ -53,6 +56,7 @@ SOURCE_FILES = (
     "workstation_inspection.py",
     "workstation_planning.py",
     "workstation_quality.py",
+    "workstation_regrind.py",
     "workstation_jobs.py",
     "workstation_delivery.py",
     "workstation_transfers.py",
@@ -69,29 +73,53 @@ SOURCE_FILES = (
     "defect_training.py",
 )
 
-# Derived from the two coordinate transformations in the STEP importer:
-# R_gripper_to_flange @ R_tooling_to_MuJoCo.T and their CAD datum difference.
-GRIPPER_FROM_WORKPIECE = np.eye(4)
-GRIPPER_FROM_WORKPIECE[:3, :3] = [[0, 0, 1], [1, 0, 0], [0, 1, 0]]
-GRIPPER_FROM_WORKPIECE[:3, 3] = [-0.421, -0.090, 0.310]
+# Public default-frame constants remain the 097 package's CAD datum frames.
+GRIPPER_FROM_WORKPIECE, LOADING_ROTATION = DEFAULT_WORKPIECE_PACKAGE.grasp_frames()
 WORKPIECE_FROM_GRIPPER = np.linalg.inv(GRIPPER_FROM_WORKPIECE)
-LOADING_POSITION = np.array([-0.400, -1.800, 0.601])
-LOADING_ROTATION = Rotation.from_euler("z", 180, degrees=True).as_matrix()
+LOADING_POSITION = DEFAULT_WORKPIECE_PACKAGE.loading_position.copy()
 WHEEL_CENTER = np.array([-1.651, -1.125, 1.156])
 WHEEL_RADIUS = 0.0225
 WHEEL_HALF_WIDTH = 0.009
 
 
-GRASP_SETUPS = ("original", "opposite_simulation")
+GRASP_SETUPS = tuple(setup.name for setup in DEFAULT_WORKPIECE_PACKAGE.grasp_setups)
+CAMERA_SETUPS = ("original", "low_side_simulation")
 
 
-def grasp_frames(name):
-    if name not in GRASP_SETUPS:
-        raise ValueError("未登记的夹持配置")
-    turn = np.eye(4)
-    if name == "opposite_simulation":
-        turn[:3, :3] = Rotation.from_euler("z", 180, degrees=True).as_matrix()
-    return GRIPPER_FROM_WORKPIECE @ turn, LOADING_ROTATION @ turn[:3, :3]
+def grasp_frames(name, workpiece_id="097"):
+    """Resolve declared grasp frames while retaining the default 097 call."""
+    return load_workpiece_package(workpiece_id).grasp_frames(name)
+
+
+def inspection_camera_config(name="original", *, cell_package=None):
+    """Resolve one fixed virtual camera placement independently of defects.
+
+    The lower placement observes outer CAD walls below the upper flange. Both
+    placements keep the configured target, optics, sensor noise and table views.
+    These positions are simulation assumptions pending real-camera calibration.
+
+    Args:
+        name: ``original`` or ``low_side_simulation``.
+
+    Returns:
+        This run's camera settings in world coordinates and meters.
+
+    Raises:
+        ValueError: The named placement is not registered.
+    """
+    if name not in CAMERA_SETUPS:
+        raise ValueError("未登记的离线相机配置")
+    camera = (cell_package or CELL_PACKAGE).config["camera"]
+    return {
+        **camera,
+        "position_world_m": [
+            *camera["position_world_m"][:2],
+            1.200
+            if name == "low_side_simulation"
+            else camera["position_world_m"][2],
+        ],
+        "target_world_m": list(camera["target_world_m"]),
+    }
 
 
 COMPONENTS = [
@@ -192,7 +220,8 @@ def write_json(path, value):
     temporary.replace(path)
 
 
-def source_hashes():
+def source_hashes(workpiece_id="097"):
+    package = load_workpiece_package(workpiece_id)
     return {
         **{
             name: hashlib.sha256(
@@ -201,10 +230,9 @@ def source_hashes():
             for name in SOURCE_FILES
             if (project.SOURCE / name).exists()
         },
-        "scene.xml": hashlib.sha256(SOURCE_SCENE.read_bytes()).hexdigest(),
-        "wp_097_c0.stl": hashlib.sha256(
-            WORKPIECE_MESH.read_bytes()
-        ).hexdigest(),
+        package.source_scene.name: hashlib.sha256(package.source_scene.read_bytes()).hexdigest(),
+        package.mesh_path.name: hashlib.sha256(package.mesh_path.read_bytes()).hexdigest(),
+        package.path.name: hashlib.sha256(package.path.read_bytes()).hexdigest(),
         "workstation.json": hashlib.sha256(
             CELL_CONFIG_FILE.read_bytes()
         ).hexdigest(),
@@ -447,13 +475,18 @@ def prepare_belt_collision_assets():
     return record
 
 
-def prepare_workpiece_collision_assets():
-    """Preserve CAD flange steps instead of joining them into a tapered hull."""
+def prepare_workpiece_collision_assets(workpiece_package=None, output=None):
+    """Preserve the selected CAD steps; new packages keep proxies in run storage."""
     import trimesh
 
-    cache = ASSETS / "collision_workpiece_v3"
+    package = load_workpiece_package(workpiece_package or "097")
+    cache = package.collision_cache
+    if cache is None:
+        if output is None:
+            raise ValueError("新工件碰撞网格需要独立运行输出目录")
+        cache = Path(output) / f"collision_workpiece_{package.workpiece_id}_v3"
     manifest_file = cache / "manifest.json"
-    digest = hashlib.sha256(WORKPIECE_MESH.read_bytes()).hexdigest()
+    digest = hashlib.sha256(package.mesh_path.read_bytes()).hexdigest()
     if manifest_file.is_file():
         saved = json.loads(manifest_file.read_text())
         if (
@@ -462,7 +495,7 @@ def prepare_workpiece_collision_assets():
         ):
             return saved
     cache.mkdir(parents=True, exist_ok=True)
-    mesh = trimesh.load_mesh(WORKPIECE_MESH, process=True)
+    mesh = trimesh.load_mesh(package.mesh_path, process=True)
     horizontal = (np.abs(mesh.face_normals[:, 2]) > 0.999999) & (
         np.ptp(mesh.triangles[:, :, 2], axis=1) < 1e-7
     )
@@ -474,11 +507,11 @@ def prepare_workpiece_collision_assets():
         for index, height in enumerate(rounded)
         if areas[index] > mesh.area * 0.01 and height > mesh.bounds[:, 2].mean()
     ]
-    levels = sorted({0.07, 0.17, 0.31, 0.371, *major_planes})
+    levels = sorted({*package.collision_slice_boundaries_m, *major_planes})
     center = np.r_[mesh.bounds[:, :2].mean(axis=0), 0]
     files = []
-    for angle in np.linspace(0, 2 * np.pi, 13)[:-1]:
-        end = angle + 2 * np.pi / 12
+    for angle in np.linspace(0, 2 * np.pi, package.collision_angular_slices + 1)[:-1]:
+        end = angle + 2 * np.pi / package.collision_angular_slices
         wedge = _clip_triangles(
             mesh.triangles, [-np.sin(angle), np.cos(angle), 0], center
         )
@@ -537,10 +570,10 @@ def prepare_workpiece_collision_assets():
                     target = cache / f"workpiece_{len(files)}.stl"
                     points = clipped.triangles[faces].reshape(-1, 3)
                     if _convex_proxy(points, target):
-                        files.append(str(target.relative_to(ASSETS)))
+                        files.append(str(target.relative_to(ASSETS)) if target.is_relative_to(ASSETS) else str(target.resolve()))
     record = {
         "schema_version": 3,
-        "source": str(WORKPIECE_MESH.relative_to(ASSETS)),
+        "source": str(package.mesh_path.relative_to(ASSETS)),
         "source_sha256": digest,
         "major_horizontal_cad_planes_m": major_planes,
         "slice_boundaries_m": levels,
@@ -560,19 +593,26 @@ def build_scene(
     tool_key="belt",
     casting_profile=BASE_PROFILE,
     grasp_setup="original",
+    camera_config=None,
+    *,
+    workpiece_id="097",
+    workpiece_package=None,
+    cell_package=None,
 ):
-    """Compose independent cell bodies and attach this run's defects to CAD 097."""
+    """Compose the declared workpiece, shared cell and independent excess meshes."""
+    package = load_workpiece_package(workpiece_package or workpiece_id)
+    cell = cell_package or package.cell
     out = Path(output).resolve()
     out.mkdir(parents=True, exist_ok=True)
-    gripper_from_workpiece, loading_rotation = grasp_frames(grasp_setup)
-    root = ET.parse(SOURCE_SCENE).getroot()
+    gripper_from_workpiece, loading_rotation = package.grasp_frames(grasp_setup)
+    root = ET.parse(package.source_scene).getroot()
     root.set("model", "ESTUN_iER220_current_grinding_cell")
     compiler = root.find("compiler")
-    meshdir = SOURCE_SCENE.parent / compiler.attrib.pop("meshdir")
+    meshdir = package.source_scene.parent / compiler.attrib.pop("meshdir")
     assets = root.find("asset")
     if case in CASTING_CASES:
         appearance = casting_appearance(seed)
-        material = assets.find("./material[@name='wp_097_mat0']")
+        material = assets.find(f"./material[@name='{package.material_name}']")
         material.set("rgba", _numbers(appearance["rgba"]))
         material.set("specular", str(appearance["specular"]))
         material.set("shininess", str(appearance["shininess"]))
@@ -649,8 +689,8 @@ def build_scene(
         ctrlrange="-250 250",
         forcerange="-5 5",
     )
-    tool = fixed_tool(tool_key)
-    belt = fixed_tool("belt")
+    tool = cell.fixed_tool(tool_key)
+    belt = cell.fixed_tool("belt")
     surface = ET.SubElement(world, "body", name="fixed_abrasive_belt")
     ET.SubElement(
         surface,
@@ -712,17 +752,18 @@ def build_scene(
         size="0.003",
         rgba="0.3 0.6 0.9 1",
     )
-    fixture = root.find(".//body[@name='base_fixture']")
-    workpiece = root.find(".//body[@name='workpiece_097']")
+    fixture = root.find(f".//body[@name='{package.fixture_body_name}']")
+    workpiece = root.find(f".//body[@name='{package.body_name}']")
     # The original static importer assigned no fixture orientation. This setup
     # faces the grip toward the robot, avoiding the rear loading gantry.
     for body in (fixture, workpiece):
+        body.set("pos", _numbers(package.loading_position))
         body.set("quat", _numbers(_quaternion(loading_rotation)))
     table = ET.SubElement(
         world,
         "body",
         name="inspection_turntable",
-        pos=_numbers(LOADING_POSITION),
+        pos=_numbers(package.loading_position),
     )
     ET.SubElement(
         table,
@@ -738,7 +779,7 @@ def build_scene(
         "geom",
         name="turntable_disk",
         type="cylinder",
-        size=_numbers([CELL_CONFIG["turntable"]["radius_m"], 0.014]),
+        size=_numbers([cell.config["turntable"]["radius_m"], 0.014]),
         pos="0 0 -0.025",
         rgba="0.16 0.4 0.48 1",
         mass="8",
@@ -761,7 +802,7 @@ def build_scene(
             body.set("gravcomp", "0")
 
     proxies = prepare_collision_assets()
-    proxies["workpiece"] = prepare_workpiece_collision_assets()["pieces"]
+    proxies["workpiece"] = prepare_workpiece_collision_assets(package, out)["pieces"]
     for owner, names in (
         (gripper, ("grip_board_col", "grip_frame_col")),
         (world, ("stiff_spindle_stand_col", "stiff_spindle_head_col")),
@@ -798,7 +839,7 @@ def build_scene(
 
     contact = root.find("contact")
     ET.SubElement(
-        contact, "exclude", body1="grinding_gripper", body2="workpiece_097"
+        contact, "exclude", body1="grinding_gripper", body2=package.body_name
     )
     equality = ET.SubElement(root, "equality")
     # High weld impedance approximates the declared rigid fixture/grasp. It is
@@ -808,7 +849,7 @@ def build_scene(
         "weld",
         name="fixture_hold",
         body1="inspection_turntable",
-        body2="workpiece_097",
+        body2=package.body_name,
         relpose=_numbers(np.r_[np.zeros(3), _quaternion(loading_rotation)]),
         active="true",
         solref="0.002 1",
@@ -819,7 +860,7 @@ def build_scene(
         "weld",
         name="gripper_hold",
         body1="grinding_gripper",
-        body2="workpiece_097",
+        body2=package.body_name,
         relpose=_numbers(
             np.r_[
                 gripper_from_workpiece[:3, 3],
@@ -835,7 +876,7 @@ def build_scene(
     from .workstation_defects import generate_cell_defects
 
     for index, (mesh, metadata) in enumerate(
-        generate_cell_defects(WORKPIECE_MESH, seed, case, casting_profile)
+        generate_cell_defects(package.mesh_path, seed, case, casting_profile)
     ):
         target = out / f"added_defect_{index}.stl"
         mesh.export(target)
@@ -849,7 +890,7 @@ def build_scene(
             name=name,
             type="mesh",
             mesh=name,
-            material="wp_097_mat0",
+            material=package.material_name,
             group="4",
             contype="0",
             conaffinity="0",
@@ -857,7 +898,7 @@ def build_scene(
         )
         private.append({"geom": name, **metadata})
 
-    camera = CELL_CONFIG["camera"]
+    camera = cell.config["camera"] if camera_config is None else camera_config
     ET.SubElement(
         world,
         "camera",
@@ -924,11 +965,24 @@ class Workstation:
         tool="belt",
         casting_profile=BASE_PROFILE,
         grasp_setup="original",
+        camera_setup="original",
+        *,
+        workpiece_id="097",
+        workpiece_package=None,
+        cell_package=None,
     ):
+        self.workpiece_package = load_workpiece_package(workpiece_package or workpiece_id)
+        self.workpiece_id = self.workpiece_package.workpiece_id
+        self.cell_package = cell_package or self.workpiece_package.cell
+        self.cell_config = self.cell_package.config
+        self.loading_position = self.workpiece_package.loading_position.copy()
+        self.seed = seed
+        self.camera_setup = camera_setup
+        self.camera_config = inspection_camera_config(camera_setup)
         self.grasp_setup = grasp_setup
-        self.gripper_from_workpiece, self.loading_rotation = grasp_frames(
-            grasp_setup
-        )
+        self.gripper_from_workpiece, self.loading_rotation = self.workpiece_package.grasp_frames(grasp_setup)
+        if self.workpiece_id != "097" and case in CASTING_CASES:
+            raise ValueError("该工件尚未登记 casting 工况先验，不能借用 097 身份")
         self.workpiece_from_gripper = np.linalg.inv(self.gripper_from_workpiece)
         self.output = Path(output).resolve()
         self.output.mkdir(parents=True, exist_ok=True)
@@ -941,9 +995,17 @@ class Workstation:
             if self.casting_profile is not None
             else None
         )
-        self.tool = fixed_tool(tool)
+        self.tool = self.cell_package.fixed_tool(tool)
         self.scene_file, self.private_defects = build_scene(
-            self.output, seed, case, tool, casting_profile, grasp_setup
+            self.output,
+            seed,
+            case,
+            tool,
+            casting_profile,
+            grasp_setup,
+            self.camera_config,
+            workpiece_package=self.workpiece_package,
+            cell_package=self.cell_package,
         )
         self.model = mujoco.MjModel.from_xml_path(str(self.scene_file))
         self.data = mujoco.MjData(self.model)
@@ -959,7 +1021,11 @@ class Workstation:
         self.lower = self.model.jnt_range[self.joints, 0] + 0.005
         self.upper = self.model.jnt_range[self.joints, 1] - 0.005
         self.gripper = self.model.body("grinding_gripper").id
-        self.workpiece = self.model.body("workpiece_097").id
+        self.workpiece = (
+            self.model.body("workpiece_097")
+            if self.workpiece_id == "097"
+            else self.model.body(self.workpiece_package.body_name)
+        ).id
         self.tcp = self.model.site("gripper_frame").id
         self.wp_qadr = self.model.joint("workpiece_free").qposadr[0]
         self.fixture_weld = self.model.equality("fixture_hold").id
@@ -980,7 +1046,7 @@ class Workstation:
         mujoco.mj_forward(self.model, self.data)
         home_wp = np.eye(4)
         home_wp[:3, :3] = self.loading_rotation
-        home_wp[:3, 3] = LOADING_POSITION + [0, 0, 0.35]
+        home_wp[:3, 3] = self.loading_position + [0, 0, 0.35]
         home_grip = home_wp @ self.workpiece_from_gripper
         self.home = self.ik(
             home_grip, np.array([1.19, -0.1, 0.7, 2.5, 0.7, -2.7])
@@ -1087,7 +1153,7 @@ class Workstation:
             if attached
             else np.block(
                 [
-                    [self.loading_rotation, LOADING_POSITION[:, None]],
+                    [self.loading_rotation, self.loading_position[:, None]],
                     [np.zeros((1, 3)), np.ones((1, 1))],
                 ]
             )
@@ -1178,11 +1244,21 @@ class Workstation:
         mode="rgb",
         reference=False,
     ):
-        key = (width, height)
+        """Render RGB for display and pixel-center rays for depth and labels."""
+        measurement = mode in {"depth", "segmentation"}
+        key = (width, height, measurement)
         if key not in self.renderers:
-            self.renderers[key] = mujoco.Renderer(
-                self.model, height=height, width=width
-            )
+            samples = self.model.vis.quality.offsamples
+            if measurement:
+                # Multisample depth resolves different subpixel rays at edges;
+                # those samples do not match the calibrated pixel-center ray.
+                self.model.vis.quality.offsamples = 0
+            try:
+                self.renderers[key] = mujoco.Renderer(
+                    self.model, height=height, width=width
+                )
+            finally:
+                self.model.vis.quality.offsamples = samples
         renderer = self.renderers[key]
         renderer.disable_depth_rendering()
         renderer.disable_segmentation_rendering()
@@ -1224,6 +1300,9 @@ class Workstation:
         return {
             "schema_version": 1,
             "robot": "ESTUN iER220-2700",
+            "workpiece_id": self.workpiece_id,
+            "workpiece_package": self.workpiece_package.summary(),
+            "grasp_setup": self.grasp_setup,
             "simulation_time_s": float(self.data.time),
             "phase": phase,
             "joint_angles_deg": np.rad2deg(self.data.qpos[self.q_index])
@@ -1246,6 +1325,8 @@ class Workstation:
                 1
             ].tolist(),
             "camera_fixed": True,
+            "camera_setup": self.camera_setup,
+            "camera_config": self.camera_config,
             "tool": self.tool.summary(),
             **extra,
         }

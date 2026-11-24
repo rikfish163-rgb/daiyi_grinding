@@ -1,10 +1,12 @@
 """Failure boundaries for the serial offline runner, using tiny subprocesses."""
 
+import json
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
+from collections import Counter
 from pathlib import Path
 from unittest import mock
 
@@ -86,6 +88,168 @@ class OfflineRunnerTests(unittest.TestCase):
         runner.write_json(destination / "evidence.json", evidence)
         return runner.Task(
             "planning_stress", destination, ("fixture",)
+        ), evidence
+
+    def reliability_output(self):
+        destination = self.root / "reliability"
+        (destination / "loops").mkdir(parents=True)
+        cases = []
+        for index in range(100):
+            expected = (
+                "reject",
+                "cancel",
+                "task_complete",
+                "execution_complete",
+            )[index % 4]
+            cases.append(
+                {
+                    "loop": index,
+                    "scenario": f"stub_{expected}",
+                    "expected": expected,
+                    "expected_code": "known_fault"
+                    if expected == "reject"
+                    else None,
+                    "observed": {
+                        "reject": "reject",
+                        "cancel": "cancelled",
+                        "task_complete": "finished",
+                        "execution_complete": "finished",
+                    }[expected],
+                    "code": "known_fault" if expected == "reject" else None,
+                    "state": {
+                        "reject": "HELD",
+                        "cancel": "CANCELLED",
+                        "task_complete": "FINISHED",
+                        "execution_complete": "FINISHED",
+                    }[expected],
+                    "execution_complete": expected.endswith("complete"),
+                    "task_quality_complete": expected == "task_complete",
+                    "match": True,
+                    "unexpected_exception": False,
+                }
+            )
+        path = destination / "loops/index.jsonl"
+        path.write_text(
+            "\n".join(json.dumps(row, allow_nan=False) for row in cases) + "\n",
+            encoding="utf-8",
+        )
+        evidence = {
+            "task": "pure mock reliability stub",
+            "scope": {"real_800h_pending": True, "real_controller_used": False},
+            "commands": [["pure_stub"]],
+            "inputs": [runner.file_reference(self.source)],
+            "metrics": {
+                "loops": {
+                    "actual_cycles": 100,
+                    "mismatches": 0,
+                    "unexpected_exceptions": 0,
+                    "meets_minimum": True,
+                    "expected_rejections": 25,
+                    "observed_expected_rejections": 25,
+                    "expected_accepts": 75,
+                    "observed_expected_accepts": 75,
+                    "execution_complete_cycles": 50,
+                    "task_quality_complete_cycles": 25,
+                    "real_task_quality_complete_cycles": 0,
+                },
+                "virtual": {
+                    "complete": True,
+                    "meets_target": True,
+                    "virtual_hours": 800,
+                    "real_800h_pending": True,
+                },
+            },
+            "failures": [],
+            "artifacts": [runner.file_reference(path)],
+            "real_data_pending": ["actual 800-hour wall clock"],
+        }
+        runner.write_json(destination / "evidence.json", evidence)
+        return runner.Task(
+            "reliability_stress", destination, ("pure_stub",)
+        ), evidence
+
+    def acceptance_output(self):
+        destination = self.root / "acceptance_facts"
+        (destination / "synthetic_suite").mkdir(parents=True)
+        (destination / "current/stub_group").mkdir(parents=True)
+        hold = {
+            "role": "simulation_cycle",
+            "code": "criterion_not_met",
+            "scope": "measured offline criterion; real status is evaluated separately",
+            "reason": "fixture observation hold",
+        }
+        report = {
+            "enterprise_acceptance_passed": False,
+            "execution_fact": {
+                "robot_executed": True,
+                "feedback_status": "rejected",
+            },
+            "matrix": [
+                {"id": "motion_tracking", "status": "fail", "measured": None},
+                {
+                    "id": "simulation_cycle",
+                    "status": "fail",
+                    "measured": {
+                        "normal_no_action_control": False,
+                        "nontrivial_grinding_complete": False,
+                    },
+                },
+            ],
+            "failures": [hold],
+        }
+        suite = {
+            "case_count": 1,
+            "expected_decisions_reproduced": 1,
+            "cases": [
+                {
+                    "case": "fixture_hold",
+                    "expected": {"simulation_cycle": "fail"},
+                    "observed": {"simulation_cycle": "fail"},
+                    "expected_decision_reproduced": True,
+                    "all_enterprise_targets_unknown": True,
+                }
+            ],
+        }
+        suite_path = destination / "synthetic_suite/suite_summary.json"
+        report_path = destination / "current/stub_group/00_run.json"
+        runner.write_json(suite_path, suite)
+        runner.write_json(report_path, report)
+        evidence = {
+            "task": "pure acceptance denominator fixture",
+            "scope": "offline synthetic",
+            "commands": [["pure_stub"]],
+            "inputs": [runner.file_reference(self.source)],
+            "metrics": {
+                "synthetic_cases": 1,
+                "synthetic_expected_decisions_reproduced": 1,
+                "virtual_800h_is_real_800h": False,
+                "real_enterprise_acceptances": 0,
+                "archive_groups": {
+                    "stub_group": {
+                        "assessed_runs": 1,
+                        "normal_no_action_controls": 0,
+                        "nontrivial_complete_cycles": 0,
+                        "executed_runs": 1,
+                        "executed_feedback_accepted": 0,
+                        "executed_feedback_rejected": 1,
+                        "execution_unknown_runs": 0,
+                        "motion_gate_passes": 0,
+                        "real_enterprise_acceptances": 0,
+                    }
+                },
+            },
+            "failures": [{"assessment": "stub_group/run", **hold}],
+            "artifacts": [
+                runner.file_reference(suite_path),
+                runner.file_reference(report_path),
+            ],
+            "real_data_pending": [
+                "physical controller and quality measurements"
+            ],
+        }
+        runner.write_json(destination / "evidence.json", evidence)
+        return runner.Task(
+            "enterprise_acceptance", destination, ("pure_stub",)
         ), evidence
 
     def run_stub(self, suffix="", *, timeout=5.0, names=("planning_stress",)):
@@ -275,6 +439,30 @@ class OfflineRunnerTests(unittest.TestCase):
         self.assertIn(
             "hash_mismatch", {error["code"] for error in result.errors}
         )
+
+    def test_artifact_changed_after_hashing_is_not_parsed_as_verified(self):
+        task, _ = self.planning_output()
+        target = task.output / "suite.json"
+        original = runner.sha256
+        mutated = False
+
+        def hash_then_change(path):
+            nonlocal mutated
+            digest = original(path)
+            if path == target and not mutated:
+                mutated = True
+                value = runner.read_json(path)
+                value["unverified_later_content"] = True
+                runner.write_json(path, value)
+            return digest
+
+        with mock.patch.object(runner, "sha256", side_effect=hash_then_change):
+            check = runner.validate_evidence(task, root=self.root)
+        self.assertFalse(check.passed)
+        self.assertIn(
+            "hash_mismatch", {error["code"] for error in check.errors}
+        )
+        self.assertIn("changed before parsing", check.errors[-1]["reason"])
 
     def test_deleted_artifact_is_not_an_expected_rejection(self):
         task, _ = self.planning_output()
@@ -484,6 +672,30 @@ class OfflineRunnerTests(unittest.TestCase):
         self.assertEqual(receipt["exit_code"], 0)
         self.assertGreater(receipt["peak_rss_kib"], 0)
 
+    def test_acceptance_rejected_feedback_keeps_the_execution_denominator(self):
+        task, evidence = self.acceptance_output()
+        check = runner.validate_evidence(task, root=self.root)
+        self.assertTrue(check.passed, check.errors)
+        facts = check.cases[-1]["details"]["execution_fact"]
+        self.assertIs(facts["robot_executed"], True)
+        self.assertEqual(facts["feedback_status"], "rejected")
+        evidence["metrics"]["archive_groups"]["stub_group"]["executed_runs"] = 0
+        runner.write_json(task.output / "evidence.json", evidence)
+        check = runner.validate_evidence(task, root=self.root)
+        self.assertFalse(check.passed)
+        self.assertIn("executed_runs", check.errors[-1]["reason"])
+
+    def test_acceptance_hold_without_a_verified_matching_assessment_fails(self):
+        task, evidence = self.acceptance_output()
+        evidence["failures"][0]["assessment"] = "invented/unassessed_run"
+        runner.write_json(task.output / "evidence.json", evidence)
+        check = runner.validate_evidence(task, root=self.root)
+        self.assertFalse(check.passed)
+        self.assertIn(
+            "unexpected_acceptance_failure",
+            {error["code"] for error in check.errors},
+        )
+
     def test_nonzero_child_exit_is_retained_and_fails_the_bundle(self):
         summary = self.run_stub("\nraise SystemExit(7)\n")
         self.assertFalse(summary["software_suite_passed"])
@@ -513,6 +725,22 @@ class OfflineRunnerTests(unittest.TestCase):
         self.assertEqual(summary["executed_task_count"], 1)
         self.assertTrue((self.output / "sources_after.json").is_file())
 
+    def test_deleted_source_tree_retains_a_failed_bundle_and_skips_later_tasks(
+        self,
+    ):
+        summary = self.run_stub(
+            "\nimport shutil\nshutil.rmtree(source.parent)\n",
+            names=("planning_stress", "reinspection_stress"),
+        )
+        self.assertFalse(summary["software_suite_passed"])
+        self.assertFalse(summary["source_unchanged"])
+        self.assertIsNone(summary["source_tree_sha256_after"])
+        self.assertFalse(summary["tasks"][1]["executed"])
+        self.assertTrue((self.output / "summary.json").is_file())
+        self.assertTrue((self.output / "evidence.json").is_file())
+        after = runner.read_json(self.output / "sources_after.json")
+        self.assertIn("snapshot_error", after)
+
     def test_timeout_kills_descendant_processes_and_retains_logs(self):
         marker = self.root / "escaped_child"
         descendant = (
@@ -539,11 +767,35 @@ class OfflineRunnerTests(unittest.TestCase):
         self.assertGreater(receipt["peak_rss_kib"], 0)
 
     def test_peak_rss_is_per_child_and_not_cumulative(self):
-        large = self.execute(
-            "large",
-            "import time; buffer = bytearray(64 * 1024 * 1024); time.sleep(0.1)",
+        # Fork/exec retains the launcher's resident high-water mark. Exercise
+        # the stdlib-only runner in a fresh interpreter, as its CLI runs.
+        code = f"""
+import sys
+from pathlib import Path
+from daiyi_grinding import enterprise_offline as runner
+
+root = Path({str(self.root)!r})
+freeze = runner.SourceFreeze(root, runner.snapshot_sources(root))
+for name, program in (
+    ("large", "import time; buffer = bytearray(64 * 1024 * 1024); time.sleep(0.1)"),
+    ("small", "pass"),
+):
+    runner.execute_task(
+        runner.Task(name, root / f"output_{{name}}", (sys.executable, "-c", program)),
+        root / f"receipt_{{name}}",
+        root=root,
+        freeze=freeze,
+        timeout=5.0,
+    )
+"""
+        harness = self.execute("rss_harness", code)
+        self.assertEqual(
+            harness["exit_code"],
+            0,
+            (self.root / "receipt_rss_harness/stderr.log").read_text(),
         )
-        small = self.execute("small", "pass")
+        large = runner.read_json(self.root / "receipt_large/receipt.json")
+        small = runner.read_json(self.root / "receipt_small/receipt.json")
         self.assertEqual((large["exit_code"], small["exit_code"]), (0, 0))
         self.assertGreater(large["peak_rss_kib"], small["peak_rss_kib"] + 32000)
         resource = runner.read_json(self.root / "receipt_small/resource.json")
@@ -641,6 +893,110 @@ class OfflineRunnerTests(unittest.TestCase):
         result = runner.validate_evidence(task, root=self.root)
         self.assertFalse(result.passed)
         self.assertIn("pending real 800-hour", result.errors[-1]["reason"])
+
+    def test_reliability_mixed_expected_outcomes_keep_quality_pending_separate(
+        self,
+    ):
+        task, _ = self.reliability_output()
+        check = runner.validate_evidence(task, root=self.root)
+        self.assertTrue(check.passed, check.errors)
+        self.assertEqual(
+            Counter(row["outcome"] for row in check.cases),
+            {
+                "expected_rejection": 25,
+                "expected_interruption": 25,
+                "mock_quality_fixture_complete": 25,
+                "mock_execution_quality_pending": 25,
+            },
+        )
+        catalog = runner._catalog([], check.cases)
+        self.assertEqual(len(catalog["expected_rejections"]), 25)
+        self.assertEqual(len(catalog["expected_interruptions"]), 25)
+        self.assertEqual(len(catalog["observed_quality_holds"]), 25)
+        self.assertEqual(catalog["software_errors"], [])
+
+    def test_reliability_declared_match_cannot_override_actual_flags_or_denominators(
+        self,
+    ):
+        task, evidence = self.reliability_output()
+        evidence["metrics"]["loops"]["execution_complete_cycles"] = 0
+        runner.write_json(task.output / "evidence.json", evidence)
+        check = runner.validate_evidence(task, root=self.root)
+        self.assertFalse(check.passed)
+        self.assertIn("execution_complete_cycles", check.errors[-1]["reason"])
+        evidence["metrics"]["loops"]["execution_complete_cycles"] = 50
+        index = task.output / "loops/index.jsonl"
+        cases = [
+            runner.strict_json(line) for line in index.read_text().splitlines()
+        ]
+        cases[2]["task_quality_complete"] = False
+        index.write_text("\n".join(json.dumps(row) for row in cases) + "\n")
+        evidence["artifacts"] = [runner.file_reference(index)]
+        runner.write_json(task.output / "evidence.json", evidence)
+        check = runner.validate_evidence(task, root=self.root)
+        self.assertFalse(check.passed)
+        self.assertIn("completion expectation", check.errors[-1]["reason"])
+
+    def test_perception_instance_gaps_are_retained_without_failing_software_suite(
+        self,
+    ):
+        destination = self.root / "perception"
+        destination.mkdir()
+        row = {
+            "status": "evaluated",
+            "case": "same_known_case",
+            "view": "view_00",
+            "results": {
+                backend: {
+                    "binary": {"f1": 0.75},
+                    "object_matching": {
+                        "visible_objects": 2,
+                        "matched_objects": 1 if backend == "learned" else 2,
+                    },
+                }
+                for backend in ("geometric", "learned", "hybrid")
+            },
+        }
+        for name in ("comparison.json", "perturbations.json"):
+            runner.write_json(destination / name, [row])
+        evidence = {
+            "task": "pure perception stub",
+            "scope": {"archived_synthetic_views": True},
+            "commands": [["pure_stub"]],
+            "inputs": [runner.file_reference(self.source)],
+            "metrics": {
+                "known_regression_frames": 1,
+                "expected_regression_frames": 1,
+                "perturbation_count": 1,
+                "expected_perturbation_count": 1,
+                "perturbation_failed": 0,
+                "comparison": {"frame_count": 1},
+            },
+            "failures": [],
+            "artifacts": [
+                runner.file_reference(destination / name)
+                for name in ("comparison.json", "perturbations.json")
+            ],
+            "real_data_pending": ["independent real object observations"],
+        }
+        runner.write_json(destination / "evidence.json", evidence)
+        check = runner.validate_evidence(
+            runner.Task("perception_stress", destination, ("pure_stub",)),
+            root=self.root,
+        )
+        self.assertTrue(check.passed, check.errors)
+        self.assertEqual(
+            [case["outcome"] for case in check.cases], ["diagnostic_gap"] * 2
+        )
+        self.assertEqual(
+            check.cases[0]["details"]["correct_kind_instance_gaps"]["learned"][
+                "unmatched_or_wrong_kind"
+            ],
+            1,
+        )
+        catalog = runner._catalog([], check.cases)
+        self.assertEqual(len(catalog["perception_diagnostic_gaps"]), 2)
+        self.assertEqual(catalog["software_errors"], [])
 
     def test_process_injected_false_releases_pass_contract_but_remain_failures(
         self,

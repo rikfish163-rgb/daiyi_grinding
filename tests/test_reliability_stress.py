@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -24,6 +27,20 @@ def sha256(path):
 
 
 class VirtualReliabilityTests(unittest.TestCase):
+    def test_nonfinite_boolean_and_unbounded_virtual_clocks_are_rejected(self):
+        for kwargs in (
+            {"hours": float("nan")},
+            {"hours": True},
+            {"hours": 10**400},
+            {"heartbeat_s": 1e-100},
+            {"heartbeat_s": float("inf")},
+            {"minimum_hours": 0},
+            {"minimum_hours": 10**400},
+            {"boot_id": ""},
+        ):
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                run_virtual_reliability(**kwargs)
+
     def test_800_hours_are_accelerated_coverage_not_acceptance(self):
         trace = run_virtual_reliability(800.0, heartbeat_s=300.0)
         self.assertEqual(trace["schema"], "daiyi-reliability-evidence-v1")
@@ -37,6 +54,10 @@ class VirtualReliabilityTests(unittest.TestCase):
         self.assertTrue(trace["complete"])
         self.assertLess(trace["wall_seconds"], 10.0)
         stamps = [event["t_s"] for event in trace["heartbeats"]]
+        self.assertEqual(
+            {event["boot_id"] for event in trace["heartbeats"]},
+            {trace["boot_id"]},
+        )
         self.assertEqual(stamps, sorted(set(stamps)))
         self.assertEqual(stamps[0], 0.0)
         self.assertEqual(stamps[-1], 800.0 * 3600.0)
@@ -63,7 +84,7 @@ class ReliabilityEvidenceTests(unittest.TestCase):
             evidence = run_reliability_stress(
                 output,
                 loops=len(SCENARIOS),
-                virtual_hours=2.0,
+                virtual_hours=800.0,
                 enforce_minimum=False,
             )
             after = {path.name: sha256(path) for path in historical_files}
@@ -88,13 +109,29 @@ class ReliabilityEvidenceTests(unittest.TestCase):
                 metrics["loops"]["observed_expected_rejections"],
             )
             self.assertEqual(
+                metrics["loops"]["expected_rejection_codes"],
+                metrics["loops"]["observed_rejection_codes"],
+            )
+            self.assertEqual(
                 metrics["loops"]["expected_accepts"],
                 metrics["loops"]["observed_expected_accepts"],
             )
-            self.assertEqual(metrics["loops"]["expected_rejections"], 16)
             self.assertEqual(
-                metrics["loops"]["task_quality_complete_cycles"], 3
+                metrics["loops"]["expected_rejections"],
+                sum(scenario.expected == "reject" for scenario in SCENARIOS),
             )
+            self.assertEqual(
+                metrics["loops"]["task_quality_complete_cycles"],
+                sum(
+                    scenario.expected == "task_complete"
+                    for scenario in SCENARIOS
+                ),
+            )
+            self.assertEqual(
+                metrics["loops"]["real_task_quality_complete_cycles"], 0
+            )
+            self.assertEqual(metrics["loops"]["sample_count"], len(SCENARIOS))
+            self.assertGreater(metrics["loops"]["control_feedback_samples"], 0)
             self.assertGreater(metrics["wall_seconds"], 0)
             self.assertGreater(metrics["peak_rss_kb"], 0)
             self.assertEqual(
@@ -112,13 +149,25 @@ class ReliabilityEvidenceTests(unittest.TestCase):
             self.assertFalse(historical["mock_cycle"]["task_quality_complete"])
             self.assertFalse(historical["reverified"]["collision"])
             self.assertFalse(historical["reverified"]["motion"])
+            self.assertTrue(
+                historical["plan_summary"]["preflight_binding"][
+                    "legacy_unbound_preflight"
+                ]
+            )
+            self.assertTrue(
+                historical["historical_source_scope"]["current_source_drift"]
+            )
+            self.assertFalse(evidence["scope"]["torch_imported"])
+            self.assertTrue(
+                evidence["source_consistency"]["offline_sources_unchanged"]
+            )
             self.assertEqual(
                 historical["plan_summary"]["result_evidence"]["task_status"],
                 "partial",
             )
             virtual = evidence["virtual_reliability"]
-            self.assertEqual(virtual["virtual_hours"], 2.0)
-            self.assertFalse(virtual["meets_target"])
+            self.assertEqual(virtual["virtual_hours"], 800.0)
+            self.assertTrue(virtual["meets_target"])
             self.assertTrue(virtual["accelerated_coverage"])
             self.assertTrue(virtual["real_800h_pending"])
             receipt = json.loads(
@@ -126,7 +175,7 @@ class ReliabilityEvidenceTests(unittest.TestCase):
             )
             self.assertEqual(receipt["clock_kind"], "virtual")
             self.assertEqual(receipt["source_kind"], "virtual_reliability")
-            self.assertFalse(receipt["complete"])
+            self.assertTrue(receipt["complete"])
             controller_receipt = json.loads(
                 (output / "historical_mock/controller_receipt.json").read_text()
             )
@@ -140,6 +189,10 @@ class ReliabilityEvidenceTests(unittest.TestCase):
                 self.assertTrue(Path(item["path"]).is_file())
                 self.assertEqual(len(item["sha256"]), 64)
                 self.assertTrue(item["source"])
+                if "snapshot_path" in item:
+                    self.assertEqual(
+                        sha256(output / item["snapshot_path"]), item["sha256"]
+                    )
             for item in evidence["artifacts"]:
                 path = output / item["path"]
                 self.assertTrue(path.is_file(), item["path"])
@@ -162,13 +215,126 @@ class ReliabilityEvidenceTests(unittest.TestCase):
             ]
             self.assertEqual(len(loop_records), len(SCENARIOS))
             self.assertTrue(all(record["match"] for record in loop_records))
+            by_scenario = {
+                record["scenario"]: record for record in loop_records
+            }
+            self.assertEqual(
+                by_scenario["feedback_batch_atomic"]["covered_command_count"], 0
+            )
+            self.assertEqual(
+                by_scenario["feedback_batch_atomic"]["feedback_samples"], 0
+            )
+            self.assertIn(
+                "overgrind", by_scenario["quality_overgrind"]["quality_reasons"]
+            )
+            self.assertIn(
+                "negative_limit_risk",
+                by_scenario["quality_negative_limit_risk"]["quality_reasons"],
+            )
+            self.assertTrue(
+                by_scenario["quality_invalid_view"]["quality_region_failures"][
+                    0
+                ]["invalid_view"]
+            )
             self.assertEqual(
                 {record["scenario"] for record in loop_records},
                 {scenario.name for scenario in SCENARIOS},
             )
+            loop_artifacts = json.loads(
+                (output / "loops/artifacts.json").read_text()
+            )
+            for item in loop_artifacts["artifacts"]:
+                self.assertEqual(sha256(output / item["path"]), item["sha256"])
+            virtual_rules = evidence["virtual_fault_rules"]
+            self.assertEqual(virtual_rules["case_count"], 5)
+            self.assertEqual(virtual_rules["matched"], 5)
+            self.assertTrue(
+                all(
+                    case["real_800h_pending"] for case in virtual_rules["cases"]
+                )
+            )
+            self.assertTrue(
+                all(
+                    case["fault_rule_matched"]
+                    for case in virtual_rules["cases"]
+                )
+            )
+            by_rule = {case["case"]: case for case in virtual_rules["cases"]}
+            self.assertEqual(by_rule["healthy"]["observed"], "pass")
+            self.assertTrue(
+                all(
+                    not case["evaluation_input_failures"]
+                    for case in by_rule.values()
+                )
+            )
+            for name in ("health_fault", "heartbeat_gap"):
+                self.assertEqual(
+                    by_rule[name]["expected_rejection_reasons"][0]["code"],
+                    "criterion_not_met",
+                )
+            self.assertEqual(
+                by_rule["clock_restart"]["expected_rejection_reasons"][0][
+                    "code"
+                ],
+                "reliability_restart",
+            )
+            self.assertEqual(
+                by_rule["clock_mismatch"]["expected_rejection_reasons"][0][
+                    "code"
+                ],
+                "reliability_clock_mismatch",
+            )
+
+    def test_mock_entry_cannot_import_models_or_open_network_sockets(self):
+        code = """
+import builtins, json, socket, sys, tempfile
+from pathlib import Path
+original = builtins.__import__
+attempts = []
+def guarded(name, *args, **kwargs):
+    if name.split('.')[0] in {'torch', 'mujoco'}:
+        attempts.append(name)
+        raise AssertionError('heavy import is forbidden')
+    return original(name, *args, **kwargs)
+def forbidden(*args, **kwargs):
+    attempts.append('network_socket')
+    raise AssertionError('network sockets are forbidden')
+builtins.__import__ = guarded
+socket.socket = forbidden
+socket.create_connection = forbidden
+from daiyi_grinding.reliability_stress import run_reliability_stress, SCENARIOS
+with tempfile.TemporaryDirectory() as directory:
+    result = run_reliability_stress(
+        Path(directory) / 'guarded', loops=len(SCENARIOS),
+        virtual_hours=2.0, enforce_minimum=False,
+    )
+    print(json.dumps({'attempts': attempts, 'failures': result['failures']}))
+"""
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            env={**os.environ, "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"},
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        output = json.loads(result.stdout)
+        self.assertEqual(output["attempts"], [])
+        self.assertEqual(output["failures"], [])
 
     def test_minimum_loop_and_800h_guards(self):
         with tempfile.TemporaryDirectory() as directory:
+            for kwargs in (
+                {"loops": True},
+                {"seed": True},
+                {"virtual_hours": True},
+                {"virtual_hours": float("inf")},
+                {"virtual_hours": 10**400},
+            ):
+                invalid = Path(directory) / "invalid_numeric_input"
+                with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                    run_reliability_stress(invalid, **kwargs)
+                self.assertFalse(invalid.exists())
             output = Path(directory) / "too_short"
             with self.assertRaises(ValueError):
                 run_reliability_stress(
@@ -210,6 +376,19 @@ class ReliabilityEvidenceTests(unittest.TestCase):
             "interrupt_recover",
             "partial_feedback",
             "support_missing_feedback",
+            "feedback_batch_atomic",
+            "feedback_sequence_gap",
+            "checkpoint_counter_corrupt",
+            "checkpoint_log_binding",
+            "quality_binding",
+            "quality_hash_changed",
+            "quality_overgrind",
+            "quality_negative_limit_risk",
+            "quality_invalid_view",
+            "clock_regression",
+            "feedback_dropout",
+            "source_changed_during_execution",
+            "receipt_hashes",
         }
         self.assertTrue(required <= names)
         self.assertTrue(
